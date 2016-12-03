@@ -27,7 +27,6 @@ class CBinaryAddonCache;
 
 namespace ActiveAE {
 class CActiveAEDSP;
-class CActiveAE;
 }
 
 namespace ANNOUNCEMENT
@@ -48,6 +47,8 @@ namespace PLAYLIST
 class CContextMenuManager;
 class XBPython;
 class CDataCacheCore;
+class CSettings;
+class IAE;
 
 namespace GAME
 {
@@ -63,9 +64,11 @@ public:
   static XBPython &GetXBPython();
   static PVR::CPVRManager &GetPVRManager();
   static ActiveAE::CActiveAEDSP& GetADSP();
-  static ActiveAE::CActiveAE& GetActiveAE();
+  static IAE& GetActiveAE();
   static CContextMenuManager& GetContextMenuManager();
   static CDataCacheCore& GetDataCacheCore();
   static PLAYLIST::CPlayListPlayer& GetPlaylistPlayer();
+  static CSettings& GetSettings();
   static GAME::CGameServices& GetGameServices();
+  static bool IsBinaryAddonCacheUp();
 };
