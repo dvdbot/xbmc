@@ -85,18 +85,17 @@ void TestBasicEnvironment::SetUp()
    * test suite run.
    */
 #ifdef TARGET_WINDOWS
-  using KODI::PLATFORM::WINDOWS::FromW;
-  std::wstring xbmcTempPath;
+  std::string xbmcTempPath;
   TCHAR lpTempPathBuffer[MAX_PATH];
   if (!GetTempPath(MAX_PATH, lpTempPathBuffer))
     SetUpError();
   xbmcTempPath = lpTempPathBuffer;
-  if (!GetTempFileName(xbmcTempPath.c_str(), L"xbmctempdir", 0, lpTempPathBuffer))
+  if (!GetTempFileName(xbmcTempPath.c_str(), "xbmctempdir", 0, lpTempPathBuffer))
     SetUpError();
   DeleteFile(lpTempPathBuffer);
   if (!CreateDirectory(lpTempPathBuffer, NULL))
     SetUpError();
-  CSpecialProtocol::SetTempPath(FromW(lpTempPathBuffer));
+  CSpecialProtocol::SetTempPath(lpTempPathBuffer);
 #else
   char buf[MAX_PATH];
   char *tmp;
@@ -125,7 +124,7 @@ void TestBasicEnvironment::SetUp()
   g_powerManager.Initialize();
   g_application.m_ServiceManager->CreateAudioEngine();
   g_application.m_ServiceManager->StartAudioEngine();
-  CServiceBroker::GetSettings().Initialize();
+  CSettings::GetInstance().Initialize();
 }
 
 void TestBasicEnvironment::TearDown()
@@ -133,7 +132,7 @@ void TestBasicEnvironment::TearDown()
   g_application.m_ServiceManager->DestroyAudioEngine();
   std::string xbmcTempPath = CSpecialProtocol::TranslatePath("special://temp/");
   XFILE::CDirectory::Remove(xbmcTempPath);
-  CServiceBroker::GetSettings().Uninitialize();
+  CSettings::GetInstance().Uninitialize();
   g_application.m_ServiceManager->Deinit();
 }
 
