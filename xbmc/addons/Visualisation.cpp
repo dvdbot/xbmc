@@ -107,7 +107,7 @@ bool CVisualisation::Create(int x, int y, int w, int h, void *device)
 
     CreateBuffers();
 
-    CAEFactory::RegisterAudioCallback(this);
+    CServiceBroker::GetActiveAE().RegisterAudioCallback(this);
 
     return true;
   }
@@ -169,7 +169,7 @@ void CVisualisation::Render()
 
 void CVisualisation::Stop()
 {
-  CAEFactory::UnregisterAudioCallback(this);
+  CServiceBroker::GetActiveAE().UnregisterAudioCallback(this);
   if (Initialized())
   {
     CAddonDll<DllVisualisation, Visualisation, VIS_PROPS>::Stop();

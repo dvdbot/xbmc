@@ -32,7 +32,6 @@
 #include "guilib/LocalizeStrings.h"
 #include "interfaces/AnnouncementManager.h"
 #include "interfaces/builtins/Builtins.h"
-#include "network/Network.h"
 #include "pvr/PVRManager.h"
 #include "settings/lib/Setting.h"
 #include "settings/Settings.h"
@@ -86,7 +85,7 @@ void CPowerManager::Initialize()
   std::unique_ptr<IPowerSyscall> currPowerManager;
   int bestCount = -1;
   int currCount = -1;
-
+  
   std::list< std::pair< std::function<bool()>,
                         std::function<IPowerSyscall*()> > > powerManagers =
   {
@@ -129,7 +128,7 @@ void CPowerManager::Initialize()
 
 void CPowerManager::SetDefaults()
 {
-  int defaultShutdown = CServiceBroker::GetSettings().GetInt(CSettings::SETTING_POWERMANAGEMENT_SHUTDOWNSTATE);
+  int defaultShutdown = CSettings::GetInstance().GetInt(CSettings::SETTING_POWERMANAGEMENT_SHUTDOWNSTATE);
 
   switch (defaultShutdown)
   {
@@ -168,7 +167,7 @@ void CPowerManager::SetDefaults()
     break;
   }
 
-  ((CSettingInt*)CServiceBroker::GetSettings().GetSetting(CSettings::SETTING_POWERMANAGEMENT_SHUTDOWNSTATE))->SetDefault(defaultShutdown);
+  ((CSettingInt*)CSettings::GetInstance().GetSetting(CSettings::SETTING_POWERMANAGEMENT_SHUTDOWNSTATE))->SetDefault(defaultShutdown);
 }
 
 bool CPowerManager::Powerdown()
@@ -271,14 +270,12 @@ void CPowerManager::OnWake()
 {
   CLog::Log(LOGNOTICE, "%s: Running resume jobs", __FUNCTION__);
 
-  g_application.getNetwork().WaitForNet();
-
   // reset out timers
   g_application.ResetShutdownTimers();
 
   CGUIDialogBusy* dialog = (CGUIDialogBusy*)g_windowManager.GetWindow(WINDOW_DIALOG_BUSY);
   if (dialog)
-    dialog->Close(true); // force close. no closing animation, sound etc at this early stage
+    dialog->Close();
 
 #if defined(HAS_SDL) || defined(TARGET_WINDOWS)
   if (g_Windowing.IsFullScreen())

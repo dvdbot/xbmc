@@ -47,7 +47,6 @@ namespace PLAYLIST
 class CContextMenuManager;
 class XBPython;
 class CDataCacheCore;
-class CSettings;
 class IAE;
 
 namespace GAME
@@ -67,7 +66,5 @@ public:
   static CContextMenuManager& GetContextMenuManager();
   static CDataCacheCore& GetDataCacheCore();
   static PLAYLIST::CPlayListPlayer& GetPlaylistPlayer();
-  static CSettings& GetSettings();
   static GAME::CGameServices& GetGameServices();
-  static bool IsBinaryAddonCacheUp();
 };
