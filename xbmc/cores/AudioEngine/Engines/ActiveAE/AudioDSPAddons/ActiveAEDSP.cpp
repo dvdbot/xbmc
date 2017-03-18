@@ -75,7 +75,6 @@ CActiveAEDSP::CActiveAEDSP()
 
 CActiveAEDSP::~CActiveAEDSP()
 {
-  Deactivate();
   CAddonMgr::GetInstance().UnregisterAddonMgrCallback(ADDON_ADSPDLL);
   //CSettings::GetInstance().UnregisterCallback(this);
   //CLog::Log(LOGDEBUG, "ActiveAE DSP - destroyed");
@@ -91,24 +90,8 @@ void CActiveAEDSP::Init(void)
   //CSettings::GetInstance().RegisterCallback(this, settingSet);
 
   CAddonMgr::GetInstance().RegisterAddonMgrCallback(ADDON_ADSPDLL, this);
-
-  if (CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED))
-    Activate();
 }
 //@}
-
-/*! @name initialization and configuration methods */
-//@{
-void CActiveAEDSP::Activate(void)
-{
-  /* first stop and remove any audio dsp add-on's */
-  Deactivate();
-
-  CSingleLock lock(m_critSection);
-
-  UpdateAddons();
-  m_isActive = true;
-}
 
 class CActiveAEDSPModeUpdateJob : public CJob
 {
@@ -144,35 +127,6 @@ void CActiveAEDSP::TriggerModeUpdate(bool bAsync /* = true */)
     m_modes[i].clear();
     m_databaseDSP.GetModes(m_modes[i], i);
   }
-
-  /*
-   * if any dsp processing is active restart playback
-   */
-  if (m_usedProcessesCnt > 0)
-  {
-    CLog::Log(LOGNOTICE, "ActiveAE DSP - restarting playback after disabled dsp system");
-    CApplicationMessenger::GetInstance().SendMsg(TMSG_MEDIA_RESTART);
-  }
-}
-
-void CActiveAEDSP::Deactivate(void)
-{
-  /* check whether the audio dsp is loaded */
-  if (!m_isActive)
-    return;
-
-  CSingleLock lock(m_critSection);
-
-  CLog::Log(LOGNOTICE, "ActiveAE DSP - stopping");
-
-  m_addonMap.clear();
-
-  /* unload all data */
-  Cleanup();
-
-  /* close database */
-  if (m_databaseDSP.IsOpen())
-    m_databaseDSP.Close();
 }
 
 void CActiveAEDSP::Cleanup(void)
@@ -206,9 +160,6 @@ void CActiveAEDSP::ResetDatabase(void)
     CApplicationMessenger::GetInstance().PostMsg(TMSG_MEDIA_STOP);
   }
 
-  /* stop the system */
-  Deactivate();
-
   if (m_databaseDSP.Open())
   {
     m_databaseDSP.DeleteModes();
@@ -223,7 +174,6 @@ void CActiveAEDSP::ResetDatabase(void)
   CLog::Log(LOGNOTICE, "ActiveAE DSP - restarting the audio DSP handler");
   m_databaseDSP.Open();
   Cleanup();
-  Activate();
 }
 //@}
 
@@ -477,7 +427,7 @@ bool CActiveAEDSP::CreateDSPs(unsigned int &streamId, CActiveAEDSPProcessPtr &pr
     return false;
   }
 
-  if (!usedProc->Create(inputFormat, outputFormat, upmix, quality, requestedStreamType, matrix_encoding, audio_service_type, profile))
+  if (!usedProc->Create(inputFormat, outputFormat, upmix, false, quality, requestedStreamType, matrix_encoding, audio_service_type, profile))
   {
     CLog::Log(LOGERROR, "ActiveAE DSP - %s - Creation of processing class failed", __FUNCTION__);
     return false;
@@ -493,7 +443,7 @@ bool CActiveAEDSP::CreateDSPs(unsigned int &streamId, CActiveAEDSPProcessPtr &pr
   return true;
 }
 
-void CActiveAEDSP::DestroyDSPs(unsigned int streamId)
+void CActiveAEDSP::DestroyDSPs(int streamId)
 {
   CSingleLock lock(m_critSection);
 
@@ -509,7 +459,7 @@ void CActiveAEDSP::DestroyDSPs(unsigned int streamId)
   }
 }
 
-CActiveAEDSPProcessPtr CActiveAEDSP::GetDSPProcess(unsigned int streamId)
+CActiveAEDSPProcessPtr CActiveAEDSP::GetDSPProcess(int streamId)
 {
   CSingleLock lock(m_critSection);
 
@@ -524,7 +474,7 @@ unsigned int CActiveAEDSP::GetProcessingStreamsAmount(void)
   return m_usedProcessesCnt;
 }
 
-unsigned int CActiveAEDSP::GetActiveStreamId(void)
+int CActiveAEDSP::GetActiveStreamId(void)
 {
   CSingleLock lock(m_critSection);
 
