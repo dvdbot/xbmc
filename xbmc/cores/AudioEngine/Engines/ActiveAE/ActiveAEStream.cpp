@@ -533,6 +533,7 @@ bool CActiveAEStream::IsFading()
 
 bool CActiveAEStream::HasDSP()
 {
+  //! @todo AudioDSP V2 remove this
   return false;
 }
 
