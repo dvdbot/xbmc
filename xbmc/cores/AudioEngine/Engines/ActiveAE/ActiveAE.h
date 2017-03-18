@@ -27,6 +27,7 @@
 #include "threads/Thread.h"
 
 #include "ActiveAESink.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
 #include "cores/AudioEngine/Interfaces/AEStream.h"
 #include "cores/AudioEngine/Interfaces/AESound.h"
 #include "cores/AudioEngine/Engines/ActiveAE/ActiveAEBuffer.h"
@@ -398,5 +399,7 @@ protected:
   float m_aeVolume;
   bool m_aeMuted;
   bool m_aeGUISoundForce;
+
+  CActiveAudioDSP m_AudioDSP;
 };
 };
