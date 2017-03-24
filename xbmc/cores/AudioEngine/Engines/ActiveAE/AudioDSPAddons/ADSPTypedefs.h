@@ -20,6 +20,10 @@
  */
 
 
+namespace DSP
+{
+namespace AUDIO
+{
 typedef enum
 {
   ADSP_BASE_ID_INVALID = -1,
@@ -60,3 +64,5 @@ typedef enum
 
   ADSP_DataFormatFlagMAX
 }ADSPDataFormatFlags_t;
+}
+}

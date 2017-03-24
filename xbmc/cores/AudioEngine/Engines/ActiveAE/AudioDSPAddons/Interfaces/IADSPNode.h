@@ -19,14 +19,13 @@
  *
  */
 
-#include "DSPChain/Nodes/Interfaces/IDSPNode.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 
 namespace DSP
 {
 namespace AUDIO
 {
-#include "DSPChain/Typedefs/ADSPTypedefs.h"
-
 class CChannelInformation
 {
 public:

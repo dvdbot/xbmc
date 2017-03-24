@@ -29,7 +29,7 @@ class CADSPProcessor : public IADSPProcessor
 {
   typedef std::list<IADSPChainNode*> ADSPChain_t;
 public:
-  CADSPProcessor(IDSPNodeFactory *NodeFactory, DSP::IDSPChainModel *NodeModel) :
+  CADSPProcessor(IDSPNodeFactory *NodeFactory, IDSPChainModel *NodeModel) :
     IADSPProcessor("CADSPProcessor", ADSP_DataFormatFloat),
     m_NodeFactory(NodeFactory), 
     m_NodeModel(NodeModel),
@@ -58,7 +58,7 @@ protected:
   virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) override
   {
     //m_NodeFactory.InstantiateNode(0);
-    DSP::IDSPChainModel::DSPNodeInfoVector_t activeNodes;
+    IDSPChainModel::DSPNodeInfoVector_t activeNodes;
     m_NodeModel->GetActiveNodes(activeNodes);
 
     for (int ii = 0; ii < activeNodes.size(); ii++)

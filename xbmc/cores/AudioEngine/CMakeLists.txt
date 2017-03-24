@@ -6,6 +6,10 @@ set(SOURCES AEResampleFactory.cpp
             Engines/ActiveAE/AudioDSPAddons/ActiveAEDSPMode.cpp
             Engines/ActiveAE/AudioDSPAddons/ActiveAEDSPProcess.cpp
             Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.cpp
+            Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.cpp
+            Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonModeNode.cpp
+            Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.cpp
+            Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPDummyMode.cpp
             Encoders/AEEncoderFFmpeg.cpp
             Engines/ActiveAE/ActiveAE.cpp
             Engines/ActiveAE/ActiveAEBuffer.cpp
@@ -31,6 +35,17 @@ set(HEADERS AEResampleFactory.h
             Engines/ActiveAE/AudioDSPAddons/ActiveAEDSPMode.h
             Engines/ActiveAE/AudioDSPAddons/ActiveAEDSPProcess.h
             Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h
+            Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPChainNode.h
+            Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h
+            Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h
+            Engines/ActiveAE/AudioDSPAddons/ADSPBuffer.h
+            Engines/ActiveAE/AudioDSPAddons/ADSPProcessor.h
+            Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h
+            Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h
+            Engines/ActiveAE/AudioDSPAddons/AudioDSPKodiNodeCreator.h
+            Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonModeNode.h
+            Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h
+            Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPDummyMode.h
             Encoders/AEEncoderFFmpeg.h
             Engines/ActiveAE/ActiveAE.h
             Engines/ActiveAE/ActiveAEBuffer.h
