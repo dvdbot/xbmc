@@ -19,72 +19,13 @@
  *
  */
 
-#include "DSPChain/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 
-namespace DSPChain
+namespace DSP
 {
-class CChannelInformation
+namespace AUDIO
 {
-public:
-};
-
-typedef enum
-{
-  ADSP_DataFormatINVALID = -1,
-
-  ADSP_DataFormatFloat,
-  ADSP_DataFormatDouble,
-  ADSP_DataFormatLongDouble,
-
-  /* planar formats */
-  ADSP_DataFormatFloatPlanes,
-  ADSP_DataFormatDoublePlanes,
-  ADSP_DataFormatLongDoublePlanes,
-
-  ADSP_DataFormatMAX
-}ADSPDataFormat_t;
-
-typedef enum
-{
-  ADSP_DataFormatFlagINVALID = 0,
-
-  ADSP_DataFormatFlagFloat            = 1 << ADSP_DataFormatFloat,
-  ADSP_DataFormatFlagDouble           = 1 << ADSP_DataFormatDouble,
-  ADSP_DataFormatFlagLongDouble       = 1 << ADSP_DataFormatLongDouble,
-
-  /* planar formats */
-  ADSP_DataFormatFlagFloatPlanes      = 1 << ADSP_DataFormatFloatPlanes,
-  ADSP_DataFormatFlagDoublePlanes     = 1 << ADSP_DataFormatDoublePlanes,
-  ADSP_DataFormatFlagLongDoublePlanes = 1 << ADSP_DataFormatLongDoublePlanes,
-
-  ADSP_DataFormatFlagMAX
-}ADSPDataFormatFlags_t;
-
-typedef struct ADSP_Properties_t
-{
-  CChannelInformation speakerLayout;
-  uint64_t            sampleFrequency;
-  uint64_t            frameLength;
-  ADSPDataFormat_t    dataFormat;
-
-  ADSP_Properties_t& operator=(const ADSP_Properties_t& Props)
-  {
-    speakerLayout   = Props.speakerLayout;
-    sampleFrequency = Props.sampleFrequency;
-    frameLength     = Props.frameLength;
-    dataFormat      = Props.dataFormat;
-    
-    return *this;
-  }
-
-  ADSP_Properties_t()
-  {
-    sampleFrequency = 0;
-    frameLength     = 0;
-    dataFormat      = ADSP_DataFormatINVALID;
-  }
-}ADSP_Properties_t;
-
 class IADSPChainNode : public IDSPChainNode
 {
 public:
@@ -189,4 +130,5 @@ private:
   ADSP_Properties_t m_InputProperties;
   ADSP_Properties_t m_OutputProperties;
 };
+}
 }

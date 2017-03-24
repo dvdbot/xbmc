@@ -26,11 +26,6 @@ namespace DSP
 {
 namespace AUDIO
 {
-class CChannelInformation
-{
-public:
-};
-
 class CADSPProperties : public DSPObject
 {
 public:

@@ -25,6 +25,7 @@
 
 #include "ActiveAEDSPDatabase.h"
 
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
 #include "cores/AudioEngine/Interfaces/IAudioDSP.h"
 #include "cores/DSP/Models/DSPChainModel.h"
 #include "cores/DSP/Factory/DSPNodeFactory.h"
@@ -85,6 +86,7 @@ class CActiveAudioDSP : private CThread,
                         public IAudioDSP,
                         public ADDON::IAddonMgrCallback
 {
+  typedef std::shared_ptr<DSP::AUDIO::IADSPProcessor>   pAudioDSPProcessor_t;
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
   typedef std::vector<std::unique_ptr<DSP::IDSPNodeCreator>> vAudioDSPNodeCreators_t;

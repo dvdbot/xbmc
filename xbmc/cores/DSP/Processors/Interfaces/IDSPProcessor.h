@@ -19,9 +19,9 @@
  *
  */
 
-#include "DSPChain/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
 
-namespace DSPChain
+namespace DSP
 {
 class IDSPProcessor
 {

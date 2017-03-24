@@ -19,17 +19,20 @@
  *
  */
 
-#include "DSPChain/Processors/Interfaces/IDSPProcessor.h"
-#include "DSPChain/Nodes/Interfaces/IADSPChainNode.h"
-#include "DSPChain/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Processors/Interfaces/IDSPProcessor.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPChainNode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
 
-namespace DSPChain
+namespace DSP
 {
-class IADSPProcessor : public IDSPProcessor
+namespace AUDIO
+{
+class IADSPProcessor : public DSP::IDSPProcessor
 {
 public:
   IADSPProcessor(std::string Name, ADSPDataFormat_t DataFormat) :
-    IDSPProcessor(Name, DSP_CATEGORY_Audio),
+    DSP::IDSPProcessor(Name, DSP_CATEGORY_Audio),
     m_DataFormat(DataFormat)
   {
   }
@@ -45,33 +48,33 @@ public:
 
     switch (m_DataFormat)
     {
-    case ADSP_DataFormatFloat:
-      err = ProcessInstance(reinterpret_cast<float*>(In), reinterpret_cast<float*>(Out));
+      case ADSP_DataFormatFloat:
+        err = ProcessInstance(reinterpret_cast<float*>(In), reinterpret_cast<float*>(Out));
       break;
 
-    case ADSP_DataFormatLongDouble:
-      err = ProcessInstance(reinterpret_cast<double*>(In), reinterpret_cast<double*>(Out));
+      case ADSP_DataFormatLongDouble:
+        err = ProcessInstance(reinterpret_cast<double*>(In), reinterpret_cast<double*>(Out));
       break;
 
-    case ADSP_DataFormatDouble:
-      err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<long double*>(Out));
+      case ADSP_DataFormatDouble:
+        err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<long double*>(Out));
       break;
 
-      /* planar formats */
-    case ADSP_DataFormatFloatPlanes:
-      err = ProcessInstance(reinterpret_cast<float**>(In), reinterpret_cast<float**>(Out));
+        /* planar formats */
+      case ADSP_DataFormatFloatPlanes:
+        err = ProcessInstance(reinterpret_cast<float**>(In), reinterpret_cast<float**>(Out));
       break;
 
-    case ADSP_DataFormatDoublePlanes:
-      err = ProcessInstance(reinterpret_cast<double**>(In), reinterpret_cast<double**>(Out));
+      case ADSP_DataFormatDoublePlanes:
+        err = ProcessInstance(reinterpret_cast<double**>(In), reinterpret_cast<double**>(Out));
       break;
 
-    case ADSP_DataFormatLongDoublePlanes:
-      err = ProcessInstance(reinterpret_cast<long double**>(In), reinterpret_cast<long double**>(Out));
+      case ADSP_DataFormatLongDoublePlanes:
+        err = ProcessInstance(reinterpret_cast<long double**>(In), reinterpret_cast<long double**>(Out));
       break;
 
-    default:
-      err = DSP_ERR_INVALID_DATA_FORMAT;
+      default:
+        err = DSP_ERR_INVALID_DATA_FORMAT;
       break;
     }
 
@@ -102,4 +105,5 @@ protected:
 private:
   ADSPDataFormat_t m_DataFormat;
 };
+}
 }

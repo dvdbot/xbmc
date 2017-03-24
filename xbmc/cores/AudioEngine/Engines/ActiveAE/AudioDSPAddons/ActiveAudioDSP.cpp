@@ -362,9 +362,9 @@ void CActiveAudioDSP::PrepareAddonModes()
     unsigned int maxModeCount = 1;
     for (unsigned int modeCount = 0; modeCount < maxModeCount; modeCount++)
     {
-      uint32_t addonID = 0;
-      uint16_t modeID = 0;
-      uint16_t modeInstanceID = 0;
+      uint32_t addonID = 0;         //! @todo get real parameters
+      uint16_t modeID = 0;          //! @todo get real parameters
+      uint16_t modeInstanceID = 0;  //! @todo get real parameters
 
       NodeID_t id(addonID, modeID, modeInstanceID);
       m_DSPChainModelObject.AddNode(IDSPChainModel::DSPNodeInfo_t(id, iter->first, false)); //! @todo how to handle errors?
@@ -378,10 +378,10 @@ void CActiveAudioDSP::PrepareAddonModes()
   //GetActiveNodesFromJsonFile(tmpActiveNodeInfos);
   for (IDSPChainModel::DSPNodeInfoVector_t::iterator iter = tmpActiveNodeInfos.begin(); iter != tmpActiveNodeInfos.end(); ++iter)
   {
-    uint32_t addonID;
-    uint16_t modeID;
-    uint16_t modeInstanceID;
-    uint32_t pos;
+    uint32_t addonID;         //! @todo get real parameters
+    uint16_t modeID;          //! @todo get real parameters
+    uint16_t modeInstanceID;  //! @todo get real parameters
+    uint32_t pos;             //! @todo get real parameters
     
     NodeID_t id(addonID, modeID, modeInstanceID);
 

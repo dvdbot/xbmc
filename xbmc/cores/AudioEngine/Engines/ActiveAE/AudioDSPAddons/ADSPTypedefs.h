@@ -64,5 +64,35 @@ typedef enum
 
   ADSP_DataFormatFlagMAX
 }ADSPDataFormatFlags_t;
+
+class CChannelInformation
+{
+public:
+};
+
+typedef struct ADSP_Properties_t
+{
+  CChannelInformation speakerLayout;
+  uint64_t            sampleFrequency;
+  uint64_t            frameLength;
+  ADSPDataFormat_t    dataFormat;
+
+  ADSP_Properties_t& operator=(const ADSP_Properties_t& Props)
+  {
+    speakerLayout   = Props.speakerLayout;
+    sampleFrequency = Props.sampleFrequency;
+    frameLength     = Props.frameLength;
+    dataFormat      = Props.dataFormat;
+    
+    return *this;
+  }
+
+  ADSP_Properties_t()
+  {
+    sampleFrequency = 0;
+    frameLength     = 0;
+    dataFormat      = ADSP_DataFormatINVALID;
+  }
+}ADSP_Properties_t;
 }
 }
