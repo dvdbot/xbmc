@@ -21,13 +21,18 @@
 #include <sstream>
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
+#include "cores/DSP/Utils/DSPIDFactory.h"
 #include "utils/log.h"
 
 #include "ServiceBroker.h"
 
+ // includes for AudioDSP add-on modes
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h"
+
 using namespace Actor;
 using namespace ADDON;
 using namespace std;
+using namespace DSP;
 
 
 namespace ActiveAE
@@ -38,6 +43,11 @@ CActiveAudioDSP::CActiveAudioDSP(CEvent *inMsgEvent) :
   m_ADSPAddonDataPort("ADSPAddonDataPort", inMsgEvent, &m_outMsgEvent)
 {
   m_inMsgEvent = inMsgEvent;
+}
+
+CActiveAudioDSP::~CActiveAudioDSP()
+{
+  Dispose();
 }
 
 void CActiveAudioDSP::Start()
@@ -51,9 +61,19 @@ void CActiveAudioDSP::Start()
 
 void CActiveAudioDSP::Dispose()
 {
+
   m_bStop = true;
   m_outMsgEvent.Set();
   StopThread();
+
+  m_KodiModes.ReleaseAllModes(m_DSPNodeFactory);
+
+  for (vAudioDSPNodeCreators_t::iterator iter = m_AddonNodeCreators.begin(); iter != m_AddonNodeCreators.end(); ++iter)
+  {
+    m_DSPNodeFactory.DeregisterCreator((*iter)->ID);
+  }
+  m_AddonNodeCreators.clear();
+
   m_ADSPAddonControlPort.Purge();
   m_ADSPAddonDataPort.Purge();
 
@@ -114,7 +134,7 @@ int ADSP_parentStates[] = {
 
 void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
 {
-  for (int state = m_state; ; state = ADSP_parentStates[state])
+  for (int state = m_state; 1; state = ADSP_parentStates[state])
   {
     switch (state)
     {
@@ -186,8 +206,11 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
             //CSingleLock lock(m_critSection);
 
             //CLog::Log(LOGNOTICE, "ActiveAE DSP - starting");
-
+            m_KodiModes.ReleaseAllModes(m_DSPNodeFactory);
+            m_KodiModes.PrepareModes(m_DSPNodeFactory, m_DSPChainModelObject);
             PrepareAddons();
+            PrepareAddonModes();
+
             m_state = ADSP_TOP_CONFIGURED_MANAGE_ADDONS;
           }
           break;
@@ -327,6 +350,51 @@ void CActiveAudioDSP::PrepareAddons()
   }
 }
 
+void CActiveAudioDSP::PrepareAddonModes()
+{
+  IDSPChainModel::DSPNodeInfoVector_t tmpNodeInfos;
+  IDSPChainModel::DSPNodeInfoVector_t tmpActiveNodeInfos;
+
+  // get all add-on modes
+  for (AudioDSPAddonMap_t::iterator iter = m_EnabledAddons.begin(); iter != m_EnabledAddons.end(); ++iter)
+  {
+    AE_DSP_ADDON_CAPABILITIES caps = iter->second->GetAddonCapabilities();
+    unsigned int maxModeCount = 1;
+    for (unsigned int modeCount = 0; modeCount < maxModeCount; modeCount++)
+    {
+      uint32_t addonID = 0;
+      uint16_t modeID = 0;
+      uint16_t modeInstanceID = 0;
+
+      NodeID_t id(addonID, modeID, modeInstanceID);
+      m_DSPChainModelObject.AddNode(IDSPChainModel::DSPNodeInfo_t(id, iter->first, false)); //! @todo how to handle errors?
+
+      m_AddonNodeCreators.push_back(std::unique_ptr<DSP::IDSPNodeCreator>(dynamic_cast<IDSPNodeCreator*>(new CAudioDSPAddonNodeCreator(id, iter->second))));
+      m_DSPNodeFactory.RegisterCreator(m_AddonNodeCreators.back().get()); //! @todo how to handle errors?
+    }
+  }
+
+  // set mode order from json file
+  //GetActiveNodesFromJsonFile(tmpActiveNodeInfos);
+  for (IDSPChainModel::DSPNodeInfoVector_t::iterator iter = tmpActiveNodeInfos.begin(); iter != tmpActiveNodeInfos.end(); ++iter)
+  {
+    uint32_t addonID;
+    uint16_t modeID;
+    uint16_t modeInstanceID;
+    uint32_t pos;
+    
+    NodeID_t id(addonID, modeID, modeInstanceID);
+
+    m_DSPChainModelObject.SetNodePosition(id, pos);
+    m_DSPChainModelObject.EnableNode(id);
+  }
+
+}
+
+void CActiveAudioDSP::CreateDSPNodeModel()
+{
+}
+
 void CActiveAudioDSP::Process()
 {
   Message *msg = nullptr;
@@ -399,4 +467,3 @@ void CActiveAudioDSP::Process()
   }
 }
 };
-

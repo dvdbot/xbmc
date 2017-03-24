@@ -26,9 +26,18 @@
 #include "ActiveAEDSPDatabase.h"
 
 #include "cores/AudioEngine/Interfaces/IAudioDSP.h"
+#include "cores/DSP/Models/DSPChainModel.h"
+#include "cores/DSP/Factory/DSPNodeFactory.h"
+
+ // internal Kodi AudioDSP processing mode include files
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h"
 
 #include <map>
 
+// notes for configuration of ActiveAE and AudioDSP
+// first configure AE
+// then AudioDSP
+// after that configure the sink
 
 namespace ActiveAE
 {
@@ -78,9 +87,11 @@ class CActiveAudioDSP : private CThread,
 {
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
+  typedef std::vector<std::unique_ptr<DSP::IDSPNodeCreator>> vAudioDSPNodeCreators_t;
 
 public:
   CActiveAudioDSP(CEvent *inMsgEvent);
+  ~CActiveAudioDSP();
   void Start();
   void Dispose();
   CADSPAddonControlProtocol m_ADSPAddonControlPort;
@@ -131,9 +142,18 @@ protected:
 
 private:
   void PrepareAddons();
+  void PrepareAddonModes();
+  void CreateDSPNodeModel();
 
+  DSP::CDSPNodeFactory    m_DSPNodeFactory;
+  DSP::CDSPChainModel     m_DSPChainModelObject;
   AudioDSPAddonMap_t      m_EnabledAddons;
   AudioDSPAddonMap_t      m_DisabledAddons;
   CActiveAEDSPDatabase    m_databaseDSP;  /*!< database for all audio DSP related data */
+
+  vAudioDSPNodeCreators_t m_AddonNodeCreators;
+
+  // internal Kodi AudioDSP modes
+  CAudioDSPKodiModes m_KodiModes;
 };
 }
