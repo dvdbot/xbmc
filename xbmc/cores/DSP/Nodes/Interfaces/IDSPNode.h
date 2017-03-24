@@ -19,7 +19,7 @@
  *
  */
 
-#include "DSPChain/DSPObject.h"
+#include "cores/DSP/DSPObject.h"
 
 
 namespace DSP

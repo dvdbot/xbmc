@@ -21,12 +21,11 @@
 
 #include <list>
 
-#include "DSPChain/Nodes/Interfaces/IADSPChainNode.h"
-#include "DSPChain/Factory/Interfaces/IDSPNodeCreator.h"
-#include "DSPChain/Factory/Interfaces/IDSPNodeFactory.h"
+#include "cores/DSP/Factory/Interfaces/IDSPNodeCreator.h"
+#include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 
 
-namespace DSPChain
+namespace DSP
 {
 class CDSPNodeFactory : public IDSPNodeFactory
 {

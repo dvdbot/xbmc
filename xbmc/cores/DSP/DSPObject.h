@@ -22,7 +22,7 @@
 #include <string>
 #include <stdint.h>
 
-#include "DSPChain/Typedefs/DSPTypedefs.h"
+#include "cores/DSP/Typedefs/DSPTypedefs.h"
 
 
 namespace DSP

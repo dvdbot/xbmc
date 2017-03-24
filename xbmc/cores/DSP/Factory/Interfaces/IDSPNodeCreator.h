@@ -20,10 +20,10 @@
  */
 
 
-#include "DSPChain/Nodes/Interfaces/IDSPChainNode.h"
-#include "DSPChain/Typedefs/DSPTypedefs.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Typedefs/DSPTypedefs.h"
 
-namespace DSPChain
+namespace DSP
 {
 class IDSPNodeCreator
 {

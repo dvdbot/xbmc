@@ -24,10 +24,10 @@
 #include <map>
 #include <unordered_map>
 
-#include "DSPChain/Typedefs/DSPTypedefs.h"
+#include "cores/DSP/Typedefs/DSPTypedefs.h"
 
 
-namespace DSPChain
+namespace DSP
 {
 //! @todo refactor this class as a base class for all processing related classes like DSPChainNode and DSPProcessor
 class IDSPChainNode

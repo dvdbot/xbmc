@@ -19,7 +19,7 @@
  *
  */
 
-#include "DSPChain/Models/Interfaces/IDSPChainModel.h"
+#include "cores/DSP/Models/Interfaces/IDSPChainModel.h"
 
 namespace DSP
 {

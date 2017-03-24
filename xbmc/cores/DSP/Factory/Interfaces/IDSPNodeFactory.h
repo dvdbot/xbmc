@@ -19,11 +19,10 @@
  *
  */
 
-#include "DSPChain/Nodes/Interfaces/IADSPChainNode.h"
-#include "DSPChain/Factory/Interfaces/IDSPNodeCreator.h"
+#include "cores/DSP/Factory/Interfaces/IDSPNodeCreator.h"
 
 
-namespace DSPChain
+namespace DSP
 {
 class IDSPNodeFactory
 {
