@@ -23,57 +23,6 @@
 
 namespace DSP
 {
-typedef struct NodeID_t
-{
-  uint32_t UniqueAddonID;
-  uint16_t ModeID;
-  uint16_t ModeInstanceID;
-
-  NodeID_t &operator=(IDSPChainModel::DSPNodeInfo_t &NodeInfo)
-  {
-    UniqueAddonID   = (uint32_t)(0xFFFFFFFF  &  NodeInfo.ID);
-    ModeID          = (uint16_t)(0xFFFF      & (NodeInfo.ID >> 32));
-    ModeInstanceID  = (uint16_t)(0xFFFF      & (NodeInfo.ID >> 48));
-    return *this;
-  }
-
-  NodeID_t &operator=(const NodeID_t &ID)
-  {
-    UniqueAddonID   = ID.UniqueAddonID;
-    ModeID          = ID.ModeID;
-    ModeInstanceID  = ID.ModeInstanceID;
-
-    return *this;
-  }
-
-  operator uint64_t()
-  {
-    return (uint64_t)ModeInstanceID << 48 | (uint64_t)ModeID << 32 | (uint64_t)UniqueAddonID;
-  }
-  
-  NodeID_t(uint64_t ID)
-  {
-    UniqueAddonID   = (uint32_t)(0xFFFFFFFF  &  ID);
-    ModeID          = (uint16_t)(0xFFFF      & (ID >> 32));
-    ModeInstanceID  = (uint16_t)(0xFFFF      & (ID >> 48));
-  }
-
-  NodeID_t(uint32_t UniqueAddonID, uint16_t ModeID, uint16_t ModeInstanceID) :
-    UniqueAddonID(UniqueAddonID),
-    ModeID(ModeID),
-    ModeInstanceID(ModeInstanceID)
-  {
-  }
-
-  NodeID_t()
-  {
-    UniqueAddonID   = 0;
-    ModeID          = 0;
-    ModeInstanceID  = 0;
-  }
-
-}NodeID_t;
-
 class CDSPChainModel : public IDSPChainModel
 {
   typedef struct NodeInfo_t

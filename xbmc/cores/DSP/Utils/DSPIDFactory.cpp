@@ -26,7 +26,7 @@ CDSPIDFactory::UniqueStringIDMap_t  CDSPIDFactory::m_UniqueStringIDMap;
 CDSPIDFactory::UniqueUint32IDMap_t  CDSPIDFactory::m_UniqueUint32IDMap;
 CDSPIDFactory::InstanceIDMap_t      CDSPIDFactory::m_InstanceIDMap;
 
-int32_t DSP::CDSPIDFactory::GetUniqueDSPNodeID(const std::string & Name, const DSPCategory_t & Category)
+int32_t CDSPIDFactory::GetUniqueDSPNodeID(const std::string & Name, const DSPCategory_t & Category)
 {
   UniqueStringIDMap_t::iterator iter = m_UniqueStringIDMap.find(Name);
   if (iter == m_UniqueStringIDMap.end())
@@ -42,7 +42,7 @@ int32_t DSP::CDSPIDFactory::GetUniqueDSPNodeID(const std::string & Name, const D
   return m_UniqueStringIDMap[Name];
 }
 
-uint16_t DSP::CDSPIDFactory::GetInstanceDSPNodeID(const uint32_t UniqueID)
+uint16_t CDSPIDFactory::GetInstanceDSPNodeID(const uint32_t UniqueID)
 {
   UniqueUint32IDMap_t::iterator iter = m_UniqueUint32IDMap.find(UniqueID);
   if (iter == m_UniqueUint32IDMap.end())
