@@ -853,6 +853,12 @@ const char *CActiveAEDSPAddon::ToString(const AE_DSP_ERROR error)
   }
 }
 
+bool CActiveAEDSPAddon::GetAddonProcessingCallbacks(AudioDSP &Callbacks)
+{
+  Callbacks = *m_pStruct;
+  return true;
+}
+
 bool CActiveAEDSPAddon::LogError(const AE_DSP_ERROR error, const char *strMethod) const
 {
   if (error != AE_DSP_ERROR_NO_ERROR && error != AE_DSP_ERROR_IGNORE_ME)
