@@ -20,100 +20,28 @@
  */
 
 
-#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
-#include "cores/DSP/Typedefs/DSPTypedefs.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
+
+namespace DSP
+{
+class IDSPNodeModel;
+}
 
 namespace DSP
 {
 class IDSPNodeCreator
 {
+  friend class IDSPNodeModel;
+
 public:
-  IDSPNodeCreator(uint64_t ID) : ID(ID) {}
+  IDSPNodeCreator() : ID(0) {}
 
-  virtual IDSPChainNode* InstantiateNode() = 0;
-  virtual DSPErrorCode_t DestroyNode(IDSPChainNode *&Node) = 0;
+  virtual IDSPNode* InstantiateNode() = 0;
+  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
 
-  const uint64_t ID;
-};
-
-template<class T>
-class TDSPNodeCreator : public IDSPNodeCreator
-{
-public:
-  TDSPNodeCreator(uint64_t ID) : IDSPNodeCreator(ID) {}
-  TDSPNodeCreator(uint64_t ID, std::string Name) : IDSPNodeCreator(ID), m_Name(Name) {}
-
-  virtual IDSPChainNode* InstantiateNode()
-  {
-    IDSPChainNode *node = nullptr;
-    node = dynamic_cast<IDSPChainNode*>(new T(ID, m_Name));
-
-    if (!node)
-    {
-      return nullptr;
-    }
-
-    //! @todo implement initialize interface for reseting state
-
-    return node;
-  }
-
-  virtual DSPErrorCode_t DestroyNode(IDSPChainNode *&Node)
-  {
-    if(!Node)
-    {
-      return DSP_ERR_INVALID_INPUT;
-    }
-
-    DSPErrorCode_t err = Node->Destroy();
-
-    delete Node;
-    Node = nullptr;
-
-    return err;
-  }
+  const uint64_t GetID() { return ID; }
 
 private:
-  std::string m_Name;
-};
-
-template<class T, class TConstructor>
-class TDSPNodeCreatorConstructor : public IDSPNodeCreator
-{
-public:
-  TDSPNodeCreatorConstructor(uint64_t ID, TConstructor Constructor) : IDSPNodeCreator(ID), m_Constructor(Constructor) {}
-
-  virtual IDSPChainNode* InstantiateNode()
-  {
-    IDSPChainNode *node = nullptr;
-    node = dynamic_cast<IDSPChainNode*>(new T(m_Constructor));
-
-    if (!node)
-    {
-      return nullptr;
-    }
-
-    //! @todo implement initialize interface for reseting state
-
-    return node;
-  }
-
-  virtual DSPErrorCode_t DestroyNode(IDSPChainNode *&Node)
-  {
-    if (!Node)
-    {
-      return DSP_ERR_INVALID_INPUT;
-    }
-
-    DSPErrorCode_t err = Node->Destroy();
-
-    delete Node;
-    Node = nullptr;
-
-    return err;
-  }
-
-private:
-  TConstructor m_Constructor;
+  uint64_t ID;
 };
 }

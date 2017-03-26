@@ -23,6 +23,9 @@
 #include "cores/AudioEngine/Engines//ActiveAE/AudioDSPAddons/KodiModes/AudioDSPCopyMode.h"
 #include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Models/Interfaces/IDSPChainModel.h"
+#include "cores/DSP/Factory/Interfaces/IDSPIDFactory.h"
+
+#include <vector>
 
 namespace ActiveAE
 {
@@ -31,10 +34,10 @@ class CAudioDSPKodiModes
 public:
   CAudioDSPKodiModes();
 
-  void PrepareModes(DSP::IDSPNodeFactory &Factory, DSP::IDSPChainModel &Model);
-  void ReleaseAllModes(DSP::IDSPNodeFactory &Factory);
+  void PrepareModes(DSP::IDSPNodeFactory &Factory, DSP::IDSPNodeModel &Model, DSP::IDSPIDFactory &IDFactory);
+  void ReleaseAllModes(DSP::IDSPNodeFactory &Factory, DSP::IDSPIDFactory &IDFactory);
 
 private:
-  CAudioDSPCopyModeCreator m_DummyModeCreator;
+  std::vector<DSP::IDSPNodeCreator*> m_NodeCreators;
 };
 }

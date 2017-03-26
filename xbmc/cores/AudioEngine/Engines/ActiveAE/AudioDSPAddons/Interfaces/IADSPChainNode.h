@@ -19,18 +19,18 @@
  *
  */
 
-#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 
 namespace DSP
 {
 namespace AUDIO
 {
-class IADSPChainNode : public IDSPChainNode
+class IADSPChainNode : public IDSPNode
 {
 public:
   IADSPChainNode(uint64_t ID, ADSPDataFormatFlags_t FormatFlags, std::string Name) :
-    IDSPChainNode(ID, DSP_CATEGORY_Audio, Name),
+    IDSPNode(Name, ID, DSP_CATEGORY_Audio),
     FormatFlags(FormatFlags),
     m_DataFormat(ADSP_DataFormatINVALID)
   {

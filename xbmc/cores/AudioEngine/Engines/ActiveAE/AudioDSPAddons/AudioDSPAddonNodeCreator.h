@@ -11,8 +11,8 @@ class CAudioDSPAddonNodeCreator : public DSP::IDSPNodeCreator
 public:
   CAudioDSPAddonNodeCreator(NodeID_t &ID, const AE_DSP_ADDON &Addon);
 
-  virtual DSP::IDSPChainNode* InstantiateNode();
-  virtual DSPErrorCode_t DestroyNode(DSP::IDSPChainNode *&Node);
+  virtual DSP::IDSPNode* InstantiateNode();
+  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node);
 
 private:
   const AE_DSP_ADDON m_Addon;

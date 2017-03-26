@@ -22,46 +22,55 @@
 #include <stdint.h>
 #include <vector>
 
-#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Factory/Interfaces/IDSPNodeCreator.h"
+
 
 namespace DSP
 {
-class IDSPChainModel
+class IDSPNodeModel
 {
 public:
-  typedef struct DSPNodeInfo_t
+  class CDSPNodeInfo
   {
-    const uint64_t    ID;
-    const std::string Name;
-    const bool        Active;
-
-    DSPNodeInfo_t &operator=(DSPNodeInfo_t &NodeInfo)
+  public:
+    CDSPNodeInfo(std::string Name, bool Active) :
+      ID(0),
+      Name(Name),
+      Active(Active)
     {
-      return *this;
     }
 
-    DSPNodeInfo_t() :
+    CDSPNodeInfo(uint64_t ID, std::string Name, bool Active) :
+      ID(ID),
+      Name(Name),
+      Active(Active)
+    {
+    }
+    
+    CDSPNodeInfo() :
       ID(0),
       Name(""),
       Active(false)
     {
     }
 
-    DSPNodeInfo_t(uint64_t ID, std::string Name, bool Active) :
-      ID(ID),
-      Name(Name),
-      Active(Active)
+    CDSPNodeInfo &operator=(CDSPNodeInfo &NodeInfo)
     {
+      return *this;
     }
-  }DSPNodeInfo_t;
 
-  typedef std::vector<DSPNodeInfo_t> DSPNodeInfoVector_t;
+    const uint64_t    ID;
+    const std::string Name;
+    const bool        Active;
+  };
+
+  typedef std::vector<CDSPNodeInfo> DSPNodeInfoVector_t;
 
 
-  virtual DSPErrorCode_t AddNode(const DSPNodeInfo_t &Node) = 0;
+  virtual DSPErrorCode_t AddNode(const CDSPNodeInfo &Node, IDSPNodeCreator *NodeCreator) = 0;
   virtual DSPErrorCode_t RemoveNode(uint64_t ID) = 0;
   
-  virtual DSPNodeInfo_t  GetNodeInfo(uint64_t ID) = 0;
+  virtual CDSPNodeInfo  GetNodeInfo(uint64_t ID) = 0;
   virtual DSPErrorCode_t GetNodeInfos(DSPNodeInfoVector_t &NodeInfos) = 0;
   virtual DSPErrorCode_t GetActiveNodes(DSPNodeInfoVector_t &ActiveNodeInfos) = 0;
   

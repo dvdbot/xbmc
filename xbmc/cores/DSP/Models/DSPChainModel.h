@@ -23,7 +23,7 @@
 
 namespace DSP
 {
-class CDSPChainModel : public IDSPChainModel
+class CDSPChainModel : public IDSPNodeModel
 {
   typedef struct NodeInfo_t
   {
@@ -31,7 +31,7 @@ class CDSPChainModel : public IDSPChainModel
     std::string ModeName;
     bool        Active;
 
-    NodeInfo_t &operator=(DSPNodeInfo_t &NodeInfo)
+    NodeInfo_t &operator=(CDSPNodeInfo &NodeInfo)
     {
       return *this;
     }
@@ -53,7 +53,7 @@ class CDSPChainModel : public IDSPChainModel
   typedef std::vector<NodeInfo_t> NodeInfoVector_t;
 
 public:
-  virtual DSPErrorCode_t AddNode(const DSPNodeInfo_t &Node)
+  virtual DSPErrorCode_t AddNode(const CDSPNodeInfo &Node, IDSPNodeCreator *NodeCreator) override
   {
     if (Node.Name.empty())
     {
@@ -89,16 +89,16 @@ public:
     return DSP_ERR_NO_ERR;
   }
 
-  virtual DSPNodeInfo_t GetNodeInfo(uint64_t ID)
+  virtual CDSPNodeInfo GetNodeInfo(uint64_t ID)
   {
     int32_t idx = GetNode(ID);
     if (ID < 0 || idx < 0)
     {
-      return DSPNodeInfo_t();
+      return CDSPNodeInfo();
     }
 
     NodeInfo_t &node = m_Nodes.at(idx);
-    return DSPNodeInfo_t(node.ID, node.ModeName, node.Active);
+    return CDSPNodeInfo(node.ID, node.ModeName, node.Active);
   }
 
   virtual DSPErrorCode_t GetNodeInfos(DSPNodeInfoVector_t &NodeInfos)
@@ -106,7 +106,7 @@ public:
     NodeInfos.clear();
     for (NodeInfoVector_t::iterator iter = m_Nodes.begin(); iter != m_Nodes.end(); ++iter)
     {
-      NodeInfos.push_back(DSPNodeInfo_t(iter->ID, iter->ModeName, iter->Active));
+      NodeInfos.push_back(CDSPNodeInfo(iter->ID, iter->ModeName, iter->Active));
     }
 
     return DSP_ERR_NO_ERR;
@@ -124,7 +124,7 @@ public:
       }
       
       NodeInfo_t &node = m_Nodes.at(idx);
-      ActiveNodeInfos.push_back(DSPNodeInfo_t(node.ID, node.ModeName, node.Active));
+      ActiveNodeInfos.push_back(CDSPNodeInfo(node.ID, node.ModeName, node.Active));
     }
 
     return DSP_ERR_NO_ERR;

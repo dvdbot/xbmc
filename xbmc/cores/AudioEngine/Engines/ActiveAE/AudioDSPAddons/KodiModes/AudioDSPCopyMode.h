@@ -4,7 +4,7 @@
 #include <string>
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 #include "cores/DSP/Factory/Interfaces/IDSPNodeCreator.h"
-#include "c:\Users\aturan\Projekte\privat\kodi_adsp_v2\kodi_17.1_adsp_v2\xbmc\addons\kodi-addon-dev-kit\include\kodi\kodi_adsp_types.h"
+#include "addons/kodi-addon-dev-kit/include/kodi/kodi_adsp_types.h"
 
 
 namespace ActiveAE
@@ -12,16 +12,16 @@ namespace ActiveAE
 class CAudioDSPCopyModeCreator : public DSP::IDSPNodeCreator
 {
 public:
-  CAudioDSPCopyModeCreator(NodeID_t &ID);
+  CAudioDSPCopyModeCreator();
 
-  virtual DSP::IDSPChainNode* InstantiateNode() override;
-  virtual DSPErrorCode_t DestroyNode(DSP::IDSPChainNode *&Node) override;
+  virtual DSP::IDSPNode* InstantiateNode() override;
+  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
 };
 
 
 class CAudioDSPCopyMode : public DSP::AUDIO::IADSPNode
 {
-  CAudioDSPCopyMode() : IADSPNode("CAudioDSPCopyMode", 0, ADSP_DataFormatFlagINVALID) {} // hide default constructor to prevent creation without a valid ID
+  CAudioDSPCopyMode() : IADSPNode("CAudioDSPCopyMode", 0, DSP::AUDIO::ADSP_DataFormatFlagINVALID) {} // hide default constructor to prevent creation without a valid ID
 public:
   CAudioDSPCopyMode(uint64_t ID);
 

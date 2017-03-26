@@ -22,7 +22,6 @@
 #include "cores/DSP/Processors/Interfaces/IDSPProcessor.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPChainNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
-#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
 
 namespace DSP
 {

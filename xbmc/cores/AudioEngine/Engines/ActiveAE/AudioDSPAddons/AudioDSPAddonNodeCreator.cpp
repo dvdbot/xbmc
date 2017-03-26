@@ -7,12 +7,11 @@ using namespace DSP;
 namespace ActiveAE
 {
 CAudioDSPAddonNodeCreator::CAudioDSPAddonNodeCreator(NodeID_t &ID, const AE_DSP_ADDON &Addon) :
-  IDSPNodeCreator(ID), //! @todo assign mode ID
   m_Addon(Addon)
 {
 }
 
-DSPErrorCode_t CAudioDSPAddonNodeCreator::DestroyNode(IDSPChainNode *&Node)
+DSPErrorCode_t CAudioDSPAddonNodeCreator::DestroyNode(IDSPNode *&Node)
 {
   if (!Node)
   {
@@ -27,9 +26,9 @@ DSPErrorCode_t CAudioDSPAddonNodeCreator::DestroyNode(IDSPChainNode *&Node)
   return err;
 }
 
-IDSPChainNode* CAudioDSPAddonNodeCreator::InstantiateNode()
+IDSPNode* CAudioDSPAddonNodeCreator::InstantiateNode()
 {
-  IDSPChainNode *node = dynamic_cast<IDSPChainNode*>(new CAudioDSPAddonModeNode(m_Addon, IDSPNodeCreator::ID, 0)); //! @todo use <add-on name>::<mode name> as ID identifier generation and add-on mode ID
+  IDSPNode *node = dynamic_cast<IDSPNode*>(new CAudioDSPAddonModeNode(m_Addon, IDSPNodeCreator::GetID(), 0)); //! @todo use <add-on name>::<mode name> as ID identifier generation and add-on mode ID
   if (!node)
   {
     return nullptr;

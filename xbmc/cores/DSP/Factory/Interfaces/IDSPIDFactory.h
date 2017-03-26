@@ -28,18 +28,11 @@
 namespace DSP
 {
 //! @todo rework this class with uint64_t!
-class CDSPIDFactory
+class IDSPIDFactory
 {
-  typedef std::map<std::string, uint32_t> UniqueStringIDMap_t;
-  typedef std::map<uint32_t, std::string> UniqueUint32IDMap_t;
-  typedef std::map<uint16_t, int32_t>     InstanceIDMap_t;
 public:
-  static int32_t GetUniqueDSPNodeID(const std::string &Name, const DSPCategory_t &Category);
-  static uint16_t GetInstanceDSPNodeID(const uint32_t UniqueID);
-
-private:
-  static UniqueStringIDMap_t  m_UniqueStringIDMap;
-  static UniqueUint32IDMap_t  m_UniqueUint32IDMap;
-  static InstanceIDMap_t      m_InstanceIDMap;
+  virtual DSPErrorCode_t RegisterNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "") = 0;
+  virtual DSPErrorCode_t DeregisterNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "") = 0;
+  virtual uint64_t GetNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "") = 0;
 };
 }

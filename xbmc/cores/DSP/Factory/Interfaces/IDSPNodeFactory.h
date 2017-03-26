@@ -30,7 +30,7 @@ public:
   virtual DSPErrorCode_t RegisterCreator(IDSPNodeCreator *Creator) = 0;
   virtual DSPErrorCode_t DeregisterCreator(uint64_t ID) = 0;
 
-  virtual IDSPChainNode* InstantiateNode(uint64_t ID) = 0;
-  virtual DSPErrorCode_t DestroyNode(IDSPChainNode *&Node) = 0;
+  virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
+  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
 };
 }

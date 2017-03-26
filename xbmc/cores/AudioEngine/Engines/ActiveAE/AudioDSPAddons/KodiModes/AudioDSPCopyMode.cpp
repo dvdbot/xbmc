@@ -6,15 +6,14 @@ using namespace DSP::AUDIO;
 
 namespace ActiveAE
 {
-CAudioDSPCopyModeCreator::CAudioDSPCopyModeCreator(NodeID_t &ID) :
-  IDSPNodeCreator(ID)
+CAudioDSPCopyModeCreator::CAudioDSPCopyModeCreator()
 {
 }
 
-IDSPChainNode *CAudioDSPCopyModeCreator::InstantiateNode()
+IDSPNode *CAudioDSPCopyModeCreator::InstantiateNode()
 {
-  CAudioDSPCopyMode *copyMode = new CAudioDSPCopyMode(IDSPNodeCreator::ID);
-  IDSPChainNode *node = dynamic_cast<IDSPChainNode*>(copyMode);
+  CAudioDSPCopyMode *copyMode = new CAudioDSPCopyMode(IDSPNodeCreator::GetID());
+  IDSPNode *node = dynamic_cast<IDSPNode*>(copyMode);
 
   if (!node)
   {
@@ -24,7 +23,7 @@ IDSPChainNode *CAudioDSPCopyModeCreator::InstantiateNode()
   return node;
 }
 
-DSPErrorCode_t CAudioDSPCopyModeCreator::DestroyNode(DSP::IDSPChainNode *&Node)
+DSPErrorCode_t CAudioDSPCopyModeCreator::DestroyNode(DSP::IDSPNode *&Node)
 {
   DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
   if (Node)
@@ -55,6 +54,7 @@ DSPErrorCode_t CAudioDSPCopyMode::CreateInstance(const CADSPProperties *InputPro
 
 DSPErrorCode_t CAudioDSPCopyMode::DestroyInstance()
 {
+  memset(&m_InputProperties, 0, sizeof(CADSPProperties));
   return DSP_ERR_NO_ERR;
 }
 

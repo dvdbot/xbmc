@@ -74,7 +74,7 @@ public:
     return DSP_ERR_NO_ERR;
   }
 
-  virtual IDSPChainNode* InstantiateNode(uint64_t ID)
+  virtual IDSPNode* InstantiateNode(uint64_t ID)
   {
     DSPNodeCreators_t::iterator iter = getCreator(ID);
     if (iter == m_DSPNodeCreators.end())
@@ -85,7 +85,7 @@ public:
     return (*iter)->InstantiateNode();
   }
 
-  virtual DSPErrorCode_t DestroyNode(IDSPChainNode *&Node)
+  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node)
   {
     DSPNodeCreators_t::iterator iter = getCreator(Node->ID);
     if (iter == m_DSPNodeCreators.end())
@@ -101,7 +101,7 @@ private:
   {
     for (DSPNodeCreators_t::iterator iter = m_DSPNodeCreators.begin(); iter != m_DSPNodeCreators.end(); ++iter)
     {
-      if ((*iter)->ID == ID)
+      if ((*iter)->GetID() == ID)
       {
         return iter;
       }

@@ -19,7 +19,7 @@
  *
  */
 
-#include "cores/DSP/Nodes/Interfaces/IDSPChainNode.h"
+#include "cores/DSP/Typedefs/DSPTypedefs.h"
 
 namespace DSP
 {

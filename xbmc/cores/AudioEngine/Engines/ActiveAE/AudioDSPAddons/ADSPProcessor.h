@@ -29,7 +29,7 @@ class CADSPProcessor : public IADSPProcessor
 {
   typedef std::list<IADSPChainNode*> ADSPChain_t;
 public:
-  CADSPProcessor(IDSPNodeFactory *NodeFactory, IDSPChainModel *NodeModel) :
+  CADSPProcessor(IDSPNodeFactory *NodeFactory, IDSPNodeModel *NodeModel) :
     IADSPProcessor("CADSPProcessor", ADSP_DataFormatFloat),
     m_NodeFactory(NodeFactory), 
     m_NodeModel(NodeModel),
@@ -58,12 +58,12 @@ protected:
   virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) override
   {
     //m_NodeFactory.InstantiateNode(0);
-    IDSPChainModel::DSPNodeInfoVector_t activeNodes;
+    IDSPNodeModel::DSPNodeInfoVector_t activeNodes;
     m_NodeModel->GetActiveNodes(activeNodes);
 
     for (int ii = 0; ii < activeNodes.size(); ii++)
     {
-      IDSPChainNode *node = (m_NodeFactory->InstantiateNode(activeNodes.at(ii).ID));
+      IDSPNode *node = (m_NodeFactory->InstantiateNode(activeNodes.at(ii).ID));
       if (!node)
       {
         return DSP_ERR_FATAL_ERROR;
@@ -141,7 +141,7 @@ private: // private methods
 
     ADSPChain_t tempNodeList;
     ADSPChain_t destroyNodeList;
-    IDSPChainModel::DSPNodeInfoVector_t activeNodes;
+    IDSPNodeModel::DSPNodeInfoVector_t activeNodes;
     m_NodeModel->GetActiveNodes(activeNodes);
 
     for (uint32_t ii = 0; ii < activeNodes.size(); ii++)
@@ -200,7 +200,7 @@ private: // private methods
     {
       for (ADSPChain_t::iterator tmpIter = destroyNodeList.begin(); tmpIter != destroyNodeList.end(); ++tmpIter)
       {
-        IDSPChainNode *node = dynamic_cast<IDSPChainNode*>(*tmpIter);
+        IDSPNode *node = dynamic_cast<IDSPNode*>(*tmpIter);
         DSPErrorCode_t locErr = m_NodeFactory->DestroyNode(node);
         if (locErr != DSP_ERR_NO_ERR)
         {
@@ -220,7 +220,7 @@ private: // private methods
 private: // private member variables
   CADSPProcessor() : IADSPProcessor("CADSPProcessor", ADSP_DataFormatINVALID), m_NodeFactory(nullptr) {}
   /*const*/ IDSPNodeFactory *m_NodeFactory;
-  /*const*/ IDSPChainModel *m_NodeModel;
+  /*const*/ IDSPNodeModel *m_NodeModel;
   ADSPChain_t m_ActiveDSPChain;
 
   bool m_NeedsNodesUpdate;
