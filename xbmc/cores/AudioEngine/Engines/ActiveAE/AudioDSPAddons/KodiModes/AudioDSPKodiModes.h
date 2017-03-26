@@ -20,7 +20,7 @@
  */
 
 
-#include "cores/AudioEngine/Engines//ActiveAE/AudioDSPAddons/KodiModes/AudioDSPDummyMode.h"
+#include "cores/AudioEngine/Engines//ActiveAE/AudioDSPAddons/KodiModes/AudioDSPCopyMode.h"
 #include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Models/Interfaces/IDSPChainModel.h"
 
@@ -35,6 +35,6 @@ public:
   void ReleaseAllModes(DSP::IDSPNodeFactory &Factory);
 
 private:
-  CAudioDSPDummyModeCreator m_DummyModeCreator;
+  CAudioDSPCopyModeCreator m_DummyModeCreator;
 };
 }

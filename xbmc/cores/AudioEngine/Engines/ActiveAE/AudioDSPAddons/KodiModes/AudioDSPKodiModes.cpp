@@ -42,13 +42,13 @@ void CAudioDSPKodiModes::PrepareModes(DSP::IDSPNodeFactory &Factory, DSP::IDSPCh
   DSPErrorCode_t err = Model.AddNode(IDSPChainModel::DSPNodeInfo_t(id, "", false));
   if (err != DSP_ERR_NO_ERR)
   {
-    CLog::Log(LOGERROR, "%s failed to add CAudioDSPDummyMode!", __FUNCTION__);
+    CLog::Log(LOGERROR, "%s failed to add CAudioDSPCopyMode!", __FUNCTION__);
   }
 
   err = Factory.RegisterCreator(dynamic_cast<IDSPNodeCreator*>(&m_DummyModeCreator));
   if (err != DSP_ERR_NO_ERR)
   {
-    CLog::Log(LOGERROR, "%s failed to add CAudioDSPDummyModeCreator!", __FUNCTION__);
+    CLog::Log(LOGERROR, "%s failed to add CAudioDSPCopyModeCreator!", __FUNCTION__);
   }
 }
 
@@ -58,7 +58,7 @@ void CAudioDSPKodiModes::ReleaseAllModes(DSP::IDSPNodeFactory &Factory)
   DSPErrorCode_t err = Factory.DeregisterCreator(m_DummyModeCreator.ID);
   if (err != DSP_ERR_NO_ERR)
   {
-    CLog::Log(LOGERROR, "%s failed to deregister CAudioDSPDummyMode!", __FUNCTION__);
+    CLog::Log(LOGERROR, "%s failed to deregister CAudioDSPCopyMode!", __FUNCTION__);
   }
 }
 }
