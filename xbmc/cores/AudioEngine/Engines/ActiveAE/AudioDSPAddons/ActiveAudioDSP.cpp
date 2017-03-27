@@ -61,18 +61,11 @@ void CActiveAudioDSP::Start()
 
 void CActiveAudioDSP::Dispose()
 {
-
   m_bStop = true;
   m_outMsgEvent.Set();
   StopThread();
 
-  m_KodiModes.ReleaseAllModes(m_DSPNodeFactory, m_NodeIDFactory);
-
-  for (vAudioDSPNodeCreators_t::iterator iter = m_AddonNodeCreators.begin(); iter != m_AddonNodeCreators.end(); ++iter)
-  {
-    m_DSPNodeFactory.DeregisterCreator((*iter)->GetID());
-  }
-  m_AddonNodeCreators.clear();
+  m_KodiModes.ReleaseAllModes(m_DSPChainModelObject);
 
   m_ADSPAddonControlPort.Purge();
   m_ADSPAddonDataPort.Purge();
@@ -206,8 +199,8 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
             //CSingleLock lock(m_critSection);
 
             //CLog::Log(LOGNOTICE, "ActiveAE DSP - starting");
-            m_KodiModes.ReleaseAllModes(m_DSPNodeFactory, m_NodeIDFactory);
-            m_KodiModes.PrepareModes(m_DSPNodeFactory, m_DSPChainModelObject, m_NodeIDFactory);
+            m_KodiModes.ReleaseAllModes(m_DSPChainModelObject);
+            m_KodiModes.PrepareModes(m_DSPChainModelObject);
             PrepareAddons();
             PrepareAddonModes();
 
@@ -367,10 +360,8 @@ void CActiveAudioDSP::PrepareAddonModes()
       uint16_t modeInstanceID = 0;  //! @todo get real parameters
 
       NodeID_t id(addonID, modeID, modeInstanceID);
+      //m_DSPChainModelObject.RegisterNode(...);
       //m_DSPChainModelObject.AddNode(IDSPNodeModel::CDSPNodeInfo(id, iter->first, false)); //! @todo how to handle errors?
-
-      m_AddonNodeCreators.push_back(std::unique_ptr<DSP::IDSPNodeCreator>(dynamic_cast<IDSPNodeCreator*>(new CAudioDSPAddonNodeCreator(id, iter->second))));
-      m_DSPNodeFactory.RegisterCreator(m_AddonNodeCreators.back().get()); //! @todo how to handle errors?
     }
   }
 
@@ -385,8 +376,7 @@ void CActiveAudioDSP::PrepareAddonModes()
     
     NodeID_t id(addonID, modeID, modeInstanceID);
 
-    m_DSPChainModelObject.SetNodePosition(id, pos);
-    m_DSPChainModelObject.EnableNode(id);
+    m_DSPChainModelObject.EnableNode(id, pos);
   }
 
 }

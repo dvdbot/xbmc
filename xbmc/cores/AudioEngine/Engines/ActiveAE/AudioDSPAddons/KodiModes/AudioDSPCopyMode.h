@@ -14,6 +14,8 @@ class CAudioDSPCopyModeCreator : public DSP::IDSPNodeCreator
 public:
   CAudioDSPCopyModeCreator();
 
+  static  DSP::IDSPNodeCreator* CreateCallback() { return nullptr; }
+
   virtual DSP::IDSPNode* InstantiateNode() override;
   virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
 };

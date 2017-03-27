@@ -29,7 +29,7 @@ typedef enum
   DSP_ERR_CREATOR_ID_NOT_FOUND          = -9,
   DSP_ERR_ALREADY_REGISTERED            = -8,
   DSP_ERR_NODE_NOT_FOUND                = -7,
-  DSP_ERR_NODE_ALREADY_AVAILABLE        = -6,
+  DSP_ERR_NODE_ALREADY_REGISTERED       = -6,
   DSP_ERR_INVALID_NODE_ID               = -5,
   DSP_ERR_FATAL_ERROR                   = -4,
   DSP_ERR_INVALID_DATA_FORMAT           = -3,

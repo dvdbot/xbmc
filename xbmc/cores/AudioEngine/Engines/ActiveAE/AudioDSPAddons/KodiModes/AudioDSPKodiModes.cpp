@@ -22,6 +22,7 @@
 #include "utils/log.h"
 
 using namespace DSP;
+using namespace std;
 
 namespace ActiveAE
 {
@@ -29,52 +30,23 @@ CAudioDSPKodiModes::CAudioDSPKodiModes()
 {
 }
 
-void CAudioDSPKodiModes::PrepareModes(IDSPNodeFactory &Factory, IDSPNodeModel &Model, IDSPIDFactory &IDFactory)
+void CAudioDSPKodiModes::PrepareModes(DSP::CDSPNodeModel &Model)
 {
-  IDFactory.RegisterNodeID("Kodi", "AudioDSPCopyMode");
-  NodeID_t id(IDFactory.GetNodeID("Kodi", "AudioDSPCopyMode"));
-  if (id != 0x0)
+  DSPErrorCode_t err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" }), CAudioDSPCopyModeCreator::CreateCallback);
+  if (err != DSP_ERR_NO_ERR)
   {
-    CAudioDSPCopyModeCreator *copyModeCreator = new CAudioDSPCopyModeCreator;
-    m_NodeCreators.push_back(dynamic_cast<IDSPNodeCreator*>(copyModeCreator));
-
-    DSPErrorCode_t err = Model.AddNode(IDSPNodeModel::CDSPNodeInfo(id, "AudioDSPCopyMode", false), copyModeCreator);
-    if (err != DSP_ERR_NO_ERR)
-    {
-      delete copyModeCreator;
-      CLog::Log(LOGERROR, "%s failed to add AudioDSPCopyMode!", __FUNCTION__);
-    }
-
-    err = Factory.RegisterCreator(m_NodeCreators.back());
-    if (err != DSP_ERR_NO_ERR)
-    {
-      delete copyModeCreator;
-      Model.RemoveNode(id);
-      CLog::Log(LOGERROR, "%s failed to add AudioDSPCopyModeCreator!", __FUNCTION__);
-    }
-  }
-  else
-  {
-    CLog::Log(LOGERROR, "%s failed to get valid node ID for AudioDSPCopyMode!", __FUNCTION__);
+    CLog::Log(LOGERROR, "%s failed to register Kodi::AudioDSPCopyMode!", __FUNCTION__);
   }
 }
 
-void CAudioDSPKodiModes::ReleaseAllModes(IDSPNodeFactory &Factory, IDSPIDFactory &IDFactory)
+void CAudioDSPKodiModes::ReleaseAllModes(DSP::CDSPNodeModel &Model)
 {
   // release all internal Kodi AudioDSP modes
-  NodeID_t id(IDFactory.GetNodeID("Kodi", "AudioDSPCopyMode"));
-
-  for (std::vector<DSP::IDSPNodeCreator*>::iterator iter = m_NodeCreators.begin(); iter != m_NodeCreators.end(); ++iter)
+  IDSPNodeModel::CDSPNodeInfo nodeInfo = Model.GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" }));
+  DSPErrorCode_t err = Model.DeregisterNode(nodeInfo.ID);
+  if (err != DSP_ERR_NO_ERR)
   {
-    DSPErrorCode_t err = Factory.DeregisterCreator((*iter)->GetID());
-    if (err != DSP_ERR_NO_ERR)
-    {
-      CLog::Log(LOGERROR, "%s failed to deregister %i!", __FUNCTION__, (*iter)->GetID());
-    }
-
-    delete *iter;
-    *iter = nullptr;
+    CLog::Log(LOGERROR, "%s failed to deregister Kodi::AudioDSPCopyMode", __FUNCTION__);
   }
-
 }
 }

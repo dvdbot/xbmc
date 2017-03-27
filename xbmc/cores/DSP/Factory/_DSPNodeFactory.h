@@ -123,6 +123,6 @@ private:
     return m_DSPNodeCreators.end();
   }
 
-  std::list<IDSPNodeCreator*> m_DSPNodeCreators;
+  std::vector<IDSPNodeCreator*> m_DSPNodeCreators;
 };
 }

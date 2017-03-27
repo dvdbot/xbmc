@@ -46,6 +46,13 @@ public:
       Active(Active)
     {
     }
+
+    CDSPNodeInfo(const CDSPNodeInfo &RHS) :
+      ID(RHS.ID),
+      Name(RHS.Name),
+      Active(RHS.Active)
+    {
+    }
     
     CDSPNodeInfo() :
       ID(0),
@@ -54,28 +61,52 @@ public:
     {
     }
 
-    CDSPNodeInfo &operator=(CDSPNodeInfo &NodeInfo)
-    {
-      return *this;
-    }
-
     const uint64_t    ID;
     const std::string Name;
     const bool        Active;
   };
 
+  class CDSPNodeInfoQuery
+  {
+  public:
+    CDSPNodeInfoQuery(std::vector<std::string> NameStrings) :
+      NameVector()
+    {
+    }
+
+    CDSPNodeInfoQuery(const CDSPNodeInfoQuery &RHS) :
+      NameVector(RHS.NameVector)
+    {
+    }
+
+    const std::vector<std::string> NameVector;
+  };
+
   typedef std::vector<CDSPNodeInfo> DSPNodeInfoVector_t;
 
+  // model task
+  // - ordered node chain
+  // - enabled nodes are at the beginning of the chain
+  // - node creators management
+  // - enable/disable nodes
+  // - node position
 
-  virtual DSPErrorCode_t AddNode(const CDSPNodeInfo &Node, IDSPNodeCreator *NodeCreator) = 0;
-  virtual DSPErrorCode_t RemoveNode(uint64_t ID) = 0;
+  // node registering
+  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorCB)()) = 0;
+  virtual DSPErrorCode_t DeregisterNode(uint64_t ID) = 0;
   
-  virtual CDSPNodeInfo  GetNodeInfo(uint64_t ID) = 0;
+  // node infos
+  virtual CDSPNodeInfo GetNodeInfo(CDSPNodeInfoQuery &Node) = 0;
   virtual DSPErrorCode_t GetNodeInfos(DSPNodeInfoVector_t &NodeInfos) = 0;
   virtual DSPErrorCode_t GetActiveNodes(DSPNodeInfoVector_t &ActiveNodeInfos) = 0;
   
-  virtual DSPErrorCode_t EnableNode(uint64_t ID) = 0;
-  virtual DSPErrorCode_t SetNodePosition(uint64_t ID, uint32_t Position) = 0;
+  // node managing
   virtual DSPErrorCode_t DisableNode(uint64_t ID) = 0;
+  // Position == 0 --> adds node to the end of active nodes
+  virtual DSPErrorCode_t EnableNode(uint64_t ID, uint32_t Position = 0) = 0;
+
+  // node creation
+  virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
+  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
 };
 }

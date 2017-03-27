@@ -27,9 +27,7 @@
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
 #include "cores/AudioEngine/Interfaces/IAudioDSP.h"
-#include "cores/DSP/Models/DSPChainModel.h"
-#include "cores/DSP/Factory/DSPNodeFactory.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPIDFactory.h"
+#include "cores/DSP/Models/DSPNodeModel.h"
 
 // internal Kodi AudioDSP processing mode include files
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h"
@@ -92,7 +90,6 @@ class CActiveAudioDSP : public IAudioDSP,
   typedef std::shared_ptr<DSP::AUDIO::IADSPProcessor>   pAudioDSPProcessor_t;
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
-  typedef std::vector<std::unique_ptr<DSP::IDSPNodeCreator>> vAudioDSPNodeCreators_t;
 
 public:
   CActiveAudioDSP(CEvent *inMsgEvent);
@@ -136,28 +133,16 @@ protected:
 
   int m_extTimeout;
   bool m_bStateMachineSelfTrigger;
-
-  enum
-  {
-    CHECK_SWAP,
-    NEED_CONVERT,
-    NEED_BYTESWAP,
-    SKIP_SWAP,
-  } m_swapState;
-
+  
 private:
   void PrepareAddons();
   void PrepareAddonModes();
   void CreateDSPNodeModel();
 
-  CAudioDSPIDFactory m_NodeIDFactory;
-  DSP::CDSPNodeFactory m_DSPNodeFactory;
-  DSP::CDSPChainModel m_DSPChainModelObject;
+  DSP::CDSPNodeModel m_DSPChainModelObject;
   AudioDSPAddonMap_t m_EnabledAddons;
   AudioDSPAddonMap_t m_DisabledAddons;
   CActiveAEDSPDatabase m_databaseDSP;  /*!< database for all audio DSP related data */
-
-  vAudioDSPNodeCreators_t m_AddonNodeCreators;
 
   // internal Kodi AudioDSP modes
   CAudioDSPKodiModes m_KodiModes;
