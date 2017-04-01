@@ -76,17 +76,17 @@ void CActiveAudioDSP::Dispose()
   m_databaseDSP.Close();
 }
 
-bool CActiveAudioDSP::RequestRestart(ADDON::AddonPtr addon, bool bDataChanged)
+bool CActiveAudioDSP::RequestRestart(AddonPtr addon, bool bDataChanged)
 {
   return true;
 }
 
-bool CActiveAudioDSP::RequestRemoval(ADDON::AddonPtr addon)
+bool CActiveAudioDSP::RequestRemoval(AddonPtr addon)
 {
   return true;
 }
 
-void CActiveAudioDSP::EnableAddon(const std::string& Id, bool Enable)
+void CActiveAudioDSP::EnableAddon(const string& Id, bool Enable)
 {
   if (Enable)
   {
@@ -98,16 +98,16 @@ void CActiveAudioDSP::EnableAddon(const std::string& Id, bool Enable)
   }
 }
 
-bool CActiveAudioDSP::GetAddon(const std::string& Id, ADDON::AddonPtr& addon)
+bool CActiveAudioDSP::GetAddon(const string& Id, AddonPtr& addon)
 {
   return false;
 }
 
-void CActiveAudioDSP::RegisterAddon(const std::string& Id, bool restart, bool update)
+void CActiveAudioDSP::RegisterAddon(const string& Id, bool restart, bool update)
 {
 }
 
-void CActiveAudioDSP::UnregisterAddon(const std::string& Id)
+void CActiveAudioDSP::UnregisterAddon(const string& Id)
 {
 }
 
@@ -164,7 +164,7 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
         }
       }
       {
-        std::string portName = port == nullptr ? "timer" : port->portName;
+        string portName = port == nullptr ? "timer" : port->portName;
         CLog::Log(LOGWARNING, "%s - signal: %d form port: %s not handled for state: %d", __FUNCTION__, signal, portName.c_str(), m_state);
       }
       return;
@@ -189,7 +189,7 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           {
             m_databaseDSP.Open();
 
-            //std::set<std::string> settingSet;
+            //set<string> settingSet;
             //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED);
             //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS);
             //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB);
@@ -321,7 +321,7 @@ void CActiveAudioDSP::PrepareAddons()
 
   for (auto &addon : addons)
   {
-    pAudioDSPAddon_t dspAddon = std::dynamic_pointer_cast<CActiveAEDSPAddon>(addon);
+    pAudioDSPAddon_t dspAddon = dynamic_pointer_cast<CActiveAEDSPAddon>(addon);
     if(!dspAddon)
     {
       CLog::Log(LOGERROR, "%s - failed to cast addon to CActiveAEDSPAddon", __FUNCTION__);
@@ -332,7 +332,7 @@ void CActiveAudioDSP::PrepareAddons()
       m_DisabledAddons[addon->ID()] = dspAddon;
 
       //! @todo implement hash for dll calls
-      //std::hash<std::string> hasher;
+      //hash<string> hasher;
       //int iAddonId = static_cast<int>(hasher(addon->ID()));
       //if (iAddonId < 0)
       //  iAddonId = -iAddonId;
