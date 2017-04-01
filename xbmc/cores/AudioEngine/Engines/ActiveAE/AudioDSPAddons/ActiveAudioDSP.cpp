@@ -40,7 +40,8 @@ namespace ActiveAE
 CActiveAudioDSP::CActiveAudioDSP(CEvent *inMsgEvent) :
   CThread("ActiveAudioDSP"),
   m_ADSPAddonControlPort("ADSPAddonControlPort", inMsgEvent, &m_outMsgEvent),
-  m_ADSPAddonDataPort("ADSPAddonDataPort", inMsgEvent, &m_outMsgEvent)
+  m_ADSPAddonDataPort("ADSPAddonDataPort", inMsgEvent, &m_outMsgEvent),
+  m_Controller(m_DSPChainModelObject)
 {
   m_inMsgEvent = inMsgEvent;
 }

@@ -27,7 +27,10 @@
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
 #include "cores/AudioEngine/Interfaces/IAudioDSP.h"
+
+// MVC Pattern object includes
 #include "cores/DSP/Models/DSPNodeModel.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPController.h"
 
 // internal Kodi AudioDSP processing mode include files
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h"
@@ -140,6 +143,7 @@ private:
   void CreateDSPNodeModel();
 
   DSP::CDSPNodeModel m_DSPChainModelObject;
+  CAudioDSPController m_Controller;
   AudioDSPAddonMap_t m_EnabledAddons;
   AudioDSPAddonMap_t m_DisabledAddons;
   CActiveAEDSPDatabase m_databaseDSP;  /*!< database for all audio DSP related data */
