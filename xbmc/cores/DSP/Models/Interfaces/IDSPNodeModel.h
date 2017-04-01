@@ -40,7 +40,7 @@ public:
     {
     }
 
-    CDSPNodeInfo(uint64_t ID, std::string Name, bool Active) :
+    CDSPNodeInfo(std::string Name, uint64_t ID, bool Active) :
       ID(ID),
       Name(Name),
       Active(Active)
@@ -92,7 +92,7 @@ public:
   // - node position
 
   // node registering
-  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorCB)()) = 0;
+  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)()) = 0;
   virtual DSPErrorCode_t DeregisterNode(uint64_t ID) = 0;
   
   // node infos
@@ -104,9 +104,5 @@ public:
   virtual DSPErrorCode_t DisableNode(uint64_t ID) = 0;
   // Position == 0 --> adds node to the end of active nodes
   virtual DSPErrorCode_t EnableNode(uint64_t ID, uint32_t Position = 0) = 0;
-
-  // node creation
-  virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
-  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
 };
 }

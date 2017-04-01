@@ -29,7 +29,7 @@
 
 namespace DSP
 {
-class CDSPNodeModel : public IDSPNodeModel, public DSP::IDSPNodeFactory, public DSP::IDSPIDFactory
+class CDSPNodeModel : public IDSPNodeModel, public IDSPNodeFactory
 {
   // node model interface
   typedef struct NodeInfo_t
@@ -39,7 +39,7 @@ class CDSPNodeModel : public IDSPNodeModel, public DSP::IDSPNodeFactory, public 
     std::string InstanceModeName;
     NodeID_t    ID;
     bool        Active;
-    const DSP::IDSPNodeCreator *NodeCreator;
+    IDSPNodeCreator *NodeCreator;
 
     NodeInfo_t &operator=(CDSPNodeInfo &NodeInfo)
     {
@@ -56,10 +56,10 @@ class CDSPNodeModel : public IDSPNodeModel, public DSP::IDSPNodeFactory, public 
     {
     }
 
-    NodeInfo_t(NodeID_t ID, bool Active, DSP::IDSPNodeCreator *Creator, std::string AddonName, std::string ModeName, std::string InstanceModeName = "") :
+    NodeInfo_t(NodeID_t ID, bool Active, IDSPNodeCreator *Creator, std::string AddonName, std::string ModeName, std::string InstanceModeName = "") :
       ID(ID),
       Active(Active),
-      NodeCreator(nullptr),
+      NodeCreator(Creator),
       AddonName(AddonName),
       ModeName(ModeName),
       InstanceModeName(InstanceModeName)
@@ -93,7 +93,7 @@ public:
   virtual ~CDSPNodeModel();
 
   // model interface
-  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorCB)()) override;
+  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)()) override;
   virtual DSPErrorCode_t DeregisterNode(uint64_t ID) override;
   virtual CDSPNodeInfo GetNodeInfo(CDSPNodeInfoQuery &Node) override;
   virtual DSPErrorCode_t GetNodeInfos(DSPNodeInfoVector_t &NodeInfos) override;
@@ -104,43 +104,52 @@ public:
   // factory interface
   virtual IDSPNode* InstantiateNode(uint64_t ID);
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node);
-
-  // node ID factory interface
-  // invalid ID == 0x0! 
-  virtual DSPErrorCode_t RegisterNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "");
-  virtual DSPErrorCode_t DeregisterNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "");
-  virtual uint64_t GetNodeID(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName = "");
   
 private:
   // node model interface
+  inline std::string GenerateNodeString(const std::string &AddonName, const std::string &ModeName, const std::string &InstanceModeName)
+  {
+    std::string str = AddonName;
+    str += "::";
+    str += ModeName;
+    if (!InstanceModeName.empty())
+    {
+      str += "::";
+      str += InstanceModeName;
+    }
+
+    return str;
+  }
+    
   inline std::string GenerateNodeString(const std::vector<std::string> &NameVectorString)
   {
+    std::string str;
+    if (NameVectorString.size() > 3 || NameVectorString.size() < 2)
+    {
+      return str;
+    }
+
+    str = NameVectorString.at(0);
+    for (uint8_t ii = 1; ii < NameVectorString.size(); ii++)
+    {
+      str += "::";
+      str += NameVectorString.at(ii);
+    }
+
+    return str;
   }
 
-  inline int32_t GetNode(uint64_t ID)
+  inline NodeInfoVector_t::iterator GetNodeData(const std::string &AddonName, const std::string &ModeName, const std::string &InstanceModeName)
   {
-    for (int32_t ii = 0; ii < (int32_t)m_Nodes.size(); ii++)
+    for (NodeInfoVector_t::iterator iter = m_Nodes.begin(); iter != m_Nodes.end(); ++iter)
     {
-      if (ID == m_Nodes.at(ii).ID)
+      if (AddonName == iter->AddonName && ModeName == iter->ModeName && InstanceModeName == iter->InstanceModeName)
       {
-        return ii;
+        return iter;
       }
     }
 
-    return -1;
-  }
-
-  inline int32_t GetNode(const std::string &AddonName, const std::string &ModeName, const std::string &InstanceModeName)
-  {
-    for (int32_t ii = 0; ii < (int32_t)m_Nodes.size(); ii++)
-    {
-      if (AddonName == m_Nodes.at(ii).AddonName && ModeName == m_Nodes.at(ii).ModeName && InstanceModeName == m_Nodes.at(ii).InstanceModeName)
-      {
-        return ii;
-      }
-    }
-
-    return -1;
+    return m_Nodes.end();
   }
 
   inline void RemoveActiveNode(uint64_t ID)
@@ -159,48 +168,17 @@ private:
   std::vector<uint64_t> m_ActiveNodes;
 
   // node factory interface
-  inline DSPNodeCreators_t::iterator getCreator(uint64_t ID)
+  inline NodeInfoVector_t::iterator GetNodeData(uint64_t ID)
   {
-    for (DSPNodeCreators_t::iterator iter = m_DSPNodeCreators.begin(); iter != m_DSPNodeCreators.end(); ++iter)
+    for (NodeInfoVector_t::iterator iter = m_Nodes.begin(); iter != m_Nodes.end(); ++iter)
     {
-      if ((*iter)->GetID() == ID)
+      if (iter->ID  == ID)
       {
         return iter;
       }
     }
 
-    return m_DSPNodeCreators.end();
-  }
-
-  inline DSPNodeCreators_t::iterator getCreator(IDSPNodeCreator *Creator)
-  {
-    for (DSPNodeCreators_t::iterator iter = m_DSPNodeCreators.begin(); iter != m_DSPNodeCreators.end(); ++iter)
-    {
-      if (*iter == Creator)
-      {
-        return iter;
-      }
-    }
-
-    return m_DSPNodeCreators.end();
-  }
-
-  std::vector<IDSPNodeCreator*> m_DSPNodeCreators;
-
-  // node ID factory interface
-  inline std::string GenerateNodeString(const std::string &AddonName, const std::string &NodeName, const std::string &CustomName)
-  {
-    std::string nodeAddonNameStr = AddonName;
-    nodeAddonNameStr += "::";
-    nodeAddonNameStr += NodeName;
-
-    if (!CustomName.empty())
-    {
-      nodeAddonNameStr += "::";
-      nodeAddonNameStr += CustomName;
-    }
-
-    return nodeAddonNameStr;
+    return m_Nodes.end();
   }
 
   UniqueStringIDMap_t  m_UniqueStringIDMap;

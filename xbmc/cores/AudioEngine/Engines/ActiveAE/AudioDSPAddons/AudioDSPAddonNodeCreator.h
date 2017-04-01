@@ -9,10 +9,10 @@ namespace ActiveAE
 class CAudioDSPAddonNodeCreator : public DSP::IDSPNodeCreator
 {
 public:
-  CAudioDSPAddonNodeCreator(NodeID_t &ID, const AE_DSP_ADDON &Addon);
+  CAudioDSPAddonNodeCreator(const AE_DSP_ADDON &Addon);
 
-  virtual DSP::IDSPNode* InstantiateNode();
-  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node);
+  virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
+  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
 
 private:
   const AE_DSP_ADDON m_Addon;

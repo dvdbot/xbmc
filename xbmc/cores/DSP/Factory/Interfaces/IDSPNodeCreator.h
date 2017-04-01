@@ -24,24 +24,10 @@
 
 namespace DSP
 {
-class IDSPNodeModel;
-}
-
-namespace DSP
-{
 class IDSPNodeCreator
 {
-  friend class IDSPNodeModel;
-
 public:
-  IDSPNodeCreator() : ID(0) {}
-
-  virtual IDSPNode* InstantiateNode() = 0;
+  virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
-
-  const uint64_t GetID() { return ID; }
-
-private:
-  uint64_t ID;
 };
 }
