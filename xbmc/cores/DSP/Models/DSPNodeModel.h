@@ -23,6 +23,8 @@
 #include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Factory/Interfaces/IDSPIDFactory.h"
 
+#include "threads/SingleLock.h"
+
 #include <vector>
 #include <string>
 
@@ -181,7 +183,6 @@ private:
     return m_Nodes.end();
   }
 
-  UniqueStringIDMap_t  m_UniqueStringIDMap;
-  UniqueUint32IDMap_t  m_UniqueUint32IDMap;
+  CCriticalSection m_Mutex;
 };
 }

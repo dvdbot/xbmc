@@ -6,6 +6,7 @@ using namespace std;
 
 CDSPNodeModel::~CDSPNodeModel()
 {
+  CSingleLock lock(m_Mutex);
   for (NodeInfoVector_t::iterator iter = m_Nodes.begin(); iter != m_Nodes.end(); ++iter)
   {
     if (iter->NodeCreator)
@@ -20,6 +21,8 @@ CDSPNodeModel::~CDSPNodeModel()
 
 DSPErrorCode_t CDSPNodeModel::RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)())
 {
+  CSingleLock lock(m_Mutex);
+
   if (Node.NameVector.size() < 2)
   {
     return DSP_ERR_INVALID_NODE_ID;
@@ -58,6 +61,8 @@ DSPErrorCode_t CDSPNodeModel::RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCrea
 
 DSPErrorCode_t CDSPNodeModel::DeregisterNode(uint64_t ID)
 {
+  CSingleLock lock(m_Mutex);
+
   NodeInfoVector_t::iterator iter = GetNodeData(ID);
   if (iter != m_Nodes.end())
   {
@@ -76,6 +81,8 @@ DSPErrorCode_t CDSPNodeModel::DeregisterNode(uint64_t ID)
 
 IDSPNodeModel::CDSPNodeInfo CDSPNodeModel::GetNodeInfo(CDSPNodeInfoQuery &Node)
 {
+  CSingleLock lock(m_Mutex);
+
   string nodeStr = GenerateNodeString(Node.NameVector);
   if (Node.NameVector.size() < 2 || Node.NameVector.size() > 3)
   {
@@ -121,6 +128,8 @@ DSPErrorCode_t CDSPNodeModel::GetNodeInfos(DSPNodeInfoVector_t &NodeInfos)
 
 DSPErrorCode_t CDSPNodeModel::GetActiveNodes(DSPNodeInfoVector_t &ActiveNodeInfos)
 {
+  CSingleLock lock(m_Mutex);
+
   ActiveNodeInfos.clear();
   string nodeStr;
   for (std::vector<uint64_t>::iterator iter = m_ActiveNodes.begin(); iter != m_ActiveNodes.end(); ++iter)
@@ -149,6 +158,8 @@ DSPErrorCode_t CDSPNodeModel::GetActiveNodes(DSPNodeInfoVector_t &ActiveNodeInfo
 
 DSPErrorCode_t CDSPNodeModel::EnableNode(uint64_t ID, uint32_t Position)
 {
+  CSingleLock lock(m_Mutex);
+
   NodeInfoVector_t::iterator nodeIter = GetNodeData(ID);
   if (nodeIter == m_Nodes.end())
   {
@@ -168,6 +179,8 @@ DSPErrorCode_t CDSPNodeModel::EnableNode(uint64_t ID, uint32_t Position)
 
 DSPErrorCode_t CDSPNodeModel::DisableNode(uint64_t ID)
 {
+  CSingleLock lock(m_Mutex);
+
   NodeInfoVector_t::iterator nodeIter = GetNodeData(ID);
   if (nodeIter == m_Nodes.end())
   {
@@ -184,6 +197,8 @@ DSPErrorCode_t CDSPNodeModel::DisableNode(uint64_t ID)
 // factory interface
 IDSPNode* CDSPNodeModel::InstantiateNode(uint64_t ID)
 {
+  CSingleLock lock(m_Mutex);
+
   NodeInfoVector_t::iterator iter = GetNodeData(ID);
   if (iter == m_Nodes.end())
   {
@@ -195,6 +210,8 @@ IDSPNode* CDSPNodeModel::InstantiateNode(uint64_t ID)
 
 DSPErrorCode_t CDSPNodeModel::DestroyNode(IDSPNode *&Node)
 {
+  CSingleLock lock(m_Mutex);
+
   NodeInfoVector_t::iterator iter = GetNodeData(Node->ID);
   if (iter == m_Nodes.end())
   {
