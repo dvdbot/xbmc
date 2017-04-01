@@ -10,9 +10,9 @@ CAudioDSPCopyModeCreator::CAudioDSPCopyModeCreator()
 {
 }
 
-IDSPNode *CAudioDSPCopyModeCreator::InstantiateNode()
+IDSPNode *CAudioDSPCopyModeCreator::InstantiateNode(uint64_t ID)
 {
-  CAudioDSPCopyMode *copyMode = new CAudioDSPCopyMode(IDSPNodeCreator::GetID());
+  CAudioDSPCopyMode *copyMode = new CAudioDSPCopyMode(ID);
   IDSPNode *node = dynamic_cast<IDSPNode*>(copyMode);
 
   if (!node)

@@ -16,7 +16,7 @@ public:
 
   static  DSP::IDSPNodeCreator* CreateCallback() { return nullptr; }
 
-  virtual DSP::IDSPNode* InstantiateNode() override;
+  virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
   virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
 };
 
