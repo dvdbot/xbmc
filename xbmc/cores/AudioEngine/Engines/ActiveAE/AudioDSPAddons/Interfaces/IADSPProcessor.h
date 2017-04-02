@@ -86,9 +86,6 @@ public:
   }
 
 protected:
-  virtual DSPErrorCode_t AddADSPNode(IADSPChainNode *ADSPNode) = 0;
-  virtual DSPErrorCode_t RemoveADSPNode(IADSPChainNode *ADSPNode) = 0;
-
   //! @todo think about the create interface
   virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) = 0;
 

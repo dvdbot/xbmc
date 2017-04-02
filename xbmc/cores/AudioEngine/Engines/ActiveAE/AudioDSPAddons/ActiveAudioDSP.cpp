@@ -24,6 +24,7 @@
 #include "ServiceBroker.h"
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessor.h"
 
  // includes for AudioDSP add-on modes
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h"
@@ -40,8 +41,7 @@ CActiveAudioDSP::CActiveAudioDSP(CEvent *inMsgEvent) :
   CThread("ActiveAudioDSP"),
   m_ADSPAddonControlPort("ADSPAddonControlPort", inMsgEvent, &m_outMsgEvent),
   m_ADSPAddonDataPort("ADSPAddonDataPort", inMsgEvent, &m_outMsgEvent),
-  m_Controller(m_DSPChainModelObject), 
-  m_DSPChainModelObject(m_Controller)
+  m_Controller(m_DSPChainModelObject)
 {
   m_inMsgEvent = inMsgEvent;
 }

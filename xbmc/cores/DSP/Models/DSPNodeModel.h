@@ -94,7 +94,6 @@ class CDSPNodeModel : public IDSPNodeModel, public IDSPNodeFactory
   typedef std::map<uint64_t, std::string> UniqueUint32IDMap_t;
 
 public:
-  CDSPNodeModel(IDSPNodeModelCallback &ModelCallback);
   virtual ~CDSPNodeModel();
 
   // model interface
@@ -111,7 +110,8 @@ public:
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node);
   
 private:
-  IDSPNodeModelCallback &m_ModelCallback;
+  void NotifyEnableNodeUpdate(uint64_t ID, uint32_t Position);
+  void NotifyDisableNodeUpdate(uint64_t ID);
 
   // node model interface
   inline std::string GenerateNodeString(const std::string &AddonName, const std::string &ModeName, const std::string &InstanceModeName)

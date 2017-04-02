@@ -21,11 +21,21 @@
 #pragma once
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
+#include "cores/DSP/Models/Interfaces/IDSPNodeModelCallback.h"
 
-class CAudioDSPProcessor : public DSP::AUDIO::IADSPProcessor
+class CAudioDSPProcessor : public DSP::AUDIO::IADSPProcessor, public DSP::IDSPNodeModelCallback
 {
 public:
   CAudioDSPProcessor();
   virtual ~CAudioDSPProcessor();
+
+private:
+  // processor callbacks
+  virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) override;
+  virtual DSPErrorCode_t DestroyInstance() override;
+
+  // node model callbacks
+  virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
+  virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
 };
 

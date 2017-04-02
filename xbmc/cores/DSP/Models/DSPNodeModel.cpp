@@ -23,12 +23,6 @@
 using namespace DSP;
 using namespace std;
 
-CDSPNodeModel::CDSPNodeModel(IDSPNodeModelCallback &ModelCallback) :
-  m_ModelCallback(ModelCallback)
-{
-}
-
-
 CDSPNodeModel::~CDSPNodeModel()
 {
   CSingleLock lock(m_Mutex);
@@ -198,7 +192,7 @@ DSPErrorCode_t CDSPNodeModel::EnableNode(uint64_t ID, uint32_t Position)
   }
   RemoveActiveNode(ID);
   m_ActiveNodes.insert(m_ActiveNodes.begin() + Position, ID);
-  m_ModelCallback.EnableNodeCallback(ID, Position); //! @todo how to handle error code?
+  NotifyEnableNodeUpdate(ID, Position);
 
   return DSP_ERR_NO_ERR;
 }
@@ -215,7 +209,7 @@ DSPErrorCode_t CDSPNodeModel::DisableNode(uint64_t ID)
 
   nodeIter->Active = false;
   RemoveActiveNode(ID);
-  m_ModelCallback.DisableNodeCallback(ID); //! @todo how to handle error code?
+  NotifyDisableNodeUpdate(ID); //! @todo how to handle error code?
 
   return DSP_ERR_NO_ERR;
 }
@@ -246,4 +240,12 @@ DSPErrorCode_t CDSPNodeModel::DestroyNode(IDSPNode *&Node)
   }
 
   return iter->NodeCreator->DestroyNode(Node);
+}
+
+void CDSPNodeModel::NotifyEnableNodeUpdate(uint64_t ID, uint32_t Position)
+{
+}
+
+void CDSPNodeModel::NotifyDisableNodeUpdate(uint64_t ID)
+{
 }
