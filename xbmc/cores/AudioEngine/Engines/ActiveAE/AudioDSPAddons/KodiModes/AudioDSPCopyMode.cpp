@@ -1,4 +1,5 @@
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPCopyMode.h"
+#include <string.h>
 
 using namespace DSP;
 using namespace DSP::AUDIO;

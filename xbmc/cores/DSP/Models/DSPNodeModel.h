@@ -96,9 +96,9 @@ public:
   virtual ~CDSPNodeModel();
 
   // model interface
-  virtual DSPErrorCode_t RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)()) override;
+  virtual DSPErrorCode_t RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)()) override;
   virtual DSPErrorCode_t DeregisterNode(uint64_t ID) override;
-  virtual CDSPNodeInfo GetNodeInfo(CDSPNodeInfoQuery &Node) override;
+  virtual CDSPNodeInfo GetNodeInfo(const CDSPNodeInfoQuery &Node) override;
   virtual DSPErrorCode_t GetNodeInfos(DSPNodeInfoVector_t &NodeInfos) override;
   virtual DSPErrorCode_t GetActiveNodes(DSPNodeInfoVector_t &ActiveNodeInfos) override;
   virtual DSPErrorCode_t EnableNode(uint64_t ID, uint32_t Position = 0) override;

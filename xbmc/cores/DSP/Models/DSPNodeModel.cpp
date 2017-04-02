@@ -39,7 +39,7 @@ CDSPNodeModel::~CDSPNodeModel()
   m_Nodes.clear();
 }
 
-DSPErrorCode_t CDSPNodeModel::RegisterNode(CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)())
+DSPErrorCode_t CDSPNodeModel::RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)())
 {
   CSingleLock lock(m_Mutex);
 
@@ -99,7 +99,7 @@ DSPErrorCode_t CDSPNodeModel::DeregisterNode(uint64_t ID)
   return DSP_ERR_NO_ERR;
 }
 
-IDSPNodeModel::CDSPNodeInfo CDSPNodeModel::GetNodeInfo(CDSPNodeInfoQuery &Node)
+IDSPNodeModel::CDSPNodeInfo CDSPNodeModel::GetNodeInfo(const CDSPNodeInfoQuery &Node)
 {
   CSingleLock lock(m_Mutex);
 
