@@ -91,6 +91,7 @@ class CActiveAudioDSP : public IAudioDSP,
                         private CThread
 {
   typedef std::shared_ptr<DSP::AUDIO::IADSPProcessor>   pAudioDSPProcessor_t;
+  typedef std::vector<pAudioDSPProcessor_t>             AudioDSPProcessorVector_t;
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
 
@@ -141,6 +142,8 @@ private:
   void PrepareAddons();
   void PrepareAddonModes();
   void CreateDSPNodeModel();
+
+  AudioDSPProcessorVector_t m_AudioDSPProcessors;
 
   DSP::CDSPNodeModel m_DSPChainModelObject;
   CAudioDSPController m_Controller;
