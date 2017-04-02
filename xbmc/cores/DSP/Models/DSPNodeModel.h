@@ -21,6 +21,7 @@
 #pragma once
 
 #include "cores/DSP/Models/Interfaces/IDSPNodeModel.h"
+#include "cores/DSP/Models/Interfaces/IDSPNodeModelCallback.h"
 #include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Factory/Interfaces/IDSPIDFactory.h"
 
@@ -93,6 +94,7 @@ class CDSPNodeModel : public IDSPNodeModel, public IDSPNodeFactory
   typedef std::map<uint64_t, std::string> UniqueUint32IDMap_t;
 
 public:
+  CDSPNodeModel(IDSPNodeModelCallback &ModelCallback);
   virtual ~CDSPNodeModel();
 
   // model interface
@@ -109,6 +111,8 @@ public:
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node);
   
 private:
+  IDSPNodeModelCallback &m_ModelCallback;
+
   // node model interface
   inline std::string GenerateNodeString(const std::string &AddonName, const std::string &ModeName, const std::string &InstanceModeName)
   {

@@ -53,3 +53,13 @@ DSPErrorCode_t CAudioDSPController::EnableNode(uint64_t ID, uint32_t Position)
 {
   return m_DSPNodeModel.EnableNode(ID, Position);
 }
+
+DSPErrorCode_t CAudioDSPController::EnableNodeCallback(uint64_t ID, uint32_t Position)
+{
+  return DSP_ERR_NO_ERR;
+}
+
+DSPErrorCode_t CAudioDSPController::DisableNodeCallback(uint64_t ID)
+{
+  return DSP_ERR_NO_ERR;
+}

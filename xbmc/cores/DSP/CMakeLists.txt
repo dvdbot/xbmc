@@ -10,6 +10,7 @@ set(HEADERS DSPObject.h
             Models/DSPNodeModel.h
             Models/TDSPChainNodeModel.h
             Models/Interfaces/IDSPNodeModel.h
+            Models/Interfaces/IDSPNodeModelCallback.h
             Models/Interfaces/IDSPChainNodeModel.h
 
             Nodes/Interfaces/IDSPNode.h

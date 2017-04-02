@@ -21,11 +21,12 @@
 #pragma once
 
 #include "cores/DSP/Models/Interfaces/IDSPNodeModel.h"
+#include "cores/DSP/Models/Interfaces/IDSPNodeModelCallback.h"
 
 
 namespace ActiveAE
 {
-class CAudioDSPController
+class CAudioDSPController : public DSP::IDSPNodeModelCallback
 {
 public:
   CAudioDSPController(DSP::IDSPNodeModel &DSPNodeModel);
@@ -41,6 +42,9 @@ public:
   DSPErrorCode_t EnableNode(uint64_t ID, uint32_t Position = 0);
 
 private:
+  virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
+  virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
+
   DSP::IDSPNodeModel &m_DSPNodeModel;
 };
 }
