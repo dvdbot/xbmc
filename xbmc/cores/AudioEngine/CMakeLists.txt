@@ -7,7 +7,6 @@ set(SOURCES AEResampleFactory.cpp
             Engines/ActiveAE/AudioDSPAddons/ActiveAEDSPProcess.cpp
             Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.cpp
             Engines/ActiveAE/AudioDSPAddons/AudioDSPController.cpp
-            Engines/ActiveAE/AudioDSPAddons/AudioDSPIDFactory.cpp
             Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.cpp
             Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonModeNode.cpp
             Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.cpp
@@ -44,7 +43,6 @@ set(HEADERS AEResampleFactory.h
             Engines/ActiveAE/AudioDSPAddons/ADSPBuffer.h
             Engines/ActiveAE/AudioDSPAddons/ADSPProcessor.h
             Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h
-            Engines/ActiveAE/AudioDSPAddons/AudioDSPIDFactory.h
             Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h
             Engines/ActiveAE/AudioDSPAddons/AudioDSPKodiNodeCreator.h
             Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonModeNode.h

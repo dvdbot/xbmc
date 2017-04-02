@@ -24,7 +24,6 @@
 #include "ServiceBroker.h"
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPIDFactory.h"
 
  // includes for AudioDSP add-on modes
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h"
