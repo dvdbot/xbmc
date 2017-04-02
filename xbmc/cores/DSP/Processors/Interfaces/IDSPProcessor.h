@@ -20,6 +20,7 @@
  */
 
 #include "cores/DSP/Typedefs/DSPTypedefs.h"
+#include <string>
 
 namespace DSP
 {
