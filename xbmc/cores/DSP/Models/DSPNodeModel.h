@@ -175,7 +175,7 @@ private:
   std::vector<uint64_t> m_ActiveNodes;
 
   // node factory interface
-  inline NodeInfoVector_t::iterator GetNodeData(uint64_t ID)
+  const inline NodeInfoVector_t::iterator GetNodeData(uint64_t ID)
   {
     for (NodeInfoVector_t::iterator iter = m_Nodes.begin(); iter != m_Nodes.end(); ++iter)
     {

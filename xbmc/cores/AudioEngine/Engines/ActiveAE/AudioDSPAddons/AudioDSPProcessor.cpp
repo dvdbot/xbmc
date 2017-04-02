@@ -18,13 +18,17 @@
  *
  */
 
-#include "AudioDSPProcessor.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessor.h"
+#include "cores/DSP/Models/DSPNodeModel.h"
 
+using namespace ActiveAE;
 using namespace DSP;
 using namespace DSP::AUDIO;
 
-CAudioDSPProcessor::CAudioDSPProcessor() :
-  IADSPProcessor("CAudioDSPProcessor", ADSP_DataFormatFloat)
+CAudioDSPProcessor::CAudioDSPProcessor(const CAudioDSPController &Controller, IDSPNodeFactory &NodeFactory) :
+  IADSPProcessor("CAudioDSPProcessor", ADSP_DataFormatFloat),
+  m_AudioDSPController(Controller),
+  m_NodeFactory(NodeFactory)
 {
 }
 
@@ -34,6 +38,14 @@ CAudioDSPProcessor::~CAudioDSPProcessor()
 
 DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const void *InParameters, void *OutParameters, void *Options)
 {
+  IDSPNodeModel::DSPNodeInfoVector_t nodeInfos;
+  m_AudioDSPController.GetNodeInfos(nodeInfos);
+
+  for(uint32_t ii = 0; ii < nodeInfos.size(); ii++)
+  {
+    m_NodeFactory.InstantiateNode(nodeInfos.at(ii).ID);
+  }
+
   return DSP_ERR_NO_ERR;
 }
 

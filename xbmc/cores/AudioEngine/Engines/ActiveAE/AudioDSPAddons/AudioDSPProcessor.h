@@ -21,12 +21,16 @@
 #pragma once
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPController.h"
+#include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Models/Interfaces/IDSPNodeModelCallback.h"
 
+namespace ActiveAE
+{
 class CAudioDSPProcessor : public DSP::AUDIO::IADSPProcessor, public DSP::IDSPNodeModelCallback
 {
 public:
-  CAudioDSPProcessor();
+  CAudioDSPProcessor(const CAudioDSPController &Controller, DSP::IDSPNodeFactory &NodeFactory);
   virtual ~CAudioDSPProcessor();
 
 private:
@@ -37,5 +41,9 @@ private:
   // node model callbacks
   virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
   virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
+
+  const CAudioDSPController &m_AudioDSPController;
+  DSP::IDSPNodeFactory &m_NodeFactory;
 };
+}
 

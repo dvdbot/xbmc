@@ -34,7 +34,7 @@ IDSPNodeModel::CDSPNodeInfo CAudioDSPController::GetNodeInfo(IDSPNodeModel::CDSP
   return m_DSPNodeModel.GetNodeInfo(Node);
 }
 
-DSPErrorCode_t CAudioDSPController::GetNodeInfos(IDSPNodeModel::DSPNodeInfoVector_t &NodeInfos)
+DSPErrorCode_t CAudioDSPController::GetNodeInfos(IDSPNodeModel::DSPNodeInfoVector_t &NodeInfos) const
 {
   return m_DSPNodeModel.GetNodeInfos(NodeInfos);
 }

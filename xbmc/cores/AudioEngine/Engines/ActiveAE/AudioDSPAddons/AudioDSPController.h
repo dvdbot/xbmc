@@ -33,7 +33,7 @@ public:
 
   // node infos
   DSP::IDSPNodeModel::CDSPNodeInfo GetNodeInfo(DSP::IDSPNodeModel::CDSPNodeInfoQuery &Node);
-  DSPErrorCode_t GetNodeInfos(DSP::IDSPNodeModel::DSPNodeInfoVector_t &NodeInfos);
+  DSPErrorCode_t GetNodeInfos(DSP::IDSPNodeModel::DSPNodeInfoVector_t &NodeInfos) const;
   DSPErrorCode_t GetActiveNodes(DSP::IDSPNodeModel::DSPNodeInfoVector_t &ActiveNodeInfos);
 
   // node managing
