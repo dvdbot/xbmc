@@ -68,6 +68,11 @@ typedef enum
 class CChannelInformation
 {
 public:
+
+  bool operator != (const CChannelInformation &Channels)
+  {
+    return false;
+  }
 };
 
 typedef struct ADSP_Properties_t

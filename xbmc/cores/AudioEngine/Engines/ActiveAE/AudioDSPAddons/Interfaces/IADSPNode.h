@@ -44,6 +44,16 @@ public:
     return *this;
   }
 
+  bool operator !=(const CADSPProperties& Props)
+  {
+    return  speakerLayout     != Props.speakerLayout    ||
+            sampleFrequency   != Props.sampleFrequency  ||
+            frameLength       != Props.frameLength      ||
+            dataFormat        != Props.dataFormat;
+
+    return true;
+  }
+
   CADSPProperties() :
     DSPObject("CADSPProperties", ADSP_BASE_ID_PROPERTIES, DSP_CATEGORY_Audio)
   {
@@ -144,6 +154,9 @@ public:
 
     return err;
   }
+
+  const CADSPProperties& GetInputFormat()  { return m_InputProperties;  }
+  const CADSPProperties& GetOutputFormat() { return m_OutputProperties; }
 
 protected:
   virtual DSPErrorCode_t CreateInstance(const CADSPProperties *InputProperties, CADSPProperties *OutputProperties, void *Options = nullptr) = 0;

@@ -20,7 +20,6 @@
  */
 
 #include "cores/DSP/Processors/Interfaces/IDSPProcessor.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPChainNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 
 namespace DSP
@@ -30,15 +29,16 @@ namespace AUDIO
 class IADSPProcessor : public DSP::IDSPProcessor
 {
 public:
-  IADSPProcessor(std::string Name, ADSPDataFormat_t DataFormat) :
+  IADSPProcessor(std::string Name, ADSPDataFormatFlags_t DataFormatFlags) :
     DSP::IDSPProcessor(Name, DSP_CATEGORY_Audio),
-    m_DataFormat(DataFormat)
+    m_DataFormatFlags(DataFormatFlags),
+    m_DataFormat(ADSP_DataFormatINVALID)
   {
   }
 
-  virtual DSPErrorCode_t Create(const void *InParameters, void *OutParameters, void *Options = nullptr)
+  virtual DSPErrorCode_t Create(const DSPObject *InParameters, DSPObject *OutParameters, void *Options = nullptr)
   {
-    return CreateInstance(InParameters, OutParameters, Options);
+    return CreateInstance(reinterpret_cast<const CADSPProperties*>(InParameters), reinterpret_cast<CADSPProperties*>(OutParameters), Options);
   }
 
   virtual DSPErrorCode_t Process(void *In, void *Out)
@@ -84,10 +84,11 @@ public:
   {
     return DestroyInstance();
   }
+  
+  const ADSPDataFormatFlags_t m_DataFormatFlags;
 
 protected:
-  //! @todo think about the create interface
-  virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) = 0;
+  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options = nullptr) = 0;
 
   virtual DSPErrorCode_t ProcessInstance(float  *In,  float   *Out)             { return DSP_ERR_NOT_IMPLEMENTED; }
   virtual DSPErrorCode_t ProcessInstance(double *In,  double  *Out)             { return DSP_ERR_NOT_IMPLEMENTED; }

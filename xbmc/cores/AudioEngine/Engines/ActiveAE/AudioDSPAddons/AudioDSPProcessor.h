@@ -20,8 +20,10 @@
 
 #pragma once
 
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPController.h"
+
 #include "cores/DSP/Factory/Interfaces/IDSPNodeFactory.h"
 #include "cores/DSP/Models/Interfaces/IDSPNodeModelCallback.h"
 
@@ -29,21 +31,29 @@ namespace ActiveAE
 {
 class CAudioDSPProcessor : public DSP::AUDIO::IADSPProcessor, public DSP::IDSPNodeModelCallback
 {
+  typedef std::vector<DSP::AUDIO::IADSPNode*> AudioDSPNodeChain_t;
 public:
   CAudioDSPProcessor(const CAudioDSPController &Controller, DSP::IDSPNodeFactory &NodeFactory);
   virtual ~CAudioDSPProcessor();
 
+private: // private methods
+  DSPErrorCode_t ReCreateNodeChain();
+
 private:
   // processor callbacks
-  virtual DSPErrorCode_t CreateInstance(const void *InParameters, void *OutParameters, void *Options = nullptr) override;
+  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InParameters, DSP::AUDIO::CADSPProperties *OutParameters, void *Options = nullptr) override;
+  virtual DSPErrorCode_t ProcessInstance(float  *In, float   *Out) override;
   virtual DSPErrorCode_t DestroyInstance() override;
 
   // node model callbacks
   virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
   virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
 
+  AudioDSPNodeChain_t m_DSPNodeChain;
+  DSP::AUDIO::CADSPProperties m_InParameters;
+  DSP::AUDIO::CADSPProperties m_OutParameters;
+
   const CAudioDSPController &m_AudioDSPController;
   DSP::IDSPNodeFactory &m_NodeFactory;
 };
 }
-
