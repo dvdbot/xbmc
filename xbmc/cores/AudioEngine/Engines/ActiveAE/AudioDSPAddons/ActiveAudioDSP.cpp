@@ -33,14 +33,16 @@ using namespace Actor;
 using namespace ADDON;
 using namespace std;
 using namespace DSP;
+using namespace DSP::AUDIO;
 
 
 namespace ActiveAE
 {
 CActiveAudioDSP::CActiveAudioDSP(CEvent *inMsgEvent) :
   CThread("ActiveAudioDSP"),
-  m_ADSPAddonControlPort("ADSPAddonControlPort", inMsgEvent, &m_outMsgEvent),
-  m_ADSPAddonDataPort("ADSPAddonDataPort", inMsgEvent, &m_outMsgEvent),
+  m_AddonControlPort("AudioDSPAddonControlPort", inMsgEvent, &m_outMsgEvent),
+  m_ProcessorDataPort("AudioDSPProcessorDataPort", inMsgEvent, &m_outMsgEvent),
+  m_ControlPort("AudioDSPControlPort", inMsgEvent, &m_outMsgEvent),
   m_Controller(m_DSPChainModelObject)
 {
   m_inMsgEvent = inMsgEvent;
@@ -48,32 +50,44 @@ CActiveAudioDSP::CActiveAudioDSP(CEvent *inMsgEvent) :
 
 CActiveAudioDSP::~CActiveAudioDSP()
 {
-  Dispose();
+  Stop();
 }
 
 void CActiveAudioDSP::Start()
 {
   if (!IsRunning())
   {
-    Create();
+    Create(); // create thread for this object
     SetPriority(THREAD_PRIORITY_NORMAL);
   }
+  
+  m_ControlPort.SendOutMessage(CAudioDSPControlProtocol::INIT);
 }
 
-void CActiveAudioDSP::Dispose()
+void CActiveAudioDSP::Stop()
 {
+  Message *replyMsg;
+  if (m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::DEINIT, &replyMsg, 0))
+  {
+    if (replyMsg->signal != CAudioDSPControlProtocol::ACC)
+    {
+      CLog::Log(LOGERROR, "%s an error occured during shutting down AudioDSP", __FUNCTION__);
+    }
+
+    replyMsg->Release();
+  }
+
   m_bStop = true;
   m_outMsgEvent.Set();
   StopThread();
 
   m_KodiModes.ReleaseAllModes(m_DSPChainModelObject);
 
-  m_ADSPAddonControlPort.Purge();
-  m_ADSPAddonDataPort.Purge();
+  m_AddonControlPort.Purge();
+  m_ControlPort.Purge();
+  m_ProcessorDataPort.Purge();
 
   CServiceBroker::GetAddonMgr().UnregisterAddonMgrCallback(ADDON_ADSPDLL);
-
-  m_databaseDSP.Close();
 }
 
 bool CActiveAudioDSP::RequestRestart(AddonPtr addon, bool bDataChanged)
@@ -86,44 +100,70 @@ bool CActiveAudioDSP::RequestRemoval(AddonPtr addon)
   return true;
 }
 
-void CActiveAudioDSP::EnableAddon(const string& Id, bool Enable)
+IADSPProcessor* CActiveAudioDSP::CreateProcessor()
 {
-  if (Enable)
+  Actor::Message *msg = nullptr;
+  if (m_ProcessorDataPort.SendOutMessageSync(CAudioDSPProcessorControlProtocol::CREATE_PROCESSOR, &msg, 0))
   {
-    m_ADSPAddonControlPort.SendOutMessage(CADSPAddonControlProtocol::ENABLE_ADDON, (void*)Id.c_str(), sizeof(char)*Id.length() + 1);
+    IADSPProcessor *processor = reinterpret_cast<IADSPProcessor*>(msg->data);
+    msg->Release();
+
+    return processor;
   }
-  else
+
+  return nullptr;
+}
+
+void CActiveAudioDSP::DestroyProcessor(IADSPProcessor *Processor)
+{
+  if (!Processor)
   {
-    m_ADSPAddonControlPort.SendOutMessage(CADSPAddonControlProtocol::DISABLE_ADDON, (void*)Id.c_str(), sizeof(char)*Id.length() + 1);
+    return;
+  }
+
+  string processorName = Processor->Name;
+  if (!m_ProcessorDataPort.SendOutMessage(CAudioDSPProcessorControlProtocol::DESTROY_PROCESSOR, Processor, sizeof(IADSPProcessor*)))
+  {
+    CLog::Log(LOGERROR, "%s failed to send out message for destroying AudioDSP processor %s", __FUNCTION__, processorName.c_str());
   }
 }
 
-bool CActiveAudioDSP::GetAddon(const string& Id, AddonPtr& addon)
+void CActiveAudioDSP::EnableAddon(const string &Id, bool Enable)
+{
+  if (Enable)
+  {
+    m_AddonControlPort.SendOutMessage(CAudioDSPAddonControlProtocol::ENABLE_ADDON, (void*)Id.c_str(), sizeof(char)*Id.length() + 1);
+  }
+  else
+  {
+    m_AddonControlPort.SendOutMessage(CAudioDSPAddonControlProtocol::DISABLE_ADDON, (void*)Id.c_str(), sizeof(char)*Id.length() + 1);
+  }
+}
+
+bool CActiveAudioDSP::GetAddon(const string &Id, AddonPtr &addon)
 {
   return false;
 }
 
-void CActiveAudioDSP::RegisterAddon(const string& Id, bool restart, bool update)
+void CActiveAudioDSP::RegisterAddon(const string &Id, bool restart, bool update)
 {
 }
 
-void CActiveAudioDSP::UnregisterAddon(const string& Id)
+void CActiveAudioDSP::UnregisterAddon(const string &Id)
 {
 }
 
 enum SINK_STATES
 {
-  ADSP_TOP = 0,                      // 0
-  ADSP_TOP_UNCONFIGURED,             // 1
-  ADSP_TOP_CONFIGURED,               // 2
-  ADSP_TOP_CONFIGURED_MANAGE_ADDONS, // 3
+  ADSP_TOP = 0,                             // 0
+  ADSP_TOP_UNCONFIGURED,                    // 1
+  ADSP_TOP_CONFIGURED,                      // 2
 };
 
 int ADSP_parentStates[] = {
     -1,
-    ADSP_TOP,             //TOP_UNCONFIGURED
-    ADSP_TOP,             //TOP_CONFIGURED
-    ADSP_TOP_CONFIGURED,  //ADSP_TOP_CONFIGURED_MANAGE_ADDONS
+    ADSP_TOP,                             //TOP_UNCONFIGURED
+    ADSP_TOP,                             //TOP_CONFIGURED
 };
 
 void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
@@ -132,182 +172,187 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
   {
     switch (state)
     {
-    case ADSP_TOP: // TOP
-      if (port == &m_ADSPAddonControlPort)
-      {
-        switch (signal)
+      case ADSP_TOP: // TOP
+        if (port == nullptr) // timeout
         {
-        case CADSPAddonControlProtocol::CONFIGURE:
-          m_state = ADSP_TOP_CONFIGURED;
-          return;
-
-        case CADSPAddonControlProtocol::UNCONFIGURE:
-          m_state = ADSP_TOP_UNCONFIGURED;
-          msg->Reply(CADSPAddonControlProtocol::ACC);
-          return;
-
-        default:
-          break;
-        }
-      }
-      else if (port == &m_ADSPAddonDataPort)
-      {
-        switch (signal)
-        {
-        case CADSPAddonDataProtocol::DRAIN:
-          msg->Reply(CADSPAddonDataProtocol::ACC);
-          m_state = ADSP_TOP_UNCONFIGURED;
-          m_extTimeout = 0;
-          return;
-        default:
-          break;
-        }
-      }
-      {
-        string portName = port == nullptr ? "timer" : port->portName;
-        CLog::Log(LOGWARNING, "%s - signal: %d form port: %s not handled for state: %d", __FUNCTION__, signal, portName.c_str(), m_state);
-      }
-      return;
-
-    case ADSP_TOP_UNCONFIGURED:
-      if (port == nullptr) // timeout
-      {
-        switch (signal)
-        {
-        case CADSPAddonControlProtocol::TIMEOUT:
-          m_extTimeout = 1000;
-          return;
-        default:
-          break;
-        }
-      }
-      else if (port == &m_ADSPAddonControlPort)
-      {
-        switch (signal)
-        {
-          case CADSPAddonControlProtocol::INIT:
+          switch (signal)
           {
-            m_databaseDSP.Open();
+          case CAudioDSPControlProtocol::TIMEOUT:
+            m_extTimeout = 1000;
+            return;
 
-            //set<string> settingSet;
-            //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED);
-            //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS);
-            //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB);
-            //CServiceBroker::GetSettings().RegisterCallback(this, settingSet);
-
-            CServiceBroker::GetAddonMgr().RegisterAddonMgrCallback(ADDON_ADSPDLL, this);
-
-            //CSingleLock lock(m_critSection);
-
-            //CLog::Log(LOGNOTICE, "ActiveAE DSP - starting");
-            m_KodiModes.ReleaseAllModes(m_DSPChainModelObject);
-            m_KodiModes.PrepareModes(m_DSPChainModelObject);
-            PrepareAddons();
-            PrepareAddonModes();
-
-            m_state = ADSP_TOP_CONFIGURED_MANAGE_ADDONS;
-          }
-          break;
-          
           default:
-          break;
-        }
-      }
-      break;
-
-    case ADSP_TOP_CONFIGURED:
-      if (port == &m_ADSPAddonControlPort)
-      {
-        switch (signal)
-        {
-        default:
-          break;
-        }
-      }
-      else if (port == &m_ADSPAddonDataPort)
-      {
-        switch (signal)
-        {
-        case CADSPAddonDataProtocol::DRAIN:
-          msg->Reply(CADSPAddonDataProtocol::ACC);
-          m_state = ADSP_TOP_CONFIGURED_MANAGE_ADDONS;
-          m_extTimeout = 10000;
-          return;
-        default:
-          break;
-        }
-      }
-      break;
-
-    case ADSP_TOP_CONFIGURED_MANAGE_ADDONS:
-      if (port == &m_ADSPAddonDataPort)
-      {
-        switch (signal)
-        {
-        default:
-          break;
-        }
-      }
-      if (port == &m_ADSPAddonControlPort)
-      {
-        switch (signal)
-        {
-        case CADSPAddonControlProtocol::ENABLE_ADDON:
-          {
-            string addonId = (char*)msg->data;
-            AudioDSPAddonMap_t::iterator iter = m_DisabledAddons.find(addonId);
-            if(iter == m_DisabledAddons.end())
-            { 
-              CLog::Log(LOGERROR, "%s, Tried to enable the unknown addon \"%s\"", __FUNCTION__, addonId.c_str());
-            }
-            else
-            {
-              m_EnabledAddons[addonId] = iter->second;
-              //! @todo add addon to processing object
-              m_DisabledAddons.erase(addonId);
-              
-              //! @todo implement hash ID here
-              iter->second->Create(0);
-            }
+            break;
           }
-          break;
-
-        case CADSPAddonControlProtocol::DISABLE_ADDON:
-          {
-            string addonId = (char*)msg->data;
-            AudioDSPAddonMap_t::iterator iter = m_EnabledAddons.find(addonId);
-            if(iter == m_EnabledAddons.end())
-            { 
-              CLog::Log(LOGERROR, "%s, Tried to enable the unknown addon \"%s\"", __FUNCTION__, addonId.c_str());
-            }
-            else
-            {
-              iter->second->Destroy();
-              m_DisabledAddons[addonId] = iter->second;
-              //! @todo remove addon from processing object
-              m_EnabledAddons.erase(addonId);
-            }
-          }
-          break;
-
-        default:
-          break;
         }
-      }
-      else if (port == nullptr) // timeout
-      {
-        switch (signal)
+        if (port == &m_ControlPort)
         {
-        default:
-          break;
+          switch (signal)
+          {
+            case CAudioDSPControlProtocol::INIT:
+              return;
+
+            case CAudioDSPControlProtocol::DEINIT:
+              return;
+
+            default:
+            break;
+          }
         }
-      }
+        else if (port == &m_AddonControlPort)
+        {
+          switch (signal)
+          {
+            default:
+            break;
+          }
+        }
+        else if (port == &m_ProcessorDataPort)
+        {
+          switch (signal)
+          {
+            case CAudioDSPProcessorControlProtocol::CREATE_PROCESSOR:
+              return;
+          
+            case CAudioDSPProcessorControlProtocol::DESTROY_PROCESSOR:
+              return;
+
+            default:
+            break;
+          }
+        }
+
+        {
+          string portName = port == nullptr ? "timer" : port->portName;
+          CLog::Log(LOGWARNING, "%s - signal: %d form port: %s not handled for state: %d", __FUNCTION__, signal, portName.c_str(), m_state);
+        }
+        return;
+
+      case ADSP_TOP_UNCONFIGURED:
+        if (port == &m_ControlPort)
+        {
+          switch (signal)
+          {
+            case CAudioDSPControlProtocol::INIT:
+              if (!m_databaseDSP.Open())
+              {
+                msg->Reply(CAudioDSPControlProtocol::ERR);
+                CLog::Log(LOGERROR, "%s during opening database an error occured!", __FUNCTION__);
+                return;
+              }
+
+              //set<string> settingSet;
+              //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED);
+              //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS);
+              //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB);
+              //CServiceBroker::GetSettings().RegisterCallback(this, settingSet);
+
+              if (!CServiceBroker::GetAddonMgr().RegisterAddonMgrCallback(ADDON_ADSPDLL, this))
+              {
+                msg->Reply(CAudioDSPControlProtocol::ERR);
+                CLog::Log(LOGERROR, "%s during add-on manager callback registration an error occured!", __FUNCTION__);
+                return;
+              }
+
+              //CLog::Log(LOGNOTICE, "ActiveAE DSP - starting");
+              m_KodiModes.ReleaseAllModes(m_DSPChainModelObject);
+              m_KodiModes.PrepareModes(m_DSPChainModelObject);
+              PrepareAddons();
+              PrepareAddonModes();
+
+              m_state = ADSP_TOP_CONFIGURED;
+            break;
+
+            default:
+            break;
+          }
+        }
       break;
 
-    default: // AudioDSP is in an unknown state, should not happen!
-      CLog::Log(LOGERROR, "CActiveAudioDSP::%s - no valid state: %d", __FUNCTION__, m_state);
-      return;
-    }
+
+      case ADSP_TOP_CONFIGURED:
+        if (port == &m_ControlPort)
+        {
+          switch (signal)
+          {
+            case CAudioDSPControlProtocol::DEINIT:
+              m_databaseDSP.Close();
+            break;
+
+            default:
+            break;
+          }
+        }
+        else if (port == &m_AddonControlPort)
+        {
+          switch (signal)
+          {
+            case CAudioDSPAddonControlProtocol::ENABLE_ADDON:
+            {
+              string addonId = (char*)msg->data;
+              AudioDSPAddonMap_t::iterator iter = m_DisabledAddons.find(addonId);
+              if (iter == m_DisabledAddons.end())
+              {
+                CLog::Log(LOGERROR, "%s, Tried to enable the unknown addon \"%s\"", __FUNCTION__, addonId.c_str());
+              }
+              else
+              {
+                m_EnabledAddons[addonId] = iter->second;
+                //! @todo add addon to processing object
+                m_DisabledAddons.erase(addonId);
+
+                //! @todo implement hash ID here
+                iter->second->Create(0);
+              }
+            }
+            break;
+
+            case CAudioDSPAddonControlProtocol::DISABLE_ADDON:
+            {
+              string addonId = (char*)msg->data;
+              AudioDSPAddonMap_t::iterator iter = m_EnabledAddons.find(addonId);
+              if (iter == m_EnabledAddons.end())
+              {
+                CLog::Log(LOGERROR, "%s, Tried to enable the unknown addon \"%s\"", __FUNCTION__, addonId.c_str());
+              }
+              else
+              {
+                iter->second->Destroy();
+                m_DisabledAddons[addonId] = iter->second;
+                //! @todo remove addon from processing object
+                m_EnabledAddons.erase(addonId);
+              }
+            }
+            break;
+
+            case CAudioDSPAddonControlProtocol::REMOVE_ADDON:
+            break;
+
+            default:
+            break;
+          }
+        }
+        else if (port == &m_ProcessorDataPort)
+        {
+          switch (signal)
+          {
+            case CAudioDSPProcessorControlProtocol::CREATE_PROCESSOR:
+              msg->replyMessage = m_ProcessorDataPort.GetMessage();
+            break;
+
+            case CAudioDSPProcessorControlProtocol::DESTROY_PROCESSOR:
+            break;
+
+            default:
+            break;
+          }
+        }
+      break;
+
+      default: // AudioDSP is in an unknown state, should not happen!
+        CLog::Log(LOGERROR, "CActiveAudioDSP::%s - no valid state: %d", __FUNCTION__, m_state);
+        return;
+    } // switch
   } // for
 }
 
@@ -414,17 +459,21 @@ void CActiveAudioDSP::Process()
       }
       continue;
     }
-    // check control port
-    else if (m_ADSPAddonControlPort.ReceiveOutMessage(&msg))
+    else if (m_ControlPort.ReceiveOutMessage(&msg))
     {
       gotMsg = true;
-      port = &m_ADSPAddonControlPort;
+      port = &m_ControlPort;
     }
-    // check data port
-    else if (m_ADSPAddonDataPort.ReceiveOutMessage(&msg))
+    // check control port
+    else if (m_AddonControlPort.ReceiveOutMessage(&msg))
     {
       gotMsg = true;
-      port = &m_ADSPAddonDataPort;
+      port = &m_AddonControlPort;
+    }
+    else if (m_ProcessorDataPort.ReceiveOutMessage(&msg))
+    {
+      gotMsg = true;
+      port = &m_ProcessorDataPort;
     }
 
     if (gotMsg)
@@ -444,8 +493,8 @@ void CActiveAudioDSP::Process()
     }
     else
     { // time out
-      msg = m_ADSPAddonControlPort.GetMessage();
-      msg->signal = CADSPAddonControlProtocol::TIMEOUT;
+      msg = m_AddonControlPort.GetMessage();
+      msg->signal = CAudioDSPControlProtocol::TIMEOUT;
       port = nullptr;
       // signal timeout to state machine
       StateMachine(msg->signal, port, msg);

@@ -47,40 +47,51 @@ namespace ActiveAE
 {
 using namespace Actor;
 
-class CADSPAddonControlProtocol : public Protocol
+class CAudioDSPAddonControlProtocol : public Protocol
 {
 public:
-  CADSPAddonControlProtocol(std::string name, CEvent* inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  CAudioDSPAddonControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
   enum OutSignal
   {
-    CONFIGURE = 0,
-    UNCONFIGURE,
-    INIT,
     REMOVE_ADDON,
-    FLUSH,
     ENABLE_ADDON,
     DISABLE_ADDON,
-    TIMEOUT
   };
   enum InSignal
   {
     ACC,
     ERR,
-    STATS,
   };
 };
 
-class CADSPAddonDataProtocol : public Protocol
+class CAudioDSPControlProtocol : public Protocol
 {
 public:
-  CADSPAddonDataProtocol(std::string name, CEvent* inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  CAudioDSPControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
   enum OutSignal
   {
-    DRAIN = 0,
+    DEINIT = 0,
+    INIT,
+    TIMEOUT,
   };
   enum InSignal
   {
-    RETURNSAMPLE,
+    ACC,
+    ERR,
+  };
+};
+
+class CAudioDSPProcessorControlProtocol : public Protocol
+{
+public:
+  CAudioDSPProcessorControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  enum OutSignal
+  {
+    CREATE_PROCESSOR = 0,
+    DESTROY_PROCESSOR,
+  };
+  enum InSignal
+  {
     ACC,
   };
 };
@@ -99,33 +110,37 @@ public:
   CActiveAudioDSP(CEvent *inMsgEvent);
   ~CActiveAudioDSP();
   void Start();
-  void Dispose();
-  CADSPAddonControlProtocol m_ADSPAddonControlPort;
-  CADSPAddonDataProtocol m_ADSPAddonDataPort;
+  void Stop();
 
   /*!
-  * @brief Restart an AudioDSP add-on.
-  * @param addon The add-on to restart.
-  * @param bDataChanged True if add-on's data has changed, false otherwise (unused).
-  * @return True if the AudioDSP add-on was found and restarted, false otherwise.
-  */
+   * @brief Restart an AudioDSP add-on.
+   * @param addon The add-on to restart.
+   * @param bDataChanged True if add-on's data has changed, false otherwise (unused).
+   * @return True if the AudioDSP add-on was found and restarted, false otherwise.
+   */
   virtual bool RequestRestart(ADDON::AddonPtr addon, bool bDataChanged) override;
 
   /*!
-  * @brief Remove a single AudioDSP add-on.
-  * @param addon AudioDSP add-on to remove.
-  * @return True if the AudioDSP add-on was found and restarted, false otherwise.
-  */
+   * @brief Remove a single AudioDSP add-on.
+   * @param addon AudioDSP add-on to remove.
+   * @return True if the AudioDSP add-on was found and restarted, false otherwise.
+   */
   virtual bool RequestRemoval(ADDON::AddonPtr addon) override;
 
+  virtual DSP::AUDIO::IADSPProcessor *CreateProcessor();
+  virtual void DestroyProcessor(DSP::AUDIO::IADSPProcessor *Processor);
+  virtual void EnableAddon(const std::string &Id, bool Enable) override;
+  virtual bool GetAddon(const std::string &Id, ADDON::AddonPtr &addon) override;
 
-  virtual void EnableAddon(const std::string& Id, bool Enable) override;
-  virtual bool GetAddon(const std::string& Id, ADDON::AddonPtr &addon) override;
-
-  virtual void RegisterAddon(const std::string& Id, bool restart = false, bool update = false) override;
-  virtual void UnregisterAddon(const std::string& Id) override;
+  virtual void RegisterAddon(const std::string &Id, bool restart = false, bool update = false) override;
+  virtual void UnregisterAddon(const std::string &Id) override;
 
 protected:
+  // ports
+  CAudioDSPControlProtocol m_ControlPort;
+  CAudioDSPAddonControlProtocol m_AddonControlPort;
+  CAudioDSPProcessorControlProtocol m_ProcessorDataPort;
+
   void Process();
   void StateMachine(int signal, Protocol *port, Message *msg);
 

@@ -298,7 +298,7 @@ void CActiveAE::Dispose()
 {
   g_Windowing.Unregister(this);
 
-  m_AudioDSP.Dispose();
+  m_AudioDSP.Stop();
   m_bStop = true;
   m_outMsgEvent.Set();
   StopThread();
@@ -470,7 +470,6 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
           m_sink.EnumerateSinkList(false);
           LoadSettings();
           m_AudioDSP.Start();
-          m_AudioDSP.m_ADSPAddonControlPort.SendOutMessage(CADSPAddonControlProtocol::INIT);
           Configure();
           msg->Reply(CActiveAEControlProtocol::ACC);
           if (!m_extError)
@@ -804,7 +803,6 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
             LoadSettings();
           }
           m_AudioDSP.Start();
-          m_AudioDSP.m_ADSPAddonControlPort.SendOutMessage(CADSPAddonControlProtocol::INIT);
           Configure();
           if (!displayReset)
             msg->Reply(CActiveAEControlProtocol::ACC);
