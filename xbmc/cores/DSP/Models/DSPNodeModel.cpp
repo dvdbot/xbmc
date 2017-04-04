@@ -83,7 +83,7 @@ DSPErrorCode_t CDSPNodeModel::DeregisterNode(uint64_t ID)
   CSingleLock lock(m_Mutex);
 
   NodeInfoVector_t::iterator iter = GetNodeData(ID);
-  if (iter != m_Nodes.end())
+  if (iter == m_Nodes.end())
   {
     return DSP_ERR_NODE_NOT_FOUND;
   }
