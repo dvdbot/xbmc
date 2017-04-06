@@ -67,12 +67,74 @@ typedef enum
 
 class CChannelInformation
 {
+  friend class CChannelInformation;
 public:
-
-  bool operator != (const CChannelInformation &Channels)
+  CChannelInformation()
   {
+    SetDefaultLayout();
+  }
+
+  void SetDefaultLayout()
+  {
+    for (uint8_t ii = AE_DSP_CH_FL; ii < AE_DSP_CH_MAX; ii++)
+    {
+      m_Channels[ii] = static_cast<AE_DSP_CHANNEL>(ii);
+    }
+    m_ChannelCount = AE_DSP_CH_MAX;
+  }
+
+  DSPErrorCode_t SetChannelLayout(const std::vector<AE_DSP_CHANNEL> &Channels)
+  {
+    if (Channels.size() == 0 || Channels.size() > AE_DSP_CH_MAX)
+    {
+      return DSP_ERR_INVALID_INPUT;
+    }
+
+    ResetChannelLayout();
+
+    for (uint8_t ch = 0; ch < Channels.size(); ch++)
+    {
+      m_Channels[ch] = Channels.at(ch);
+      m_ChannelCount++;
+    }
+
+    return DSP_ERR_NO_ERR;
+  }
+
+  uint32_t GetChannelCount()
+  {
+    return m_ChannelCount;
+  }
+
+  bool operator != (const CChannelInformation &ChannelInfo)
+  {
+    if (m_ChannelCount != ChannelInfo.m_ChannelCount)
+    {
+      return false;
+    }
+
+    for (uint8_t ch = 0; ch < AE_DSP_CH_MAX; ch++)
+    {
+      if (m_Channels[ch] != ChannelInfo.m_Channels[ch])
+      {
+        return false;
+      }
+    }
+
     return false;
   }
+
+private:
+  void ResetChannelLayout()
+  {
+    m_ChannelCount = 0;
+    for (uint8_t ii = AE_DSP_CH_FL; ii < AE_DSP_CH_MAX; ii++)
+    {
+      m_Channels[ii] = AE_DSP_CH_INVALID;
+    }
+  }
+  AE_DSP_CHANNEL m_Channels[AE_DSP_CH_MAX];
+  uint32_t m_ChannelCount;
 };
 
 typedef struct ADSP_Properties_t
