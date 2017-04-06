@@ -19,6 +19,7 @@
  *
  */
 
+#include "addons/kodi-addon-dev-kit/include/kodi/kodi_adsp_types.h"
 
 namespace DSP
 {
