@@ -34,6 +34,62 @@ typedef enum
   ADSP_BASE_ID_MAX
 }ADSPBaseClassIDs_t;
 
+//// FFMPEG Data Format
+//AV_SAMPLE_FMT_NONE = -1,
+//AV_SAMPLE_FMT_U8,          ///< unsigned 8 bits
+//AV_SAMPLE_FMT_S16,         ///< signed 16 bits
+//AV_SAMPLE_FMT_S32,         ///< signed 32 bits
+//AV_SAMPLE_FMT_FLT,         ///< float
+//AV_SAMPLE_FMT_DBL,         ///< double
+//
+//AV_SAMPLE_FMT_U8P,         ///< unsigned 8 bits, planar
+//AV_SAMPLE_FMT_S16P,        ///< signed 16 bits, planar
+//AV_SAMPLE_FMT_S32P,        ///< signed 32 bits, planar
+//AV_SAMPLE_FMT_FLTP,        ///< float, planar
+//AV_SAMPLE_FMT_DBLP,        ///< double, planar
+//
+//AV_SAMPLE_FMT_NB           ///< Number of sample formats. DO NOT USE if linking dynamically
+//
+//AE_FMT_INVALID = -1,
+//
+//// ActiveAE Data Format
+//AE_FMT_U8,
+//
+//AE_FMT_S16BE,
+//AE_FMT_S16LE,
+//AE_FMT_S16NE,
+//
+//AE_FMT_S32BE,
+//AE_FMT_S32LE,
+//AE_FMT_S32NE,
+//
+//AE_FMT_S24BE4,
+//AE_FMT_S24LE4,
+//AE_FMT_S24NE4,    // 24 bits in lower 3 bytes
+//AE_FMT_S24NE4MSB, // S32 with bits_per_sample < 32
+//
+//AE_FMT_S24BE3,
+//AE_FMT_S24LE3,
+//AE_FMT_S24NE3, /* S24 in 3 bytes */
+//
+//AE_FMT_DOUBLE,
+//AE_FMT_FLOAT,
+//
+//// Bitstream
+//AE_FMT_RAW,
+//
+///* planar formats */
+//AE_FMT_U8P,
+//AE_FMT_S16NEP,
+//AE_FMT_S32NEP,
+//AE_FMT_S24NE4P,
+//AE_FMT_S24NE4MSBP,
+//AE_FMT_S24NE3P,
+//AE_FMT_DOUBLEP,
+//AE_FMT_FLOATP,
+//
+//AE_FMT_MAX
+
 typedef enum
 {
   ADSP_DataFormatINVALID = -1,
