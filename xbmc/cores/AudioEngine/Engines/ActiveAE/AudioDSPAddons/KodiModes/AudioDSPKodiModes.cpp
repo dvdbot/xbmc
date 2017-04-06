@@ -19,6 +19,11 @@
  */
 
 #include "cores/AudioEngine/Engines//ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h"
+
+// mode includes
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPCopyMode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterCreator.h"
+
 #include "utils/log.h"
 
 using namespace DSP;
@@ -32,21 +37,32 @@ CAudioDSPKodiModes::CAudioDSPKodiModes()
 
 void CAudioDSPKodiModes::PrepareModes(DSP::CDSPNodeModel &Model)
 {
-  DSPErrorCode_t err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" }), CAudioDSPCopyModeCreator::CreateCallback);
+  DSPErrorCode_t err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" }), CAudioDSPCopyModeCreator());
   if (err != DSP_ERR_NO_ERR)
   {
     CLog::Log(LOGERROR, "%s failed to register Kodi::AudioDSPCopyMode!", __FUNCTION__);
   }
+
+  err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioConverter" }), CAudioDSPAudioConverterCreator());
+  if (err != DSP_ERR_NO_ERR)
+  {
+    CLog::Log(LOGERROR, "%s failed to register Kodi::AudioConverter!", __FUNCTION__);
+  }  
 }
 
 void CAudioDSPKodiModes::ReleaseAllModes(DSP::CDSPNodeModel &Model)
 {
   // release all internal Kodi AudioDSP modes
-  IDSPNodeModel::CDSPNodeInfo nodeInfo = Model.GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" }));
-  DSPErrorCode_t err = Model.DeregisterNode(nodeInfo.ID);
+  DSPErrorCode_t err = Model.DeregisterNode(Model.GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioDSPCopyMode" })).ID);
   if (err != DSP_ERR_NO_ERR)
   {
     CLog::Log(LOGERROR, "%s failed to deregister Kodi::AudioDSPCopyMode", __FUNCTION__);
+  }
+
+  err = Model.DeregisterNode(Model.GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioConverter" })).ID);
+  if (err != DSP_ERR_NO_ERR)
+  {
+    CLog::Log(LOGERROR, "%s failed to deregister Kodi::AudioConverter", __FUNCTION__);
   }
 }
 }
