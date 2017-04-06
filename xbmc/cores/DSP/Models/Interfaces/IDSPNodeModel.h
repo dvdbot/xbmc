@@ -92,7 +92,7 @@ public:
   // - node position
 
   // node registering
-  virtual DSPErrorCode_t RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)()) = 0;
+  virtual DSPErrorCode_t RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreator::NodeCreatorCallback CreatorCallback) = 0;
   virtual DSPErrorCode_t DeregisterNode(uint64_t ID) = 0;
   
   // node infos

@@ -27,7 +27,23 @@ namespace DSP
 class IDSPNodeCreator
 {
 public:
+  typedef IDSPNodeCreator*(*NodeCreatorCallback)(void);
+
   virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
+};
+
+
+template<class T>
+class TDSPNodeCreator : public IDSPNodeCreator
+{
+public:
+  operator IDSPNodeCreator::NodeCreatorCallback()
+  {
+    return CreateCallback;
+  }
+
+private:
+  static  IDSPNodeCreator* CreateCallback() { return dynamic_cast<IDSPNodeCreator*>(new T); }
 };
 }
