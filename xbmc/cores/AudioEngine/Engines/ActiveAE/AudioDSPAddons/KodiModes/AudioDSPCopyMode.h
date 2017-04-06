@@ -9,12 +9,10 @@
 
 namespace ActiveAE
 {
-class CAudioDSPCopyModeCreator : public DSP::IDSPNodeCreator
+class CAudioDSPCopyModeCreator : public DSP::TDSPNodeCreator<CAudioDSPCopyModeCreator>
 {
 public:
   CAudioDSPCopyModeCreator();
-
-  static  DSP::IDSPNodeCreator* CreateCallback() { return nullptr; }
 
   virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
   virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;

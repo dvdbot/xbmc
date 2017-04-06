@@ -40,7 +40,7 @@ DSPErrorCode_t CAudioDSPCopyModeCreator::DestroyNode(DSP::IDSPNode *&Node)
 
 
 CAudioDSPCopyMode::CAudioDSPCopyMode(uint64_t ID) :
-  IADSPNode("CAudioDSPCopyMode", ID, ADSP_DataFormatFlagFloat) //! @todo register internal mode and get ID from factory
+  IADSPNode("CAudioDSPCopyMode", ID, ADSP_DataFormatFlagFloat) //! @todo set format flags with |
 {
 }
 
