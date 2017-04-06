@@ -97,8 +97,12 @@ if(PULSEAUDIO_FOUND)
 endif()
 
 if(FFMPEG_FOUND)
-  list(APPEND SOURCES Engines/ActiveAE/ActiveAEResampleFFMPEG.cpp)
-  list(APPEND HEADERS Engines/ActiveAE/ActiveAEResampleFFMPEG.h)
+  list(APPEND SOURCES Engines/ActiveAE/ActiveAEResampleFFMPEG.cpp
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterCreator.cpp
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterFFMPEG.cpp)
+  list(APPEND HEADERS Engines/ActiveAE/ActiveAEResampleFFMPEG.h
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterCreator.h
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterFFMPEG.h)
 endif()
 
 if(CORE_SYSTEM_NAME STREQUAL windows)
@@ -110,8 +114,10 @@ endif()
 
 if(CORE_SYSTEM_NAME STREQUAL rbpi)
   list(APPEND SOURCES Engines/ActiveAE/ActiveAEResamplePi.cpp
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterPi.cpp
                       Sinks/AESinkPi.cpp)
   list(APPEND HEADERS Engines/ActiveAE/ActiveAEResamplePi.h
+                      Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterPi.h
                       Sinks/AESinkPi.h)
 endif()
 
