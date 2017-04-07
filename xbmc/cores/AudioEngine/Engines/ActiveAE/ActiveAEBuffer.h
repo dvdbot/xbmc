@@ -131,6 +131,45 @@ protected:
   bool m_stereoUpmix;
 };
 
+class CActiveAEAudioDSPBuffer : public CActiveAEBufferPool
+{
+public:
+  CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
+  virtual ~CActiveAEAudioDSPBuffer();
+  bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
+  bool ResampleBuffers(int64_t timestamp = 0);
+  void ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality);
+  float GetDelay();
+  void Flush();
+  void SetDrain(bool drain);
+  void SetRR(double rr);
+  double GetRR();
+  void FillBuffer();
+  bool DoesNormalize();
+  void ForceResampler(bool force);
+  AEAudioFormat m_inputFormat;
+  std::deque<CSampleBuffer*> m_inputSamples;
+  std::deque<CSampleBuffer*> m_outputSamples;
+
+protected:
+  void ChangeResampler();
+
+  uint8_t *m_planes[16];
+  bool m_empty;
+  bool m_drain;
+  int64_t m_lastSamplePts;
+  bool m_remap;
+  CSampleBuffer *m_procSample;
+  IAEResample *m_resampler;
+  double m_resampleRatio;
+  bool m_fillPackets;
+  bool m_normalize;
+  bool m_changeResampler;
+  bool m_forceResampler;
+  AEQuality m_resampleQuality;
+  bool m_stereoUpmix;
+};
+
 class CActiveAEFilter;
 
 class CActiveAEBufferPoolAtempo : public CActiveAEBufferPool

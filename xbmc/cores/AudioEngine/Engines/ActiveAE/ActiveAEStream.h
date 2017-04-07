@@ -112,6 +112,7 @@ public:
   void SetDSPConfig(bool usedsp, bool bypassdsp);
   bool HasWork();
   CActiveAEBufferPool *GetResampleBuffers();
+  CActiveAEBufferPool *GetAudioDSPBuffers();
   CActiveAEBufferPool *GetAtempoBuffers();
   
   AEAudioFormat m_inputFormat;
@@ -120,6 +121,7 @@ public:
 
 protected:
   CActiveAEBufferPoolResample *m_resampleBuffers;
+  CActiveAEAudioDSPBuffer *m_audioDSPBuffers;
   CActiveAEBufferPoolAtempo *m_atempoBuffers;
 };
 

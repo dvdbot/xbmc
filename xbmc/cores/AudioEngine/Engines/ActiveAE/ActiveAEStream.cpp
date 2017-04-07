@@ -580,12 +580,14 @@ CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudi
   m_inputFormat = inputFormat;
   m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, outputFormat, quality);
   m_atempoBuffers = new CActiveAEBufferPoolAtempo(outputFormat);
+  m_audioDSPBuffers = new CActiveAEAudioDSPBuffer(inputFormat, outputFormat);
 }
 
 CActiveAEStreamBuffers::~CActiveAEStreamBuffers()
 {
   delete m_resampleBuffers;
   delete m_atempoBuffers;
+  delete m_audioDSPBuffers;
 }
 
 bool CActiveAEStreamBuffers::HasInputLevel(int level)
@@ -603,6 +605,9 @@ bool CActiveAEStreamBuffers::Create(unsigned int totaltime, bool remap, bool upm
     return false;
 
   if (!m_atempoBuffers->Create(totaltime))
+    return false;
+
+  if (!m_audioDSPBuffers->Create(totaltime, remap, upmix, normalize))
     return false;
 
   return true;
@@ -665,6 +670,7 @@ float CActiveAEStreamBuffers::GetDelay()
 
   delay += m_resampleBuffers->GetDelay();
   delay += m_atempoBuffers->GetDelay();
+  delay += m_audioDSPBuffers->GetDelay();
 
   for (auto &buf : m_outputSamples)
   {
@@ -678,6 +684,7 @@ void CActiveAEStreamBuffers::Flush()
 {
   m_resampleBuffers->Flush();
   m_atempoBuffers->Flush();
+  m_audioDSPBuffers->Flush();
 
   while (!m_inputSamples.empty())
   {
@@ -695,6 +702,7 @@ void CActiveAEStreamBuffers::SetDrain(bool drain)
 {
   m_resampleBuffers->SetDrain(drain);
   m_atempoBuffers->SetDrain(drain);
+  m_audioDSPBuffers->SetDrain(drain);
 }
 
 bool CActiveAEStreamBuffers::IsDrained()
@@ -703,6 +711,8 @@ bool CActiveAEStreamBuffers::IsDrained()
       m_resampleBuffers->m_outputSamples.empty() &&
       m_atempoBuffers->m_inputSamples.empty() &&
       m_atempoBuffers->m_outputSamples.empty() &&
+      m_audioDSPBuffers->m_inputSamples.empty() &&
+      m_audioDSPBuffers->m_outputSamples.empty() &&
       m_inputSamples.empty() &&
       m_outputSamples.empty())
     return true;
@@ -735,6 +745,7 @@ void CActiveAEStreamBuffers::FillBuffer()
 {
   m_resampleBuffers->FillBuffer();
   m_atempoBuffers->FillBuffer();
+  m_audioDSPBuffers->FillBuffer();
 }
 
 bool CActiveAEStreamBuffers::DoesNormalize()
@@ -759,6 +770,13 @@ CActiveAEBufferPool* CActiveAEStreamBuffers::GetResampleBuffers()
   return ret;
 }
 
+CActiveAEBufferPool * ActiveAE::CActiveAEStreamBuffers::GetAudioDSPBuffers()
+{
+  CActiveAEBufferPool *ret = m_audioDSPBuffers;
+  m_audioDSPBuffers = nullptr;
+  return ret;
+}
+
 CActiveAEBufferPool* CActiveAEStreamBuffers::GetAtempoBuffers()
 {
   CActiveAEBufferPool *ret = m_atempoBuffers;
@@ -775,6 +793,10 @@ bool CActiveAEStreamBuffers::HasWork()
   if (!m_resampleBuffers->m_inputSamples.empty())
     return true;
   if (!m_resampleBuffers->m_outputSamples.empty())
+    return true;
+  if (!m_audioDSPBuffers->m_inputSamples.empty())
+    return true;
+  if (!m_audioDSPBuffers->m_outputSamples.empty())
     return true;
   if (!m_atempoBuffers->m_inputSamples.empty())
     return true;

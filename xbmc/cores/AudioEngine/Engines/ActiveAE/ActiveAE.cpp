@@ -1096,6 +1096,8 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
   AEAudioFormat oldSinkRequestFormat = m_sinkRequestFormat;
 
   inputFormat = GetInputFormat(desiredFmt);
+  
+  // try to create AudioDSP stream and use it as sinkRequestedFormat
 
   m_sinkRequestFormat = inputFormat;
   ApplySettingsToFormat(m_sinkRequestFormat, m_settings, (int*)&m_mode);
@@ -1284,6 +1286,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
         (*it)->m_processingBuffers->Flush();
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
+        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
         delete (*it)->m_processingBuffers;
         (*it)->m_processingBuffers = nullptr;
       }
@@ -1297,6 +1300,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
 
         if (useDSP && !(*it)->m_bypassDSP)
           (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
+
         (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL*1000, false, m_settings.stereoupmix, m_settings.normalizelevels, useDSP);
 
         m_stats.SetDSP(useDSP);
@@ -1454,6 +1458,7 @@ void CActiveAE::DiscardStream(CActiveAEStream *stream)
         (*it)->m_processingBuffers->Flush();
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
+        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
       }
       delete (*it)->m_processingBuffers;
       CLog::Log(LOGDEBUG, "CActiveAE::DiscardStream - audio stream deleted");
