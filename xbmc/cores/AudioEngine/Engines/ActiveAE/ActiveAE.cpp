@@ -1083,10 +1083,128 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
   AEAudioFormat oldSinkRequestFormat = m_sinkRequestFormat;
 
   inputFormat = GetInputFormat(desiredFmt);
+
+  // configure AudioDSP stream buffers
+  if (!m_streams.empty())
+  {
+    bool streaming = true;
+    m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::STREAMING, &streaming, sizeof(bool));
+
+    AEAudioFormat outputFormat;
+
+    { // initialize PCM format
+      outputFormat = inputFormat;
+      outputFormat.m_dataFormat = AE_IS_PLANAR(outputFormat.m_dataFormat) ? AE_FMT_FLOATP : AE_FMT_FLOAT;
+      outputFormat.m_frameSize =  outputFormat.m_channelLayout.Count() *
+                                  (CAEUtil::DataFormatToBits(outputFormat.m_dataFormat) >> 3);
+
+      //// due to channel ordering of the driver, a sink may return more channels than
+      //// requested, i.e. 2.1 request returns FL,FR,BL,BR,FC,LFE for ALSA
+      //// in this case we need to downmix to requested format
+      //if (m_sinkFormat.m_channelLayout.Count() > m_sinkRequestFormat.m_channelLayout.Count())
+      //{
+      //  outputFormat.m_channelLayout = m_sinkRequestFormat.m_channelLayout;
+      //  outputFormat.m_channelLayout.ResolveChannels(m_sinkFormat.m_channelLayout);
+      //}
+
+      // internally we use ffmpeg layouts, means that layout won't change in resample
+      // stage. preserve correct layout for sink stage where remapping is done
+      uint64_t avlayout = CAEUtil::GetAVChannelLayout(outputFormat.m_channelLayout);
+      outputFormat.m_channelLayout = CAEUtil::GetAEChannelLayout(avlayout);
+
+      //! @todo adjust to decoder
+      sinkInputFormat = outputFormat;
+    }
+    m_internalFormat = outputFormat;
+
+    bool isRaw;
+    std::list<CActiveAEStream*>::iterator it;
+    for (it = m_streams.begin(); it != m_streams.end(); ++it)
+    {
+      isRaw = ((*it)->m_format.m_dataFormat == AE_FMT_RAW);
+
+      if (!(*it)->m_inputBuffers)
+      {
+        // align input buffers with period of sink or encoder
+        (*it)->m_format.m_frames = m_internalFormat.m_frames * ((float)(*it)->m_format.m_sampleRate / m_internalFormat.m_sampleRate);
+
+        // create buffer pool
+        (*it)->m_inputBuffers = new CActiveAEBufferPool((*it)->m_format);
+        (*it)->m_inputBuffers->Create(MAX_CACHE_LEVEL * 1000);
+        (*it)->m_streamSpace = (*it)->m_format.m_frameSize * (*it)->m_format.m_frames;
+
+        // if input format does not follow ffmpeg channel mask, we may need to remap channels
+        (*it)->InitRemapper();
+      }
+      if ((*it)->m_processingBuffers)
+      {
+        (*it)->m_processingBuffers->Flush();
+        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
+        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
+        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
+        delete (*it)->m_processingBuffers;
+        (*it)->m_processingBuffers = nullptr;
+      }
+      if (!(*it)->m_processingBuffers)
+      {
+        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality, m_audioDSP);
+        (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
+        (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
+
+        (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL * 1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
+      }
+      if (m_mode == MODE_TRANSCODE || m_streams.size() > 1)
+        (*it)->m_processingBuffers->FillBuffer();
+
+      // amplification
+      (*it)->m_limiter.SetSamplerate(outputFormat.m_sampleRate);
+    }
+
+    // update buffered time of streams
+    m_stats.AddSamples(0, m_streams);
+
+    // buffers for viz
+    if (inputFormat.m_dataFormat != AE_FMT_RAW)
+    {
+      if (m_vizBuffers)
+      {
+        m_discardBufferPools.push_back(m_vizBuffers);
+        m_vizBuffers = NULL;
+        m_discardBufferPools.push_back(m_vizBuffersInput);
+        m_vizBuffersInput = NULL;
+      }
+      if (!m_vizBuffers && !m_audioCallback.empty())
+      {
+        AEAudioFormat vizFormat = m_internalFormat;
+        vizFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+        vizFormat.m_dataFormat = AE_FMT_FLOAT;
+        vizFormat.m_sampleRate = 44100;
+
+        // input buffers
+        m_vizBuffersInput = new CActiveAEBufferPool(m_internalFormat);
+        m_vizBuffersInput->Create(2048 * m_internalFormat.m_sampleRate);
+
+        // resample buffers
+        m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat, m_settings.resampleQuality);
+        //! @todo use cache of sync + water level
+        m_vizBuffers->Create(2048 * vizFormat.m_sampleRate, false, false);
+        m_vizInitialized = false;
+      }
+    }
+
+    // buffers need to sync
+    m_silenceBuffers = new CActiveAEBufferPool(outputFormat);
+    m_silenceBuffers->Create(500);
+
+    m_sinkRequestFormat = outputFormat;
+  }
   
   // try to create AudioDSP stream and use it as sinkRequestedFormat
 
-  m_sinkRequestFormat = inputFormat;
+  if (m_streams.empty())
+  {
+    m_sinkRequestFormat = inputFormat;
+  }
   ApplySettingsToFormat(m_sinkRequestFormat, m_settings, (int*)&m_mode);
   m_extKeepConfig = 0;
 
@@ -1118,15 +1236,16 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
     }
   }
 
-  if (m_silenceBuffers)
-  {
-    m_discardBufferPools.push_back(m_silenceBuffers);
-    m_silenceBuffers = NULL;
-  }
 
   // buffers for driving gui sounds if no streams are active
   if (m_streams.empty())
   {
+    if (m_silenceBuffers)
+    {
+      m_discardBufferPools.push_back(m_silenceBuffers);
+      m_silenceBuffers = NULL;
+    }
+
     inputFormat = m_sinkFormat;
     if (m_sinkFormat.m_channelLayout.Count() > m_sinkRequestFormat.m_channelLayout.Count())
     {
@@ -1164,170 +1283,170 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
     }
   }
   // resample buffers for streams
-  else
-  {
-    bool streaming = true;
-    m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::STREAMING, &streaming, sizeof(bool));
+  //else
+  //{
+  //  bool streaming = true;
+  //  m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::STREAMING, &streaming, sizeof(bool));
 
-    AEAudioFormat outputFormat;
-    if (m_mode == MODE_RAW)
-    {
-      inputFormat.m_frames = m_sinkFormat.m_frames;
-      outputFormat = inputFormat;
-      sinkInputFormat = m_sinkFormat;
-    }
-    // transcode everything with more than 2 channels
-    else if (m_mode == MODE_TRANSCODE)
-    {
-      outputFormat = inputFormat;
-      outputFormat.m_dataFormat = AE_FMT_FLOATP;
-      outputFormat.m_sampleRate = 48000;
+  //  AEAudioFormat outputFormat;
+  //  if (m_mode == MODE_RAW)
+  //  {
+  //    inputFormat.m_frames = m_sinkFormat.m_frames;
+  //    outputFormat = inputFormat;
+  //    sinkInputFormat = m_sinkFormat;
+  //  }
+  //  // transcode everything with more than 2 channels
+  //  else if (m_mode == MODE_TRANSCODE)
+  //  {
+  //    outputFormat = inputFormat;
+  //    outputFormat.m_dataFormat = AE_FMT_FLOATP;
+  //    outputFormat.m_sampleRate = 48000;
 
-      // setup encoder
-      if (!m_encoder)
-      {
-        m_encoder = new CAEEncoderFFmpeg();
-        m_encoder->Initialize(outputFormat, true);
-        m_encoderFormat = outputFormat;
-      }
-      else
-        outputFormat = m_encoderFormat;
+  //    // setup encoder
+  //    if (!m_encoder)
+  //    {
+  //      m_encoder = new CAEEncoderFFmpeg();
+  //      m_encoder->Initialize(outputFormat, true);
+  //      m_encoderFormat = outputFormat;
+  //    }
+  //    else
+  //      outputFormat = m_encoderFormat;
 
-      outputFormat.m_channelLayout = m_encoderFormat.m_channelLayout;
-      outputFormat.m_frames = m_encoderFormat.m_frames;
+  //    outputFormat.m_channelLayout = m_encoderFormat.m_channelLayout;
+  //    outputFormat.m_frames = m_encoderFormat.m_frames;
 
-      // encoder buffer
-      if (m_encoder->GetCodecID() == AV_CODEC_ID_AC3)
-      {
-        AEAudioFormat format;
-        format.m_channelLayout += AE_CH_FC;
-        format.m_dataFormat = AE_FMT_RAW;
-        format.m_sampleRate = 48000;
-        format.m_channelLayout = AE_CH_LAYOUT_2_0;
-        format.m_streamInfo.m_type = CAEStreamInfo::STREAM_TYPE_AC3;
-        format.m_streamInfo.m_channels = 2;
-        format.m_streamInfo.m_sampleRate = 48000;
-        format.m_streamInfo.m_ac3FrameSize = m_encoderFormat.m_frames;
-        //! @todo implement
-        if (m_encoderBuffers && initSink)
-        {
-          m_discardBufferPools.push_back(m_encoderBuffers);
-          m_encoderBuffers = NULL;
-        }
-        if (!m_encoderBuffers)
-        {
-          m_encoderBuffers = new CActiveAEBufferPool(format);
-          m_encoderBuffers->Create(MAX_WATER_LEVEL*1000);
-        }
-      }
+  //    // encoder buffer
+  //    if (m_encoder->GetCodecID() == AV_CODEC_ID_AC3)
+  //    {
+  //      AEAudioFormat format;
+  //      format.m_channelLayout += AE_CH_FC;
+  //      format.m_dataFormat = AE_FMT_RAW;
+  //      format.m_sampleRate = 48000;
+  //      format.m_channelLayout = AE_CH_LAYOUT_2_0;
+  //      format.m_streamInfo.m_type = CAEStreamInfo::STREAM_TYPE_AC3;
+  //      format.m_streamInfo.m_channels = 2;
+  //      format.m_streamInfo.m_sampleRate = 48000;
+  //      format.m_streamInfo.m_ac3FrameSize = m_encoderFormat.m_frames;
+  //      //! @todo implement
+  //      if (m_encoderBuffers && initSink)
+  //      {
+  //        m_discardBufferPools.push_back(m_encoderBuffers);
+  //        m_encoderBuffers = NULL;
+  //      }
+  //      if (!m_encoderBuffers)
+  //      {
+  //        m_encoderBuffers = new CActiveAEBufferPool(format);
+  //        m_encoderBuffers->Create(MAX_WATER_LEVEL*1000);
+  //      }
+  //    }
 
-      sinkInputFormat = m_sinkFormat;
-    }
-    else
-    {
-      outputFormat = m_sinkFormat;
-      outputFormat.m_dataFormat = AE_IS_PLANAR(outputFormat.m_dataFormat) ? AE_FMT_FLOATP : AE_FMT_FLOAT;
-      outputFormat.m_frameSize = outputFormat.m_channelLayout.Count() *
-                                 (CAEUtil::DataFormatToBits(outputFormat.m_dataFormat) >> 3);
+  //    sinkInputFormat = m_sinkFormat;
+  //  }
+  //  else
+  //  {
+  //    outputFormat = m_sinkFormat;
+  //    outputFormat.m_dataFormat = AE_IS_PLANAR(outputFormat.m_dataFormat) ? AE_FMT_FLOATP : AE_FMT_FLOAT;
+  //    outputFormat.m_frameSize = outputFormat.m_channelLayout.Count() *
+  //                               (CAEUtil::DataFormatToBits(outputFormat.m_dataFormat) >> 3);
 
-      // due to channel ordering of the driver, a sink may return more channels than
-      // requested, i.e. 2.1 request returns FL,FR,BL,BR,FC,LFE for ALSA
-      // in this case we need to downmix to requested format
-      if (m_sinkFormat.m_channelLayout.Count() > m_sinkRequestFormat.m_channelLayout.Count())
-      {
-        outputFormat.m_channelLayout = m_sinkRequestFormat.m_channelLayout;
-        outputFormat.m_channelLayout.ResolveChannels(m_sinkFormat.m_channelLayout);
-      }
+  //    // due to channel ordering of the driver, a sink may return more channels than
+  //    // requested, i.e. 2.1 request returns FL,FR,BL,BR,FC,LFE for ALSA
+  //    // in this case we need to downmix to requested format
+  //    if (m_sinkFormat.m_channelLayout.Count() > m_sinkRequestFormat.m_channelLayout.Count())
+  //    {
+  //      outputFormat.m_channelLayout = m_sinkRequestFormat.m_channelLayout;
+  //      outputFormat.m_channelLayout.ResolveChannels(m_sinkFormat.m_channelLayout);
+  //    }
 
-      // internally we use ffmpeg layouts, means that layout won't change in resample
-      // stage. preserve correct layout for sink stage where remapping is done
-      uint64_t avlayout = CAEUtil::GetAVChannelLayout(outputFormat.m_channelLayout);
-      outputFormat.m_channelLayout = CAEUtil::GetAEChannelLayout(avlayout);
+  //    // internally we use ffmpeg layouts, means that layout won't change in resample
+  //    // stage. preserve correct layout for sink stage where remapping is done
+  //    uint64_t avlayout = CAEUtil::GetAVChannelLayout(outputFormat.m_channelLayout);
+  //    outputFormat.m_channelLayout = CAEUtil::GetAEChannelLayout(avlayout);
 
-      //! @todo adjust to decoder
-      sinkInputFormat = outputFormat;
-    }
-    m_internalFormat = outputFormat;
+  //    //! @todo adjust to decoder
+  //    sinkInputFormat = outputFormat;
+  //  }
+  //  m_internalFormat = outputFormat;
 
-    bool isRaw;
-    std::list<CActiveAEStream*>::iterator it;
-    for(it=m_streams.begin(); it!=m_streams.end(); ++it)
-    {
-      isRaw = ((*it)->m_format.m_dataFormat == AE_FMT_RAW);
+  //  bool isRaw;
+  //  std::list<CActiveAEStream*>::iterator it;
+  //  for(it=m_streams.begin(); it!=m_streams.end(); ++it)
+  //  {
+  //    isRaw = ((*it)->m_format.m_dataFormat == AE_FMT_RAW);
 
-      if (!(*it)->m_inputBuffers)
-      {
-        // align input buffers with period of sink or encoder
-        (*it)->m_format.m_frames = m_internalFormat.m_frames * ((float)(*it)->m_format.m_sampleRate / m_internalFormat.m_sampleRate);
+  //    if (!(*it)->m_inputBuffers)
+  //    {
+  //      // align input buffers with period of sink or encoder
+  //      (*it)->m_format.m_frames = m_internalFormat.m_frames * ((float)(*it)->m_format.m_sampleRate / m_internalFormat.m_sampleRate);
 
-        // create buffer pool
-        (*it)->m_inputBuffers = new CActiveAEBufferPool((*it)->m_format);
-        (*it)->m_inputBuffers->Create(MAX_CACHE_LEVEL*1000);
-        (*it)->m_streamSpace = (*it)->m_format.m_frameSize * (*it)->m_format.m_frames;
+  //      // create buffer pool
+  //      (*it)->m_inputBuffers = new CActiveAEBufferPool((*it)->m_format);
+  //      (*it)->m_inputBuffers->Create(MAX_CACHE_LEVEL*1000);
+  //      (*it)->m_streamSpace = (*it)->m_format.m_frameSize * (*it)->m_format.m_frames;
 
-        // if input format does not follow ffmpeg channel mask, we may need to remap channels
-        (*it)->InitRemapper();
-      }
-      if (initSink && (*it)->m_processingBuffers)
-      {
-        (*it)->m_processingBuffers->Flush();
-        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
-        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
-        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
-        delete (*it)->m_processingBuffers;
-        (*it)->m_processingBuffers = nullptr;
-      }
-      if (!(*it)->m_processingBuffers)
-      {
-        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality, m_audioDSP);
-        (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
-        (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
+  //      // if input format does not follow ffmpeg channel mask, we may need to remap channels
+  //      (*it)->InitRemapper();
+  //    }
+  //    if (initSink && (*it)->m_processingBuffers)
+  //    {
+  //      (*it)->m_processingBuffers->Flush();
+  //      m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
+  //      m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
+  //      m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
+  //      delete (*it)->m_processingBuffers;
+  //      (*it)->m_processingBuffers = nullptr;
+  //    }
+  //    if (!(*it)->m_processingBuffers)
+  //    {
+  //      (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality, m_audioDSP);
+  //      (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
+  //      (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
 
-        (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL*1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
-      }
-      if (m_mode == MODE_TRANSCODE || m_streams.size() > 1)
-        (*it)->m_processingBuffers->FillBuffer();
+  //      (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL*1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
+  //    }
+  //    if (m_mode == MODE_TRANSCODE || m_streams.size() > 1)
+  //      (*it)->m_processingBuffers->FillBuffer();
 
-      // amplification
-      (*it)->m_limiter.SetSamplerate(outputFormat.m_sampleRate);
-    }
+  //    // amplification
+  //    (*it)->m_limiter.SetSamplerate(outputFormat.m_sampleRate);
+  //  }
 
-    // update buffered time of streams
-    m_stats.AddSamples(0, m_streams);
+  //  // update buffered time of streams
+  //  m_stats.AddSamples(0, m_streams);
 
-    // buffers for viz
-    if (!(inputFormat.m_dataFormat == AE_FMT_RAW))
-    {
-      if (initSink && m_vizBuffers)
-      {
-        m_discardBufferPools.push_back(m_vizBuffers);
-        m_vizBuffers = NULL;
-        m_discardBufferPools.push_back(m_vizBuffersInput);
-        m_vizBuffersInput = NULL;
-      }
-      if (!m_vizBuffers && !m_audioCallback.empty())
-      {
-        AEAudioFormat vizFormat = m_internalFormat;
-        vizFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
-        vizFormat.m_dataFormat = AE_FMT_FLOAT;
-        vizFormat.m_sampleRate = 44100;
+  //  // buffers for viz
+  //  if (!(inputFormat.m_dataFormat == AE_FMT_RAW))
+  //  {
+  //    if (initSink && m_vizBuffers)
+  //    {
+  //      m_discardBufferPools.push_back(m_vizBuffers);
+  //      m_vizBuffers = NULL;
+  //      m_discardBufferPools.push_back(m_vizBuffersInput);
+  //      m_vizBuffersInput = NULL;
+  //    }
+  //    if (!m_vizBuffers && !m_audioCallback.empty())
+  //    {
+  //      AEAudioFormat vizFormat = m_internalFormat;
+  //      vizFormat.m_channelLayout = AE_CH_LAYOUT_2_0;
+  //      vizFormat.m_dataFormat = AE_FMT_FLOAT;
+  //      vizFormat.m_sampleRate = 44100;
 
-        // input buffers
-        m_vizBuffersInput = new CActiveAEBufferPool(m_internalFormat);
-        m_vizBuffersInput->Create(2000);
+  //      // input buffers
+  //      m_vizBuffersInput = new CActiveAEBufferPool(m_internalFormat);
+  //      m_vizBuffersInput->Create(2000);
 
-        // resample buffers
-        m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat, m_settings.resampleQuality);
-        //! @todo use cache of sync + water level
-        m_vizBuffers->Create(2000, false, false);
-        m_vizInitialized = false;
-      }
-    }
+  //      // resample buffers
+  //      m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat, m_settings.resampleQuality);
+  //      //! @todo use cache of sync + water level
+  //      m_vizBuffers->Create(2000, false, false);
+  //      m_vizInitialized = false;
+  //    }
+  //  }
 
-    // buffers need to sync
-    m_silenceBuffers = new CActiveAEBufferPool(outputFormat);
-    m_silenceBuffers->Create(500);
-  }
+  //  // buffers need to sync
+  //  m_silenceBuffers = new CActiveAEBufferPool(outputFormat);
+  //  m_silenceBuffers->Create(500);
+  //}
 
   // resample buffers for sink
   if (m_sinkBuffers && 
