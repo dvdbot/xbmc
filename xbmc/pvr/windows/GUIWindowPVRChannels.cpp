@@ -78,7 +78,7 @@ void CGUIWindowPVRChannels::GetContextButtons(int itemNumber, CContextButtons &b
   else if (g_PVRClients->SupportsTimers(channel->ClientID()))
     buttons.Add(CONTEXT_BUTTON_START_RECORD, 264);   /* Record */
 
-  //! @todo reimplement this with AudioDSP V2.0
+  //! @todo AudioDSP reimplement this with AudioDSP V2.0
   //if (CServiceBroker::GetADSP().IsProcessing())
   //  buttons.Add(CONTEXT_BUTTON_ACTIVE_ADSP_SETTINGS, 15047);                        /* Audio DSP settings */
 
