@@ -79,7 +79,7 @@ bool CServiceManager::Init2()
 
 bool CServiceManager::CreateAudioEngine()
 {
-  m_ActiveAE.reset(new ActiveAE::CActiveAE());
+  m_ActiveAE.reset(dynamic_cast<IAE*>(new ActiveAE::CActiveAE()));
 
   return true;
 }
@@ -156,8 +156,7 @@ PVR::CPVRManager& CServiceManager::GetPVRManager()
 
 IAE& CServiceManager::GetActiveAE()
 {
-  ActiveAE::CActiveAE& ae = *m_ActiveAE;
-  return ae;
+  return *m_ActiveAE;
 }
 
 CContextMenuManager& CServiceManager::GetContextMenuManager()
@@ -196,7 +195,7 @@ void CServiceManager::delete_contextMenuManager::operator()(CContextMenuManager 
   delete p;
 }
 
-void CServiceManager::delete_activeAE::operator()(ActiveAE::CActiveAE *p) const
+void CServiceManager::delete_activeAE::operator()(IAE *p) const
 {
   delete p;
 }

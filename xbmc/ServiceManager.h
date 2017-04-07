@@ -28,9 +28,7 @@ class CAddonMgr;
 class CBinaryAddonCache;
 }
 
-namespace ActiveAE {
-class CActiveAE;
-}
+class IAE;
 
 namespace ANNOUNCEMENT
 {
@@ -98,7 +96,7 @@ protected:
 
   struct delete_activeAE
   {
-    void operator()(ActiveAE::CActiveAE *p) const;
+    void operator()(IAE *p) const;
   };
 
   std::unique_ptr<ADDON::CAddonMgr> m_addonMgr;
@@ -107,7 +105,7 @@ protected:
   std::unique_ptr<XBPython> m_XBPython;
   std::unique_ptr<PVR::CPVRManager> m_PVRManager;
   //! @todo use IAE instead of CActiveAE
-  std::unique_ptr<ActiveAE::CActiveAE, delete_activeAE> m_ActiveAE;
+  std::unique_ptr<IAE, delete_activeAE> m_ActiveAE;
   std::unique_ptr<CContextMenuManager, delete_contextMenuManager> m_contextMenuManager;
   std::unique_ptr<CDataCacheCore, delete_dataCacheCore> m_dataCacheCore;
   std::unique_ptr<CPlatform> m_Platform;

@@ -38,6 +38,7 @@ class IAEPacketizer;
 class IAudioCallback;
 class IAEClockCallback;
 class CAEStreamInfo;
+class CServiceManager;
 
 /* sound options */
 #define AE_SOUND_OFF    0 /* disable sounds */
@@ -71,7 +72,7 @@ enum AEQuality
 class IAE
 {
 protected:
-  friend class CAEFactory;
+  friend class CServiceManager;
 
   IAE() {}
   virtual ~IAE() {}
