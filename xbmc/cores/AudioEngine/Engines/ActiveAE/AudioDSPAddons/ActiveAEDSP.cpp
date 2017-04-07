@@ -83,7 +83,6 @@ CActiveAEDSP::~CActiveAEDSP()
 void CActiveAEDSP::Init(void)
 {
   std::set<std::string> settingSet;
-  settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED);
   settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS);
   settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB);
   //! @todo reimplement this with AudioDSP V2.0
