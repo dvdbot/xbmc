@@ -21,7 +21,7 @@
 
 #include "cores/AudioEngine/Utils/AEAudioFormat.h"
 #include "cores/AudioEngine/Interfaces/AE.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAEDSP.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
 #include <deque>
 #include <memory>
 
@@ -134,7 +134,7 @@ protected:
 class CActiveAEAudioDSPBuffer : public CActiveAEBufferPool
 {
 public:
-  CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
+  CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, CActiveAudioDSP &AudioDSP);
   virtual ~CActiveAEAudioDSPBuffer();
   bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
   bool ResampleBuffers(int64_t timestamp = 0);
@@ -168,6 +168,9 @@ protected:
   bool m_forceResampler;
   AEQuality m_resampleQuality;
   bool m_stereoUpmix;
+
+private:
+  CActiveAudioDSP &m_audioDSP;
 };
 
 class CActiveAEFilter;

@@ -502,8 +502,9 @@ void CActiveAEBufferPoolResample::ForceResampler(bool force)
 // AudioDSP
 // ----------------------------------------------------------------------------------
 
-CActiveAEAudioDSPBuffer::CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality)
-  : CActiveAEBufferPool(outputFormat)
+CActiveAEAudioDSPBuffer::CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, CActiveAudioDSP &AudioDSP) :
+  CActiveAEBufferPool(outputFormat),
+  m_audioDSP(AudioDSP)
 {
   m_inputFormat = inputFormat;
   if (m_inputFormat.m_dataFormat == AE_FMT_RAW)
@@ -519,7 +520,7 @@ CActiveAEAudioDSPBuffer::CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAu
   m_empty = true;
   m_procSample = nullptr;
   m_resampleRatio = 1.0;
-  m_resampleQuality = quality;
+  m_resampleQuality = AE_QUALITY_REALLYHIGH;
   m_forceResampler = false;
   m_stereoUpmix = false;
   m_normalize = true;

@@ -194,12 +194,10 @@ public:
   float GetCacheTotal(CActiveAEStream *stream);
   float GetWaterLevel();
   void SetSuspended(bool state);
-  void SetDSP(bool state);
   void SetCurrentSinkFormat(AEAudioFormat SinkFormat);
   void SetSinkCacheTotal(float time) { m_sinkCacheTotal = time; }
   void SetSinkLatency(float time) { m_sinkLatency = time; }
   bool IsSuspended();
-  bool HasDSP();
   AEAudioFormat GetCurrentSinkFormat();
 protected:
   float m_sinkCacheTotal;
@@ -208,7 +206,6 @@ protected:
   unsigned int m_sinkSampleRate;
   AEDelayStatus m_sinkDelay;
   bool m_suspended;
-  bool m_hasDSP;
   AEAudioFormat m_sinkFormat;
   bool m_pcmOutput;
   CCriticalSection m_lock;
@@ -269,7 +266,6 @@ public:
   virtual bool IsSettingVisible(const std::string &settingId);
   virtual void KeepConfiguration(unsigned int millis);
   virtual void DeviceChange();
-  virtual bool HasDSP();
   virtual bool GetCurrentSinkFormat(AEAudioFormat &SinkFormat);
 
   virtual void RegisterAudioCallback(IAudioCallback* pCallback);
@@ -400,6 +396,6 @@ protected:
   bool m_aeMuted;
   bool m_aeGUISoundForce;
 
-  CActiveAudioDSP m_AudioDSP;
+  CActiveAudioDSP m_audioDSP;
 };
 };

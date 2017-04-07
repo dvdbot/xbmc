@@ -46,7 +46,6 @@ void CEngineStats::Reset(unsigned int sampleRate, bool pcm)
   m_sinkSampleRate = sampleRate;
   m_bufferedSamples = 0;
   m_suspended = false;
-  m_hasDSP = false;
   m_pcmOutput = pcm;
 }
 
@@ -239,22 +238,10 @@ bool CEngineStats::IsSuspended()
   return m_suspended;
 }
 
-void CEngineStats::SetDSP(bool state)
-{
-  CSingleLock lock(m_lock);
-  m_hasDSP = state;
-}
-
 void CEngineStats::SetCurrentSinkFormat(AEAudioFormat SinkFormat)
 {
   CSingleLock lock(m_lock);
   m_sinkFormat = SinkFormat;
-}
-
-bool CEngineStats::HasDSP()
-{
-  CSingleLock lock(m_lock);
-  return m_hasDSP;
 }
 
 AEAudioFormat CEngineStats::GetCurrentSinkFormat()
@@ -268,7 +255,7 @@ CActiveAE::CActiveAE() :
   m_controlPort("OutputControlPort", &m_inMsgEvent, &m_outMsgEvent),
   m_dataPort("OutputDataPort", &m_inMsgEvent, &m_outMsgEvent),
   m_sink(&m_outMsgEvent),
-  m_AudioDSP(&m_outMsgEvent)
+  m_audioDSP(&m_outMsgEvent)
 {
   m_sinkBuffers = NULL;
   m_silenceBuffers = NULL;
@@ -298,7 +285,7 @@ void CActiveAE::Dispose()
 {
   g_Windowing.Unregister(this);
 
-  m_AudioDSP.Stop();
+  m_audioDSP.Stop();
   m_bStop = true;
   m_outMsgEvent.Set();
   StopThread();
@@ -469,7 +456,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
           m_extError = false;
           m_sink.EnumerateSinkList(false);
           LoadSettings();
-          m_AudioDSP.Start();
+          m_audioDSP.Start();
           Configure();
           msg->Reply(CActiveAEControlProtocol::ACC);
           if (!m_extError)
@@ -802,7 +789,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
             m_sink.EnumerateSinkList(true);
             LoadSettings();
           }
-          m_AudioDSP.Start();
+          m_audioDSP.Start();
           Configure();
           if (!displayReset)
             msg->Reply(CActiveAEControlProtocol::ACC);
@@ -1294,16 +1281,11 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
       {
         bool useDSP = !isRaw ? m_settings.dspaddonsenabled : false;
 
-        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality);
+        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality, m_audioDSP);
         (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
-        (*it)->m_processingBuffers->SetDSPConfig(useDSP, (*it)->m_bypassDSP);
+        (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
 
-        if (useDSP && !(*it)->m_bypassDSP)
-          (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
-
-        (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL*1000, false, m_settings.stereoupmix, m_settings.normalizelevels, useDSP);
-
-        m_stats.SetDSP(useDSP);
+        (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL*1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
       }
       if (m_mode == MODE_TRANSCODE || m_streams.size() > 1)
         (*it)->m_processingBuffers->FillBuffer();
@@ -1405,7 +1387,7 @@ CActiveAEStream* CActiveAE::CreateStream(MsgStreamNew *streamMsg)
 
   // create the stream
   CActiveAEStream *stream;
-  stream = new CActiveAEStream(&streamMsg->format, m_streamIdGen++, this);
+  stream = new CActiveAEStream(&streamMsg->format, m_streamIdGen++, *this);
   stream->m_streamPort = new CActiveAEDataProtocol("stream",
                              &stream->m_inMsgEvent, &m_outMsgEvent);
 
@@ -1428,7 +1410,7 @@ CActiveAEStream* CActiveAE::CreateStream(MsgStreamNew *streamMsg)
 
   if(streamMsg->options & AESTREAM_BYPASS_ADSP)
   {
-    stream->m_bypassDSP = true;
+    //! @todo implement bypass AudioDSP functionality
   }
 
   stream->m_pClock = streamMsg->clock;
@@ -2883,11 +2865,6 @@ void CActiveAE::DeviceChange()
 {
   m_controlPort.SendOutMessage(CActiveAEControlProtocol::DEVICECHANGE);
 }
-
-bool CActiveAE::HasDSP()
-{
-  return m_stats.HasDSP();
-};
 
 bool CActiveAE::GetCurrentSinkFormat(AEAudioFormat &SinkFormat)
 {

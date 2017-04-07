@@ -38,8 +38,8 @@ CActiveAEStream::CActiveAEStream(AEAudioFormat *format, unsigned int streamid, C
   m_currentBuffer = NULL;
   m_drain = false;
   m_paused = false;
-  m_rgain = 1.0;
-  m_volume = 1.0;
+  m_rgain = 1.0f;
+  m_volume = 1.0f;
   SetVolume(1.0);
   m_amplify = 1.0;
   m_streamSpace = m_format.m_frameSize * m_format.m_frames;
@@ -49,7 +49,6 @@ CActiveAEStream::CActiveAEStream(AEAudioFormat *format, unsigned int streamid, C
   m_streamFreeBuffers = 0;
   m_streamIsBuffering = false;
   m_streamIsFlushed = false;
-  m_bypassDSP = false;
   m_streamSlave = NULL;
   m_leftoverBuffer = new uint8_t[m_format.m_frameSize];
   m_leftoverBytes = 0;
@@ -575,12 +574,12 @@ void CActiveAEStream::RegisterSlave(IAEStream *slave)
 // CActiveAEStreamBuffers
 //------------------------------------------------------------------------------
 
-CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality)
+CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality, CActiveAudioDSP &audioDSP)
 {
   m_inputFormat = inputFormat;
   m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, outputFormat, quality);
   m_atempoBuffers = new CActiveAEBufferPoolAtempo(outputFormat);
-  m_audioDSPBuffers = new CActiveAEAudioDSPBuffer(inputFormat, outputFormat);
+  m_audioDSPBuffers = new CActiveAEAudioDSPBuffer(inputFormat, outputFormat, audioDSP);
 }
 
 CActiveAEStreamBuffers::~CActiveAEStreamBuffers()
@@ -599,7 +598,7 @@ bool CActiveAEStreamBuffers::HasInputLevel(int level)
     return false;
 }
 
-bool CActiveAEStreamBuffers::Create(unsigned int totaltime, bool remap, bool upmix, bool normalize, bool useDSP)
+bool CActiveAEStreamBuffers::Create(unsigned int totaltime, bool remap, bool upmix, bool normalize)
 {
   if (!m_resampleBuffers->Create(totaltime, remap, upmix, normalize))
     return false;
@@ -756,11 +755,6 @@ bool CActiveAEStreamBuffers::DoesNormalize()
 void CActiveAEStreamBuffers::ForceResampler(bool force)
 {
   m_resampleBuffers->ForceResampler(force);
-}
-
-void CActiveAEStreamBuffers::SetDSPConfig(bool usedsp, bool bypassdsp)
-{
- /*! @todo Implement set dsp config with new AudioDSP buffer implementation */
 }
 
 CActiveAEBufferPool* CActiveAEStreamBuffers::GetResampleBuffers()

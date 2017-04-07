@@ -93,9 +93,9 @@ protected:
 class CActiveAEStreamBuffers
 {
 public:
-  CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
+  CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality, CActiveAudioDSP &audioDSP);
   virtual ~CActiveAEStreamBuffers();
-  bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true, bool useDSP = false);
+  bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
   void SetExtraData(int profile, enum AVMatrixEncoding matrix_encoding, enum AVAudioServiceType audio_service_type);
   bool ProcessBuffers();
   void ConfigureResampler(bool normalizelevels, bool dspenabled, bool stereoupmix, AEQuality quality);
@@ -109,7 +109,6 @@ public:
   void FillBuffer();
   bool DoesNormalize();
   void ForceResampler(bool force);
-  void SetDSPConfig(bool usedsp, bool bypassdsp);
   bool HasWork();
   CActiveAEBufferPool *GetResampleBuffers();
   CActiveAEBufferPool *GetAudioDSPBuffers();
@@ -130,7 +129,7 @@ class CActiveAEStream : public IAEStream
 protected:
   friend class CActiveAE;
   friend class CEngineStats;
-  CActiveAEStream(AEAudioFormat *format, unsigned int streamid, CActiveAE *ae);
+  CActiveAEStream(AEAudioFormat *format, unsigned int streamid, CActiveAE &ae);
   virtual ~CActiveAEStream();
   void FadingFinished();
   void IncFreeBuffers();
@@ -197,7 +196,6 @@ protected:
   int m_streamFreeBuffers;
   bool m_streamIsBuffering;
   bool m_streamIsFlushed;
-  bool m_bypassDSP;
   IAEStream *m_streamSlave;
   CCriticalSection m_streamLock;
   CCriticalSection m_statsLock;
