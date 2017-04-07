@@ -182,7 +182,7 @@ public:
 
 protected:
 
-  CActiveAE *m_activeAE;
+  CActiveAE &m_activeAE;
   unsigned int m_id;
   AEAudioFormat m_format;
   float m_streamVolume;
