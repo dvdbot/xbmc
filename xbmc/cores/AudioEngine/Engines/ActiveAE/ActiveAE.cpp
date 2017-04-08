@@ -1078,7 +1078,9 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
 {
   bool initSink = false;
 
-  AEAudioFormat sinkInputFormat, inputFormat;
+  AEAudioFormat sinkInputFormat;
+  AEAudioFormat inputFormat;
+  AEAudioFormat audioDSPOutputFormat;
   AEAudioFormat oldInternalFormat = m_internalFormat;
   AEAudioFormat oldSinkRequestFormat = m_sinkRequestFormat;
 
@@ -1090,13 +1092,12 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
     bool streaming = true;
     m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::STREAMING, &streaming, sizeof(bool));
 
-    AEAudioFormat outputFormat;
 
     { // initialize PCM format
-      outputFormat = inputFormat;
-      outputFormat.m_dataFormat = AE_IS_PLANAR(outputFormat.m_dataFormat) ? AE_FMT_FLOATP : AE_FMT_FLOAT;
-      outputFormat.m_frameSize =  outputFormat.m_channelLayout.Count() *
-                                  (CAEUtil::DataFormatToBits(outputFormat.m_dataFormat) >> 3);
+      audioDSPOutputFormat = inputFormat;
+      audioDSPOutputFormat.m_dataFormat = AE_IS_PLANAR(audioDSPOutputFormat.m_dataFormat) ? AE_FMT_FLOATP : AE_FMT_FLOAT;
+      audioDSPOutputFormat.m_frameSize = audioDSPOutputFormat.m_channelLayout.Count() *
+                                  (CAEUtil::DataFormatToBits(audioDSPOutputFormat.m_dataFormat) >> 3);
 
       //// due to channel ordering of the driver, a sink may return more channels than
       //// requested, i.e. 2.1 request returns FL,FR,BL,BR,FC,LFE for ALSA
@@ -1109,13 +1110,13 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
 
       // internally we use ffmpeg layouts, means that layout won't change in resample
       // stage. preserve correct layout for sink stage where remapping is done
-      uint64_t avlayout = CAEUtil::GetAVChannelLayout(outputFormat.m_channelLayout);
-      outputFormat.m_channelLayout = CAEUtil::GetAEChannelLayout(avlayout);
+      uint64_t avlayout = CAEUtil::GetAVChannelLayout(audioDSPOutputFormat.m_channelLayout);
+      audioDSPOutputFormat.m_channelLayout = CAEUtil::GetAEChannelLayout(avlayout);
 
       //! @todo adjust to decoder
-      sinkInputFormat = outputFormat;
+      sinkInputFormat = audioDSPOutputFormat;
     }
-    m_internalFormat = outputFormat;
+    m_internalFormat = audioDSPOutputFormat;
 
     bool isRaw;
     std::list<CActiveAEStream*>::iterator it;
@@ -1147,7 +1148,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
       }
       if (!(*it)->m_processingBuffers)
       {
-        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, outputFormat, m_settings.resampleQuality, m_audioDSP);
+        (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, audioDSPOutputFormat, m_settings.resampleQuality, m_audioDSP);
         (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
         (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
 
@@ -1157,7 +1158,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
         (*it)->m_processingBuffers->FillBuffer();
 
       // amplification
-      (*it)->m_limiter.SetSamplerate(outputFormat.m_sampleRate);
+      (*it)->m_limiter.SetSamplerate(audioDSPOutputFormat.m_sampleRate);
     }
 
     // update buffered time of streams
@@ -1193,10 +1194,10 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
     }
 
     // buffers need to sync
-    m_silenceBuffers = new CActiveAEBufferPool(outputFormat);
+    m_silenceBuffers = new CActiveAEBufferPool(audioDSPOutputFormat);
     m_silenceBuffers->Create(500);
 
-    m_sinkRequestFormat = outputFormat;
+    m_sinkRequestFormat = audioDSPOutputFormat;
   }
   
   // try to create AudioDSP stream and use it as sinkRequestedFormat
@@ -1204,6 +1205,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
   if (m_streams.empty())
   {
     m_sinkRequestFormat = inputFormat;
+    audioDSPOutputFormat = inputFormat;
   }
   ApplySettingsToFormat(m_sinkRequestFormat, m_settings, (int*)&m_mode);
   m_extKeepConfig = 0;
@@ -1450,8 +1452,8 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
 
   // resample buffers for sink
   if (m_sinkBuffers && 
-     (!CompareFormat(m_sinkBuffers->m_format,m_sinkFormat) ||
-      !CompareFormat(m_sinkBuffers->m_inputFormat, sinkInputFormat) ||
+     (!CompareFormat(m_sinkBuffers->m_format, m_sinkFormat) ||
+      !CompareFormat(m_sinkBuffers->m_inputFormat, audioDSPOutputFormat) ||
       m_sinkBuffers->m_format.m_frames != m_sinkFormat.m_frames))
   {
     m_discardBufferPools.push_back(m_sinkBuffers);
@@ -1459,8 +1461,8 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt)
   }
   if (!m_sinkBuffers)
   {
-    m_sinkBuffers = new CActiveAEBufferPoolResample(sinkInputFormat, m_sinkFormat, m_settings.resampleQuality);
-    m_sinkBuffers->Create(MAX_WATER_LEVEL*1000, true, false);
+    m_sinkBuffers = new CActiveAEBufferPoolResample(audioDSPOutputFormat, m_sinkFormat, m_settings.resampleQuality);
+    m_sinkBuffers->Create(MAX_WATER_LEVEL*1000, false, false, true);
   }
 
   // reset gui sounds
