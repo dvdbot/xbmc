@@ -57,7 +57,7 @@ struct AudioSettings
   std::string device;
   std::string driver;
   std::string passthroughdevice;
-  int channels;
+  AEStdChLayout channels;
   bool ac3passthrough;
   bool ac3transcode;
   bool eac3passthrough;

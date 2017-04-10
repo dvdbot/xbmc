@@ -2653,7 +2653,16 @@ void CActiveAE::LoadSettings()
   m_settings.passthroughdevice = CSettings::GetInstance().GetString(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGHDEVICE);
 
   m_settings.config = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CONFIG);
-  m_settings.channels = (m_sink.GetDeviceType(m_settings.device) == AE_DEVTYPE_IEC958) ? AE_CH_LAYOUT_2_0 : CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CHANNELS);
+  int channels = (m_sink.GetDeviceType(m_settings.device) == AE_DEVTYPE_IEC958) ? AE_CH_LAYOUT_2_0 : CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CHANNELS);
+  if (AE_CH_LAYOUT_INVALID < channels && channels < AE_CH_LAYOUT_MAX)
+  {
+    m_settings.channels = static_cast<AEStdChLayout>(channels);
+  }
+  else
+  {
+    CLog::Log(LOGERROR, "%s - failed to load valid settings for standard channel layout!", __FUNCTION__);
+    m_settings.channels = AE_CH_LAYOUT_INVALID;
+  }
   m_settings.samplerate = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_SAMPLERATE);
 
   m_settings.stereoupmix = IsSettingVisible(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) ? CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) : false;
@@ -2746,11 +2755,11 @@ void CActiveAE::OnSettingsChange(const std::string& setting)
 bool CActiveAE::SupportsRaw(AEAudioFormat &format)
 {
   // check if passthrough is enabled
-  if (!CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGH))
+  if (m_settings.passthrough)
     return false;
 
   // fixed config disabled passthrough
-  if (CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CONFIG) == AE_CONFIG_FIXED)
+  if (m_settings.config == AE_CONFIG_FIXED)
     return false;
 
   // check if the format is enabled in settings
@@ -2771,7 +2780,7 @@ bool CActiveAE::SupportsRaw(AEAudioFormat &format)
   if (format.m_streamInfo.m_type == CAEStreamInfo::STREAM_TYPE_DTSHD && !m_settings.dtshdpassthrough)
     return false;
 
-  if (!m_sink.SupportsFormat(CSettings::GetInstance().GetString(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGHDEVICE), format))
+  if (!m_sink.SupportsFormat(m_settings.passthroughdevice, format))
     return false;
 
   return true;
@@ -2784,19 +2793,12 @@ bool CActiveAE::SupportsSilenceTimeout()
 
 bool CActiveAE::HasStereoAudioChannelCount()
 {
-  std::string device = CSettings::GetInstance().GetString(CSettings::SETTING_AUDIOOUTPUT_AUDIODEVICE);
-  int numChannels = (m_sink.GetDeviceType(device) == AE_DEVTYPE_IEC958) ? AE_CH_LAYOUT_2_0 : CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CHANNELS);
-  bool passthrough = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CONFIG) == AE_CONFIG_FIXED ? false : CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGH);
-  return numChannels == AE_CH_LAYOUT_2_0 && ! (passthrough &&
-    CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_AC3PASSTHROUGH) &&
-    CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_AC3TRANSCODE));
+  return m_settings.channels == AE_CH_LAYOUT_2_0 && !(m_settings.passthrough && m_settings.ac3passthrough && m_settings.ac3transcode);
 }
 
 bool CActiveAE::HasHDAudioChannelCount()
 {
-  std::string device = CSettings::GetInstance().GetString(CSettings::SETTING_AUDIOOUTPUT_AUDIODEVICE);
-  int numChannels = (m_sink.GetDeviceType(device) == AE_DEVTYPE_IEC958) ? AE_CH_LAYOUT_2_0 : CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_CHANNELS);
-  return numChannels > AE_CH_LAYOUT_5_1;
+  return m_settings.channels > AE_CH_LAYOUT_5_1;
 }
 
 bool CActiveAE::SupportsQualityLevel(enum AEQuality level)
