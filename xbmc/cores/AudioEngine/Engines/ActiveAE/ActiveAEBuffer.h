@@ -99,7 +99,7 @@ public:
   virtual ~CActiveAEBufferPoolResample();
   bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
   bool ResampleBuffers(int64_t timestamp = 0);
-  void ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality);
+  void ConfigureResampler(bool normalizelevels, AEQuality quality);
   float GetDelay();
   void Flush();
   void SetDrain(bool drain);
@@ -134,11 +134,11 @@ protected:
 class CActiveAEAudioDSPBuffer : public CActiveAEBufferPool
 {
 public:
-  CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, CActiveAudioDSP &AudioDSP);
+  CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat);
   virtual ~CActiveAEAudioDSPBuffer();
   bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
   bool ResampleBuffers(int64_t timestamp = 0);
-  void ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality);
+  void ConfigureResampler(bool normalizelevels, AEQuality quality);
   float GetDelay();
   void Flush();
   void SetDrain(bool drain);
@@ -148,6 +148,7 @@ public:
   bool DoesNormalize();
   void ForceResampler(bool force);
   AEAudioFormat m_inputFormat;
+  AEAudioFormat m_outputFormat;
   std::deque<CSampleBuffer*> m_inputSamples;
   std::deque<CSampleBuffer*> m_outputSamples;
 
@@ -168,9 +169,6 @@ protected:
   bool m_forceResampler;
   AEQuality m_resampleQuality;
   bool m_stereoUpmix;
-
-private:
-  CActiveAudioDSP &m_audioDSP;
 };
 
 class CActiveAEFilter;

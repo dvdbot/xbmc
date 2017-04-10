@@ -401,7 +401,7 @@ bool CActiveAEBufferPoolResample::ResampleBuffers(int64_t timestamp)
   return busy;
 }
 
-void CActiveAEBufferPoolResample::ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality)
+void CActiveAEBufferPoolResample::ConfigureResampler(bool normalizelevels, AEQuality quality)
 {
   bool normalize = true;
   if ((m_format.m_channelLayout.Count() < m_inputFormat.m_channelLayout.Count()) && !normalizelevels)
@@ -502,9 +502,8 @@ void CActiveAEBufferPoolResample::ForceResampler(bool force)
 // AudioDSP
 // ----------------------------------------------------------------------------------
 
-CActiveAEAudioDSPBuffer::CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat, CActiveAudioDSP &AudioDSP) :
-  CActiveAEBufferPool(outputFormat),
-  m_audioDSP(AudioDSP)
+CActiveAEAudioDSPBuffer::CActiveAEAudioDSPBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat) :
+  CActiveAEBufferPool(outputFormat)
 {
   m_inputFormat = inputFormat;
   if (m_inputFormat.m_dataFormat == AE_FMT_RAW)
@@ -756,7 +755,7 @@ bool CActiveAEAudioDSPBuffer::ResampleBuffers(int64_t timestamp)
   return busy;
 }
 
-void CActiveAEAudioDSPBuffer::ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality)
+void CActiveAEAudioDSPBuffer::ConfigureResampler(bool normalizelevels, AEQuality quality)
 {
   bool normalize = true;
   if ((m_format.m_channelLayout.Count() < m_inputFormat.m_channelLayout.Count()) && !normalizelevels)

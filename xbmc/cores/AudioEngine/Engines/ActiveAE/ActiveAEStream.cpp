@@ -530,12 +530,6 @@ bool CActiveAEStream::IsFading()
   return m_streamFading;
 }
 
-bool CActiveAEStream::HasDSP()
-{
-  //! @todo AudioDSP V2 remove this
-  return false;
-}
-
 const unsigned int CActiveAEStream::GetFrameSize() const
 {
   return m_format.m_frameSize;
@@ -574,19 +568,24 @@ void CActiveAEStream::RegisterSlave(IAEStream *slave)
 // CActiveAEStreamBuffers
 //------------------------------------------------------------------------------
 
-CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality, CActiveAudioDSP &audioDSP)
+CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality)
 {
   m_inputFormat = inputFormat;
-  m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, outputFormat, quality);
+  m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, m_outputFormat, quality);
   m_atempoBuffers = new CActiveAEBufferPoolAtempo(outputFormat);
-  m_audioDSPBuffers = new CActiveAEAudioDSPBuffer(inputFormat, outputFormat, audioDSP);
+}
+
+ActiveAE::CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat)
+{
+  m_inputFormat = inputFormat;
+  m_resampleBuffers = nullptr;
+  m_atempoBuffers = nullptr;
 }
 
 CActiveAEStreamBuffers::~CActiveAEStreamBuffers()
 {
   delete m_resampleBuffers;
   delete m_atempoBuffers;
-  delete m_audioDSPBuffers;
 }
 
 bool CActiveAEStreamBuffers::HasInputLevel(int level)
@@ -604,9 +603,6 @@ bool CActiveAEStreamBuffers::Create(unsigned int totaltime, bool remap, bool upm
     return false;
 
   if (!m_atempoBuffers->Create(totaltime))
-    return false;
-
-  if (!m_audioDSPBuffers->Create(totaltime, remap, upmix, normalize))
     return false;
 
   return true;
@@ -655,7 +651,7 @@ bool CActiveAEStreamBuffers::ProcessBuffers()
 
 void CActiveAEStreamBuffers::ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality)
 {
-  m_resampleBuffers->ConfigureResampler(normalizelevels, stereoupmix, quality);
+  m_resampleBuffers->ConfigureResampler(normalizelevels, quality);
 }
 
 float CActiveAEStreamBuffers::GetDelay()
@@ -669,7 +665,6 @@ float CActiveAEStreamBuffers::GetDelay()
 
   delay += m_resampleBuffers->GetDelay();
   delay += m_atempoBuffers->GetDelay();
-  delay += m_audioDSPBuffers->GetDelay();
 
   for (auto &buf : m_outputSamples)
   {
@@ -683,7 +678,6 @@ void CActiveAEStreamBuffers::Flush()
 {
   m_resampleBuffers->Flush();
   m_atempoBuffers->Flush();
-  m_audioDSPBuffers->Flush();
 
   while (!m_inputSamples.empty())
   {
@@ -701,7 +695,6 @@ void CActiveAEStreamBuffers::SetDrain(bool drain)
 {
   m_resampleBuffers->SetDrain(drain);
   m_atempoBuffers->SetDrain(drain);
-  m_audioDSPBuffers->SetDrain(drain);
 }
 
 bool CActiveAEStreamBuffers::IsDrained()
@@ -710,8 +703,6 @@ bool CActiveAEStreamBuffers::IsDrained()
       m_resampleBuffers->m_outputSamples.empty() &&
       m_atempoBuffers->m_inputSamples.empty() &&
       m_atempoBuffers->m_outputSamples.empty() &&
-      m_audioDSPBuffers->m_inputSamples.empty() &&
-      m_audioDSPBuffers->m_outputSamples.empty() &&
       m_inputSamples.empty() &&
       m_outputSamples.empty())
     return true;
@@ -744,7 +735,6 @@ void CActiveAEStreamBuffers::FillBuffer()
 {
   m_resampleBuffers->FillBuffer();
   m_atempoBuffers->FillBuffer();
-  m_audioDSPBuffers->FillBuffer();
 }
 
 bool CActiveAEStreamBuffers::DoesNormalize()
@@ -766,8 +756,7 @@ CActiveAEBufferPool* CActiveAEStreamBuffers::GetResampleBuffers()
 
 CActiveAEBufferPool * ActiveAE::CActiveAEStreamBuffers::GetAudioDSPBuffers()
 {
-  CActiveAEBufferPool *ret = m_audioDSPBuffers;
-  m_audioDSPBuffers = nullptr;
+  CActiveAEBufferPool *ret = nullptr;
   return ret;
 }
 
@@ -787,10 +776,6 @@ bool CActiveAEStreamBuffers::HasWork()
   if (!m_resampleBuffers->m_inputSamples.empty())
     return true;
   if (!m_resampleBuffers->m_outputSamples.empty())
-    return true;
-  if (!m_audioDSPBuffers->m_inputSamples.empty())
-    return true;
-  if (!m_audioDSPBuffers->m_outputSamples.empty())
     return true;
   if (!m_atempoBuffers->m_inputSamples.empty())
     return true;
