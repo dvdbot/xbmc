@@ -94,9 +94,7 @@ class CActiveAEStreamBuffers
 {
 public:
   CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
-  CActiveAEStreamBuffers(AEAudioFormat inputFormat);
   virtual ~CActiveAEStreamBuffers();
-  bool CreateConfigureOutput(unsigned int totaltime, bool remap, bool upmix, AEAudioFormat &outputFormat, bool normalize = true);
   bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
   void SetExtraData(int profile, enum AVMatrixEncoding matrix_encoding, enum AVAudioServiceType audio_service_type);
   bool ProcessBuffers();
@@ -124,12 +122,6 @@ public:
 protected:
   CActiveAEBufferPoolResample *m_resampleBuffers;
   CActiveAEBufferPoolAtempo *m_atempoBuffers;
-};
-
-class CActiveAEAudioDSPStream : public CActiveAEStream
-{
-public:
-  CActiveAEAudioDSPStream(AEAudioFormat *format, unsigned int streamid, CActiveAE &ae);
 };
 
 class CActiveAEStream : public IAEStream

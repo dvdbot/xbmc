@@ -575,13 +575,6 @@ CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudi
   m_atempoBuffers = new CActiveAEBufferPoolAtempo(outputFormat);
 }
 
-ActiveAE::CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat)
-{
-  m_inputFormat = inputFormat;
-  m_resampleBuffers = nullptr;
-  m_atempoBuffers = nullptr;
-}
-
 CActiveAEStreamBuffers::~CActiveAEStreamBuffers()
 {
   delete m_resampleBuffers;
