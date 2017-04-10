@@ -305,7 +305,7 @@ protected:
   bool NeedReconfigureBuffers();
   bool NeedReconfigureSink();
   void ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &settings, int *mode = NULL);
-  void Configure(AEAudioFormat *desiredFmt = NULL);
+  void Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream);
   AEAudioFormat GetInputFormat(AEAudioFormat *desiredFmt = NULL);
   CActiveAEStream* CreateStream(MsgStreamNew *streamMsg);
   void DiscardStream(CActiveAEStream *stream);
