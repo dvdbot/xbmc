@@ -216,7 +216,7 @@ double CActiveAEStream::CalcResampleRatio(double error)
   }
 
   double ret = 1.0 / clockspeed + proportional + m_resampleIntegral;
-  //CLog::Log(LOGNOTICE,"----- error: %f, rr: %f, prop: %f, int: %f",
+  //CLog::Log(LOGNOTICE,"----- error: %f, resampleRatio: %f, prop: %f, int: %f",
   //                    error, ret, proportional, m_resampleIntegral);
   return ret;
 }
@@ -568,10 +568,10 @@ void CActiveAEStream::RegisterSlave(IAEStream *slave)
 // CActiveAEStreamBuffers
 //------------------------------------------------------------------------------
 
-CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality)
+CActiveAEStreamBuffers::CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat) :
+  IActiveAEProcessingBuffer(inputFormat, outputFormat)
 {
-  m_inputFormat = inputFormat;
-  m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, m_outputFormat, quality);
+  m_resampleBuffers = new CActiveAEBufferPoolResample(inputFormat, outputFormat);
   m_atempoBuffers = new CActiveAEBufferPoolAtempo(outputFormat);
 }
 
@@ -590,9 +590,9 @@ bool CActiveAEStreamBuffers::HasInputLevel(int level)
     return false;
 }
 
-bool CActiveAEStreamBuffers::Create(unsigned int totaltime, bool remap, bool upmix, bool normalize)
+bool CActiveAEStreamBuffers::Create(unsigned int totaltime)
 {
-  if (!m_resampleBuffers->Create(totaltime, remap, upmix, normalize))
+  if (!m_resampleBuffers->Create(totaltime))
     return false;
 
   if (!m_atempoBuffers->Create(totaltime))
@@ -606,7 +606,7 @@ void CActiveAEStreamBuffers::SetExtraData(int profile, enum AVMatrixEncoding mat
   /*! @todo Implement set dsp config with new AudioDSP buffer implementation */
 }
 
-bool CActiveAEStreamBuffers::ProcessBuffers()
+bool CActiveAEStreamBuffers::ProcessBuffer()
 {
   bool busy = false;
   CSampleBuffer *buf;
@@ -642,9 +642,9 @@ bool CActiveAEStreamBuffers::ProcessBuffers()
   return busy;
 }
 
-void CActiveAEStreamBuffers::ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality)
+void CActiveAEStreamBuffers::ConfigureResampler(bool normalizelevels, bool stereoUpmix, AEQuality quality)
 {
-  m_resampleBuffers->ConfigureResampler(normalizelevels, quality);
+  m_resampleBuffers->ConfigureResampler(normalizelevels, stereoUpmix, quality);
 }
 
 float CActiveAEStreamBuffers::GetDelay()
@@ -703,23 +703,23 @@ bool CActiveAEStreamBuffers::IsDrained()
     return false;
 }
 
-void CActiveAEStreamBuffers::SetRR(double rr, double atempoThreshold)
+void CActiveAEStreamBuffers::SetResampleRatio(double resampleRatio, double atempoThreshold)
 {
-  if (fabs(rr - 1.0) < atempoThreshold)
+  if (fabs(resampleRatio - 1.0) < atempoThreshold)
   {
-    m_resampleBuffers->SetRR(rr);
+    m_resampleBuffers->SetResampleRatio(resampleRatio);
     m_atempoBuffers->SetTempo(1.0);
   }
   else
   {
-    m_resampleBuffers->SetRR(1.0);
-    m_atempoBuffers->SetTempo(1.0/rr);
+    m_resampleBuffers->SetResampleRatio(1.0);
+    m_atempoBuffers->SetTempo(1.0/resampleRatio);
   }
 }
 
-double CActiveAEStreamBuffers::GetRR()
+double CActiveAEStreamBuffers::GetResampleRatio()
 {
-  double tempo = m_resampleBuffers->GetRR();
+  double tempo = m_resampleBuffers->GetResampleRatio();
   tempo /= m_atempoBuffers->GetTempo();
   return tempo;
 }
@@ -730,26 +730,20 @@ void CActiveAEStreamBuffers::FillBuffer()
   m_atempoBuffers->FillBuffer();
 }
 
-bool CActiveAEStreamBuffers::DoesNormalize()
+bool CActiveAEStreamBuffers::GetNormalize()
 {
-  return m_resampleBuffers->DoesNormalize();
+  return m_resampleBuffers->GetNormalize();
 }
 
-void CActiveAEStreamBuffers::ForceResampler(bool force)
+void CActiveAEStreamBuffers::ForceResampler(bool forceResampler)
 {
-  m_resampleBuffers->ForceResampler(force);
+  m_resampleBuffers->ForceResampler(forceResampler);
 }
 
 CActiveAEBufferPool* CActiveAEStreamBuffers::GetResampleBuffers()
 {
   CActiveAEBufferPool *ret = m_resampleBuffers;
   m_resampleBuffers = nullptr;
-  return ret;
-}
-
-CActiveAEBufferPool * ActiveAE::CActiveAEStreamBuffers::GetAudioDSPBuffers()
-{
-  CActiveAEBufferPool *ret = nullptr;
   return ret;
 }
 

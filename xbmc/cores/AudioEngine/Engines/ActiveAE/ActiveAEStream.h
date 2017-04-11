@@ -90,34 +90,57 @@ protected:
   XbmcThreads::EndTime m_timer;
 };
 
-class CActiveAEStreamBuffers
+
+class IActiveAEProcessingBuffer
 {
 public:
-  CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
-  virtual ~CActiveAEStreamBuffers();
-  bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
-  void SetExtraData(int profile, enum AVMatrixEncoding matrix_encoding, enum AVAudioServiceType audio_service_type);
-  bool ProcessBuffers();
-  void ConfigureResampler(bool normalizelevels, bool stereoupmix, AEQuality quality);
-  bool HasInputLevel(int level);
-  float GetDelay();
-  void Flush();
-  void SetDrain(bool drain);
-  bool IsDrained();
-  void SetRR(double rr, double atempoThreshold);
-  double GetRR();
-  void FillBuffer();
-  bool DoesNormalize();
-  void ForceResampler(bool force);
-  bool HasWork();
-  CActiveAEBufferPool *GetResampleBuffers();
-  CActiveAEBufferPool *GetAudioDSPBuffers();
-  CActiveAEBufferPool *GetAtempoBuffers();
-  
+  IActiveAEProcessingBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat) : m_inputFormat(inputFormat), m_outputFormat(outputFormat) {}
+
+  virtual bool Create(unsigned int totaltime) = 0;
+  virtual void Destroy() = 0;
+  virtual bool ProcessBuffer() = 0;
+  virtual bool HasInputLevel(int level) = 0;
+  virtual float GetDelay() = 0;
+  virtual void Flush() = 0;
+  virtual void SetDrain(bool drain) = 0;
+  virtual bool IsDrained() = 0;
+  virtual void FillBuffer() = 0;
+  virtual bool HasWork() = 0;
+
   AEAudioFormat m_inputFormat;
   AEAudioFormat m_outputFormat;
   std::deque<CSampleBuffer*> m_outputSamples;
   std::deque<CSampleBuffer*> m_inputSamples;
+};
+
+
+class CActiveAEStreamBuffers : public IActiveAEProcessingBuffer
+{
+public:
+  CActiveAEStreamBuffers(AEAudioFormat inputFormat, AEAudioFormat outputFormat);
+  virtual ~CActiveAEStreamBuffers();
+
+  // IActiveAEProcessingBuffer interface methods
+  virtual bool Create(unsigned int totaltime) override;
+  virtual void Destroy() override {}
+  virtual bool ProcessBuffer() override;
+  virtual bool HasInputLevel(int level) override;
+  virtual float GetDelay() override;
+  virtual void Flush() override;
+  virtual void SetDrain(bool drain) override;
+  virtual bool IsDrained() override;
+  virtual void FillBuffer() override;
+  virtual bool HasWork() override;
+  
+  // specific methods
+  bool GetNormalize();
+  void SetResampleRatio(double resampleRatio, double atempoThreshold);
+  double GetResampleRatio();
+  void ConfigureResampler(bool normalize, bool stereoUpmix, AEQuality quality);
+  void SetExtraData(int profile, enum AVMatrixEncoding matrixEncoding, enum AVAudioServiceType audioServiceType);
+  void ForceResampler(bool forceResampler);
+  CActiveAEBufferPool *GetResampleBuffers();
+  CActiveAEBufferPool *GetAtempoBuffers();
 
 protected:
   CActiveAEBufferPoolResample *m_resampleBuffers;
@@ -140,6 +163,7 @@ protected:
   double CalcResampleRatio(double error);
 
 public:
+  // public interface methods
   virtual unsigned int GetSpace();
   virtual unsigned int AddData(const uint8_t* const *data, unsigned int offset, unsigned int frames, double pts = 0.0) override;
   virtual double GetDelay() override;
@@ -207,8 +231,10 @@ protected:
   std::atomic_int m_errorInterval;
 
   // only accessed by engine
-  CActiveAEBufferPool *m_inputBuffers;
+  IActiveAEProcessingBuffer *m_processingBuffer;
   CActiveAEStreamBuffers *m_processingBuffers;
+
+  CActiveAEBufferPool *m_inputBuffers;
   std::deque<CSampleBuffer*> m_processingSamples;
   CActiveAEDataProtocol *m_streamPort;
   CEvent m_inMsgEvent;

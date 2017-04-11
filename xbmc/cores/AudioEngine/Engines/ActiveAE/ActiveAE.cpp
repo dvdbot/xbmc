@@ -117,7 +117,7 @@ void CEngineStats::UpdateStream(CActiveAEStream *stream)
       str.m_syncError = stream->m_syncError.GetLastError(str.m_errorTime);
       if (stream->m_processingBuffers)
       {
-        str.m_resampleRatio = stream->m_processingBuffers->GetRR();
+        str.m_resampleRatio = stream->m_processingBuffers->GetResampleRatio();
         delay += stream->m_processingBuffers->GetDelay();
       }
       else
@@ -633,7 +633,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
           par = (MsgStreamParameter*)msg->data;
           if (par->stream->m_processingBuffers)
           {
-            par->stream->m_processingBuffers->SetRR(par->parameter.double_par, m_settings.atempoThreshold);
+            par->stream->m_processingBuffers->SetResampleRatio(par->parameter.double_par, m_settings.atempoThreshold);
           }
           return;
         case CActiveAEControlProtocol::STREAMFFMPEGINFO:
@@ -1133,17 +1133,20 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
           stream->m_processingBuffers->Flush();
           m_discardBufferPools.push_back(stream->m_processingBuffers->GetResampleBuffers());
           m_discardBufferPools.push_back(stream->m_processingBuffers->GetAtempoBuffers());
-          m_discardBufferPools.push_back(stream->m_processingBuffers->GetAudioDSPBuffers());
           delete stream->m_processingBuffers;
           stream->m_processingBuffers = nullptr;
         }
         if (!stream->m_processingBuffers)
         {
-          stream->m_processingBuffers = new CActiveAEStreamBuffers(stream->m_inputBuffers->m_format, audioDSPOutputFormat, m_settings.resampleQuality);
-          stream->m_processingBuffers->ForceResampler(stream->m_forceResampler);
+          stream->m_processingBuffers = new CActiveAEStreamBuffers(stream->m_inputBuffers->m_format, audioDSPOutputFormat);
+          
+          // set stream infos
           stream->m_processingBuffers->SetExtraData(stream->m_profile, stream->m_matrixEncoding, stream->m_audioServiceType);
 
-          stream->m_processingBuffers->Create(MAX_CACHE_LEVEL * 1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
+          // set resampler options
+          stream->m_processingBuffers->ConfigureResampler(m_settings.normalizelevels, m_settings.stereoupmix, m_settings.resampleQuality);
+          stream->m_processingBuffers->ForceResampler(stream->m_forceResampler);
+          stream->m_processingBuffers->Create(MAX_CACHE_LEVEL * 1000);
         }
       }
 
@@ -1174,17 +1177,18 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
           (*it)->m_processingBuffers->Flush();
           m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
           m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
-          m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
           delete (*it)->m_processingBuffers;
           (*it)->m_processingBuffers = nullptr;
         }
         if (!(*it)->m_processingBuffers)
         {
-          (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, audioDSPOutputFormat, m_settings.resampleQuality);
+          (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, audioDSPOutputFormat);
+
+          stream->m_processingBuffers->ConfigureResampler(m_settings.normalizelevels, m_settings.stereoupmix, m_settings.resampleQuality);
           (*it)->m_processingBuffers->ForceResampler((*it)->m_forceResampler);
           (*it)->m_processingBuffers->SetExtraData((*it)->m_profile, (*it)->m_matrixEncoding, (*it)->m_audioServiceType);
 
-          (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL * 1000, false, m_settings.stereoupmix, m_settings.normalizelevels);
+          (*it)->m_processingBuffers->Create(MAX_CACHE_LEVEL * 1000);
         }
       }
       if (m_mode == MODE_TRANSCODE || m_streams.size() > 1)
@@ -1221,9 +1225,10 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
         m_vizBuffersInput->Create(2048 * m_internalFormat.m_sampleRate);
 
         // resample buffers
-        m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat, m_settings.resampleQuality);
+        m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat);
+        m_vizBuffers->ConfigureResampler(true, false, m_settings.resampleQuality);
         //! @todo use cache of sync + water level
-        m_vizBuffers->Create(2048 * vizFormat.m_sampleRate, false, false);
+        m_vizBuffers->Create(2048 * vizFormat.m_sampleRate);
         m_vizInitialized = false;
       }
     }
@@ -1496,8 +1501,9 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
   }
   if (!m_sinkBuffers)
   {
-    m_sinkBuffers = new CActiveAEBufferPoolResample(audioDSPOutputFormat, m_sinkFormat, m_settings.resampleQuality);
-    m_sinkBuffers->Create(MAX_WATER_LEVEL*1000, false, false, true);
+    m_sinkBuffers = new CActiveAEBufferPoolResample(audioDSPOutputFormat, m_sinkFormat);
+    m_sinkBuffers->ConfigureResampler(true, false, m_settings.resampleQuality);
+    m_sinkBuffers->Create(MAX_WATER_LEVEL*1000);
   }
 
   // reset gui sounds
@@ -1594,7 +1600,6 @@ void CActiveAE::DiscardStream(CActiveAEStream *stream)
         (*it)->m_processingBuffers->Flush();
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
         m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
-        m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAudioDSPBuffers());
       }
       delete (*it)->m_processingBuffers;
       CLog::Log(LOGDEBUG, "CActiveAE::DiscardStream - audio stream deleted");
@@ -1666,20 +1671,26 @@ void CActiveAE::ClearDiscardedBuffers()
   auto it = m_discardBufferPools.begin();
   while (it != m_discardBufferPools.end())
   {
-    CActiveAEBufferPoolResample *rbuf = dynamic_cast<CActiveAEBufferPoolResample*>(*it);
-    if (rbuf)
+    if (*it)
     {
-      rbuf->Flush();
+      CActiveAEBufferPoolResample *rbuf = dynamic_cast<CActiveAEBufferPoolResample*>(*it);
+      if (rbuf)
+      {
+        rbuf->Flush();
+      }
+
+      // if all buffers have returned, we can delete the buffer pool
+      if ((*it)->m_allSamples.size() == (*it)->m_freeSamples.size())
+      {
+        delete (*it);
+        CLog::Log(LOGDEBUG, "CActiveAE::ClearDiscardedBuffers - buffer pool deleted");
+        it = m_discardBufferPools.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
     }
-    // if all buffers have returned, we can delete the buffer pool
-    if ((*it)->m_allSamples.size() == (*it)->m_freeSamples.size())
-    {
-      delete (*it);
-      CLog::Log(LOGDEBUG, "CActiveAE::ClearDiscardedBuffers - buffer pool deleted");
-      it = m_discardBufferPools.erase(it);
-    }
-    else
-      ++it;
   }
 }
 
@@ -1979,7 +1990,7 @@ bool CActiveAE::RunStages()
   for (it = m_streams.begin(); it != m_streams.end(); ++it)
   {
     if ((*it)->m_processingBuffers && !(*it)->m_paused)
-      busy = (*it)->m_processingBuffers->ProcessBuffers();
+      busy = (*it)->m_processingBuffers->ProcessBuffer();
 
     if ((*it)->m_streamIsBuffering &&
         (*it)->m_processingBuffers &&
@@ -2147,7 +2158,7 @@ bool CActiveAE::RunStages()
             // turned off downmix normalization,
             // or if sink format is float (in order to prevent from clipping)
             // we need to run on a per sample basis
-            if ((*it)->m_amplify != 1.0 || !(*it)->m_processingBuffers->DoesNormalize() || (m_sinkFormat.m_dataFormat == AE_FMT_FLOAT))
+            if ((*it)->m_amplify != 1.0 || !(*it)->m_processingBuffers->GetNormalize() || (m_sinkFormat.m_dataFormat == AE_FMT_FLOAT))
             {
               nb_floats = out->pkt->config.channels / out->pkt->planes;
               nb_loops = out->pkt->nb_samples;
@@ -2214,7 +2225,7 @@ bool CActiveAE::RunStages()
 
             // for streams amplification of turned off downmix normalization
             // we need to run on a per sample basis
-            if ((*it)->m_amplify != 1.0 || !(*it)->m_processingBuffers->DoesNormalize())
+            if ((*it)->m_amplify != 1.0 || !(*it)->m_processingBuffers->GetNormalize())
             {
               nb_floats = out->pkt->config.channels / out->pkt->planes;
               nb_loops = out->pkt->nb_samples;
@@ -2435,7 +2446,7 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
   {
     stream->m_syncState = CAESyncInfo::AESyncState::SYNC_MUTE;
     stream->m_syncError.Flush(100);
-    stream->m_processingBuffers->SetRR(1.0, m_settings.atempoThreshold);
+    stream->m_processingBuffers->SetResampleRatio(1.0, m_settings.atempoThreshold);
     stream->m_resampleIntegral = 0;
     CLog::Log(LOGDEBUG,"ActiveAE - start sync of audio stream");
   }
@@ -2459,7 +2470,7 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
   if (newerror && fabs(error) > threshold && stream->m_syncState == CAESyncInfo::AESyncState::SYNC_INSYNC)
   {
     stream->m_syncState = CAESyncInfo::AESyncState::SYNC_ADJUST;
-    stream->m_processingBuffers->SetRR(1.0, m_settings.atempoThreshold);
+    stream->m_processingBuffers->SetResampleRatio(1.0, m_settings.atempoThreshold);
     stream->m_resampleIntegral = 0;
     stream->m_lastSyncError = error;
     CLog::Log(LOGDEBUG,"ActiveAE::SyncStream - average error %f above threshold of %f", error, threshold);
@@ -2583,7 +2594,7 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
         stream->m_syncState = CAESyncInfo::AESyncState::SYNC_INSYNC;
         stream->m_syncError.Flush(1000);
         stream->m_resampleIntegral = 0;
-        stream->m_processingBuffers->SetRR(1.0, m_settings.atempoThreshold);
+        stream->m_processingBuffers->SetResampleRatio(1.0, m_settings.atempoThreshold);
         CLog::Log(LOGDEBUG,"ActiveAE::SyncStream - average error %f below threshold of %f", error, 30.0);
       }
     }
@@ -2598,12 +2609,12 @@ CSampleBuffer* CActiveAE::SyncStream(CActiveAEStream *stream)
   {
     if (stream->m_processingBuffers)
     {
-      stream->m_processingBuffers->SetRR(stream->CalcResampleRatio(error), m_settings.atempoThreshold);
+      stream->m_processingBuffers->SetResampleRatio(stream->CalcResampleRatio(error), m_settings.atempoThreshold);
     }
   }
   else if (stream->m_processingBuffers)
   {
-    stream->m_processingBuffers->SetRR(1.0, m_settings.atempoThreshold);
+    stream->m_processingBuffers->SetResampleRatio(1.0, m_settings.atempoThreshold);
   }
   return ret;
 }

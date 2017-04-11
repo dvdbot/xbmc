@@ -148,7 +148,7 @@ bool CActiveAEBufferPool::Create(unsigned int totaltime)
 // Resample
 // ----------------------------------------------------------------------------------
 
-CActiveAEBufferPoolResample::CActiveAEBufferPoolResample(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality)
+CActiveAEBufferPoolResample::CActiveAEBufferPoolResample(AEAudioFormat inputFormat, AEAudioFormat outputFormat)
   : CActiveAEBufferPool(outputFormat)
 {
   m_inputFormat = inputFormat;
@@ -165,12 +165,13 @@ CActiveAEBufferPoolResample::CActiveAEBufferPoolResample(AEAudioFormat inputForm
   m_empty = true;
   m_procSample = nullptr;
   m_resampleRatio = 1.0;
-  m_resampleQuality = quality;
+  m_resampleQuality = AE_QUALITY_UNKNOWN;
   m_forceResampler = false;
   m_stereoUpmix = false;
   m_normalize = true;
   m_changeResampler = false;
   m_lastSamplePts = 0;
+  m_remap = false;
 }
 
 CActiveAEBufferPoolResample::~CActiveAEBufferPoolResample()
@@ -180,46 +181,27 @@ CActiveAEBufferPoolResample::~CActiveAEBufferPoolResample()
   delete m_resampler;
 }
 
-bool CActiveAEBufferPoolResample::Create(unsigned int totaltime, bool remap, bool upmix, bool normalize)
+void CActiveAEBufferPoolResample::RemapChannelLayout(bool remap)
 {
-  CActiveAEBufferPool::Create(totaltime);
-
   m_remap = remap;
-  m_stereoUpmix = upmix;
+}
 
-  m_normalize = true;
-  if ((m_format.m_channelLayout.Count() < m_inputFormat.m_channelLayout.Count() && !normalize))
-    m_normalize = false;
+bool CActiveAEBufferPoolResample::Create(unsigned int totaltime)
+{
+  if (m_resampleQuality == AE_QUALITY_UNKNOWN)
+  {
+    CLog::Log(LOGERROR, "%s - Invalid resampling quality! Call  CActiveAEBufferPoolResample::ConfigureResampler(...) first.", __FUNCTION__);
+    return false;
+  }
+
+  CActiveAEBufferPool::Create(totaltime);
 
   if (m_inputFormat.m_channelLayout != m_format.m_channelLayout ||
       m_inputFormat.m_sampleRate != m_format.m_sampleRate ||
       m_inputFormat.m_dataFormat != m_format.m_dataFormat ||
       m_changeResampler)
   {
-    if (!m_resampler)
-    {
-      m_resampler = CAEResampleFactory::Create();
-    }
-
-    m_resampler->Init(CAEUtil::GetAVChannelLayout(m_format.m_channelLayout),
-                                m_format.m_channelLayout.Count(),
-                                m_format.m_sampleRate,
-                                CAEUtil::GetAVSampleFormat(m_format.m_dataFormat),
-                                CAEUtil::DataFormatToUsedBits(m_format.m_dataFormat),
-                                CAEUtil::DataFormatToDitherBits(m_format.m_dataFormat),
-                                CAEUtil::GetAVChannelLayout(m_inputFormat.m_channelLayout),
-                                m_inputFormat.m_channelLayout.Count(),
-                                m_inputFormat.m_sampleRate,
-                                CAEUtil::GetAVSampleFormat(m_inputFormat.m_dataFormat),
-                                CAEUtil::DataFormatToUsedBits(m_inputFormat.m_dataFormat),
-                                CAEUtil::DataFormatToDitherBits(m_inputFormat.m_dataFormat),
-                                upmix,
-                                m_normalize,
-                                remap ? &m_format.m_channelLayout : NULL,
-                                m_resampleQuality,
-                                m_forceResampler);
-
-    m_changeResampler = false;
+    ChangeResampler();
   }
   return true;
 }
@@ -401,7 +383,7 @@ bool CActiveAEBufferPoolResample::ResampleBuffers(int64_t timestamp)
   return busy;
 }
 
-void CActiveAEBufferPoolResample::ConfigureResampler(bool normalizelevels, AEQuality quality)
+void CActiveAEBufferPoolResample::ConfigureResampler(bool normalizelevels, bool stereoUpmix, AEQuality quality)
 {
   bool normalize = true;
   if ((m_format.m_channelLayout.Count() < m_inputFormat.m_channelLayout.Count()) && !normalizelevels)
@@ -409,7 +391,7 @@ void CActiveAEBufferPoolResample::ConfigureResampler(bool normalizelevels, AEQua
     normalize = false;
   }
 
-  if (m_normalize != normalize || m_resampleQuality != quality)
+  if (m_normalize != normalize || m_resampleQuality != quality || m_stereoUpmix != stereoUpmix)
   {
     m_changeResampler = true;
   }
@@ -471,12 +453,12 @@ void CActiveAEBufferPoolResample::SetDrain(bool drain)
   m_drain = drain;
 }
 
-void CActiveAEBufferPoolResample::SetRR(double rr)
+void CActiveAEBufferPoolResample::SetResampleRatio(double resampleRatio)
 {
-  m_resampleRatio = rr;
+  m_resampleRatio = resampleRatio;
 }
 
-double CActiveAEBufferPoolResample::GetRR()
+double CActiveAEBufferPoolResample::GetResampleRatio()
 {
   return m_resampleRatio;
 }
@@ -486,14 +468,14 @@ void CActiveAEBufferPoolResample::FillBuffer()
   m_fillPackets = true;
 }
 
-bool CActiveAEBufferPoolResample::DoesNormalize()
+bool CActiveAEBufferPoolResample::GetNormalize()
 {
   return m_normalize;
 }
 
-void CActiveAEBufferPoolResample::ForceResampler(bool force)
+void CActiveAEBufferPoolResample::ForceResampler(bool forceResampler)
 {
-  m_forceResampler = force;
+  m_forceResampler = forceResampler;
 }
 
 
@@ -840,7 +822,7 @@ void CActiveAEAudioDSPBuffer::FillBuffer()
   m_fillPackets = true;
 }
 
-bool CActiveAEAudioDSPBuffer::DoesNormalize()
+bool CActiveAEAudioDSPBuffer::GetNormalize()
 {
   return m_normalize;
 }

@@ -95,35 +95,49 @@ class IAEResample;
 class CActiveAEBufferPoolResample : public CActiveAEBufferPool
 {
 public:
-  CActiveAEBufferPoolResample(AEAudioFormat inputFormat, AEAudioFormat outputFormat, AEQuality quality);
+  CActiveAEBufferPoolResample(AEAudioFormat inputFormat, AEAudioFormat outputFormat);
   virtual ~CActiveAEBufferPoolResample();
-  bool Create(unsigned int totaltime, bool remap, bool upmix, bool normalize = true);
+  
+  // generic methods
+  bool Create(unsigned int totaltime);
   bool ResampleBuffers(int64_t timestamp = 0);
-  void ConfigureResampler(bool normalizelevels, AEQuality quality);
   float GetDelay();
   void Flush();
   void SetDrain(bool drain);
-  void SetRR(double rr);
-  double GetRR();
   void FillBuffer();
-  bool DoesNormalize();
-  void ForceResampler(bool force);
+  
+  // specific methods
+  void SetResampleRatio(double resampleRatio);
+  double GetResampleRatio();
+
+  void ConfigureResampler(bool normalizelevels, bool stereoUpmix, AEQuality quality);
+  void RemapChannelLayout(bool remap);
+  bool GetNormalize();
+  void ForceResampler(bool forceResampler);
+  
+  // buffer input format
   AEAudioFormat m_inputFormat;
+  
+  // public buffers
   std::deque<CSampleBuffer*> m_inputSamples;
   std::deque<CSampleBuffer*> m_outputSamples;
 
 protected:
   void ChangeResampler();
 
-  uint8_t *m_planes[16];
+  uint8_t *m_planes[16];  //! @todo use std::vector<uint8_t*>!
   bool m_empty;
   bool m_drain;
   int64_t m_lastSamplePts;
-  bool m_remap;
   CSampleBuffer *m_procSample;
-  IAEResample *m_resampler;
-  double m_resampleRatio;
   bool m_fillPackets;
+  
+  // resampler (processing node)
+  IAEResample *m_resampler;
+  
+  // resampler options
+  bool m_remap;
+  double m_resampleRatio;
   bool m_normalize;
   bool m_changeResampler;
   bool m_forceResampler;
@@ -145,7 +159,7 @@ public:
   void SetRR(double rr);
   double GetRR();
   void FillBuffer();
-  bool DoesNormalize();
+  bool GetNormalize();
   void ForceResampler(bool force);
   AEAudioFormat m_inputFormat;
   AEAudioFormat m_outputFormat;
