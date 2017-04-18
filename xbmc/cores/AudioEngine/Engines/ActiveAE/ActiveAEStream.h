@@ -94,7 +94,7 @@ protected:
 class IActiveAEProcessingBuffer
 {
 public:
-  IActiveAEProcessingBuffer(AEAudioFormat inputFormat, AEAudioFormat outputFormat) : m_inputFormat(inputFormat), m_outputFormat(outputFormat) {}
+  IActiveAEProcessingBuffer(const AEAudioFormat &inputFormat, const AEAudioFormat &outputFormat) : m_inputFormat(inputFormat), m_outputFormat(outputFormat) {}
 
   virtual bool Create(unsigned int totaltime) = 0;
   virtual void Destroy() = 0;
@@ -106,6 +106,7 @@ public:
   virtual bool IsDrained() = 0;
   virtual void FillBuffer() = 0;
   virtual bool HasWork() = 0;
+  virtual void SetOutputSampleRate(unsigned int OutputSampleRate) = 0;
 
   AEAudioFormat m_inputFormat;
   AEAudioFormat m_outputFormat;
@@ -131,6 +132,7 @@ public:
   virtual bool IsDrained() override;
   virtual void FillBuffer() override;
   virtual bool HasWork() override;
+  virtual void SetOutputSampleRate(unsigned int OutputSampleRate) override;
   
   // specific methods
   bool GetNormalize();
@@ -231,8 +233,7 @@ protected:
   std::atomic_int m_errorInterval;
 
   // only accessed by engine
-  IActiveAEProcessingBuffer *m_processingBuffer;
-  CActiveAEStreamBuffers *m_processingBuffers;
+  IActiveAEProcessingBuffer *m_processingBuffers;
 
   CActiveAEBufferPool *m_inputBuffers;
   std::deque<CSampleBuffer*> m_processingSamples;

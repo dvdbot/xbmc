@@ -771,3 +771,8 @@ bool CActiveAEStreamBuffers::HasWork()
 
   return false;
 }
+
+void CActiveAEStreamBuffers::SetOutputSampleRate(unsigned int OutputSampleRate)
+{
+  m_resampleBuffers->SetOutputSampleRate(OutputSampleRate);
+}

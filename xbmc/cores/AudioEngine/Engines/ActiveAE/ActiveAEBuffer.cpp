@@ -165,7 +165,7 @@ CActiveAEBufferPoolResample::CActiveAEBufferPoolResample(AEAudioFormat inputForm
   m_empty = true;
   m_procSample = nullptr;
   m_resampleRatio = 1.0;
-  m_resampleQuality = AE_QUALITY_UNKNOWN;
+  m_resampleQuality = AE_QUALITY_HIGH;//AE_QUALITY_UNKNOWN;
   m_forceResampler = false;
   m_stereoUpmix = false;
   m_normalize = true;
@@ -451,6 +451,12 @@ void CActiveAEBufferPoolResample::Flush()
 void CActiveAEBufferPoolResample::SetDrain(bool drain)
 {
   m_drain = drain;
+}
+
+void CActiveAEBufferPoolResample::SetOutputSampleRate(unsigned int OutputSampleRate)
+{
+  m_resampleRatio = (double)m_inputFormat.m_sampleRate / OutputSampleRate;
+  m_format.m_sampleRate = OutputSampleRate;
 }
 
 void CActiveAEBufferPoolResample::SetResampleRatio(double resampleRatio)

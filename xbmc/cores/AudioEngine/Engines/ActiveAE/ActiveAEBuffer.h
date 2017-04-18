@@ -107,6 +107,7 @@ public:
   void FillBuffer();
   
   // specific methods
+  void SetOutputSampleRate(unsigned int OutputSampleRate);
   void SetResampleRatio(double resampleRatio);
   double GetResampleRatio();
 
