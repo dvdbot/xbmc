@@ -234,12 +234,12 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           switch (signal)
           {
             case CAudioDSPControlProtocol::INIT:
-              if (!m_databaseDSP.Open())
-              {
-                msg->Reply(CAudioDSPControlProtocol::ERR);
-                CLog::Log(LOGERROR, "%s during opening database an error occured!", __FUNCTION__);
-                return;
-              }
+              //if (!m_databaseDSP.Open())
+              //{
+              //  msg->Reply(CAudioDSPControlProtocol::ERR);
+              //  CLog::Log(LOGERROR, "%s during opening database an error occured!", __FUNCTION__);
+              //  return;
+              //}
 
               //set<string> settingSet;
               //settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPADDONSENABLED);

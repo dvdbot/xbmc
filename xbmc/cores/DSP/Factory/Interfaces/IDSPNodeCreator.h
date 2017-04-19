@@ -33,17 +33,15 @@ public:
   virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
 };
 
-
-template<class T>
-class TDSPNodeCreator : public IDSPNodeCreator
+class IDSPNodeCreatorFactory
 {
 public:
-  operator IDSPNodeCreator::NodeCreatorCallback()
-  {
-    return CreateCallback;
-  }
+  virtual IDSPNodeCreator* CreateCreator() = 0;
+};
 
-private:
-  static  IDSPNodeCreator* CreateCallback() { return dynamic_cast<IDSPNodeCreator*>(new T); }
+template<class T>
+class TDSPNodeCreator : public IDSPNodeCreator, public IDSPNodeCreatorFactory
+{
+  virtual IDSPNodeCreator* CreateCreator() override { return dynamic_cast<IDSPNodeCreator*>(new T); }
 };
 }

@@ -25,19 +25,19 @@
 
 namespace ActiveAE
 {
-class CAudioDSPAudioConverterCreator : public DSP::IDSPNodeCreator
+class CAudioDSPAudioConverterCreator : public DSP::IDSPNodeCreator, public DSP::IDSPNodeCreatorFactory
 {
 public:
-  CAudioDSPAudioConverterCreator(CAudioConverterModel *Model);
+  CAudioDSPAudioConverterCreator(CAudioConverterModel &Model);
 
   virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
   virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
 
-  operator IDSPNodeCreator::NodeCreatorCallback() { return CreateCallback; }
-
   static CAudioConverterModel *m_staticModel;
 private:
   CAudioConverterModel &m_model;
-  static  IDSPNodeCreator* CreateCallback() { return dynamic_cast<IDSPNodeCreator*>(new CAudioDSPAudioConverterCreator(m_staticModel)); }
+
+  // creator factory interface
+  virtual IDSPNodeCreator* CreateCreator() override;
 };
 }

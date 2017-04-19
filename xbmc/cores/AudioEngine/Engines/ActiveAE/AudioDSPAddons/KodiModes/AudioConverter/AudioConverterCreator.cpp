@@ -27,10 +27,8 @@ using namespace DSP;
 using namespace DSP::AUDIO;
 using namespace ActiveAE;
 
-CAudioConverterModel *CAudioDSPAudioConverterCreator::m_staticModel = nullptr;
-
-CAudioDSPAudioConverterCreator::CAudioDSPAudioConverterCreator(CAudioConverterModel *Model) :
-  m_model(*Model)
+CAudioDSPAudioConverterCreator::CAudioDSPAudioConverterCreator(CAudioConverterModel &Model) :
+  m_model(Model)
 {
 }
 
@@ -62,4 +60,9 @@ DSPErrorCode_t CAudioDSPAudioConverterCreator::DestroyNode(DSP::IDSPNode *&Node)
   }
 
   return err;
+}
+
+IDSPNodeCreator* CAudioDSPAudioConverterCreator::CreateCreator()
+{
+  return dynamic_cast<IDSPNodeCreator*>(new CAudioDSPAudioConverterCreator(m_model));
 }

@@ -38,7 +38,7 @@ CDSPNodeModel::~CDSPNodeModel()
   m_Nodes.clear();
 }
 
-DSPErrorCode_t CDSPNodeModel::RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreator* (*NodeCreatorFactory)())
+DSPErrorCode_t CDSPNodeModel::RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNodeCreatorFactory &Factory)
 {
   CSingleLock lock(m_Mutex);
 
@@ -67,7 +67,7 @@ DSPErrorCode_t CDSPNodeModel::RegisterNode(const CDSPNodeInfoQuery &Node, IDSPNo
     return DSP_ERR_INVALID_INPUT;
   }
 
-  IDSPNodeCreator *creator = NodeCreatorFactory();
+  IDSPNodeCreator *creator = Factory.CreateCreator();
   if (!creator)
   {
     return DSP_ERR_INVALID_INPUT;
