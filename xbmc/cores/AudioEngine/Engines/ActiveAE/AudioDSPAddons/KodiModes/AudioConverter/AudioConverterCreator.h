@@ -21,15 +21,23 @@
 
 
 #include "cores/DSP/Factory/Interfaces/IDSPNodeCreator.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
 
 namespace ActiveAE
 {
-class CAudioDSPAudioConverterCreator : public DSP::TDSPNodeCreator<CAudioDSPAudioConverterCreator>
+class CAudioDSPAudioConverterCreator : public DSP::IDSPNodeCreator
 {
 public:
-  CAudioDSPAudioConverterCreator();
+  CAudioDSPAudioConverterCreator(CAudioConverterModel *Model);
 
   virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
   virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
+
+  operator IDSPNodeCreator::NodeCreatorCallback() { return CreateCallback; }
+
+  static CAudioConverterModel *m_staticModel;
+private:
+  CAudioConverterModel &m_model;
+  static  IDSPNodeCreator* CreateCallback() { return dynamic_cast<IDSPNodeCreator*>(new CAudioDSPAudioConverterCreator(m_staticModel)); }
 };
 }

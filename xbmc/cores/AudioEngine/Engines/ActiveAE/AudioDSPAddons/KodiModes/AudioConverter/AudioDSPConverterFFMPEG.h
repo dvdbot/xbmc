@@ -25,6 +25,7 @@
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 #include "cores/DSP/Typedefs/DSPTypedefs.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
 
 extern "C" {
 #include "libavutil/samplefmt.h"
@@ -37,7 +38,7 @@ namespace ActiveAE
 class CAudioDSPConverterFFMPEG : public DSP::AUDIO::IADSPNode
 {
 public:
-  CAudioDSPConverterFFMPEG(uint64_t ID);
+  CAudioDSPConverterFFMPEG(uint64_t ID, CAudioConverterModel &Model);
   virtual ~CAudioDSPConverterFFMPEG();
 
 protected:
@@ -73,6 +74,8 @@ private:
   int m_dst_dither_bits;
   SwrContext *m_pContext;
   double m_rematrix[AE_CH_MAX][AE_CH_MAX];
+  
+  CAudioConverterModel &m_model;
 };
 
 }

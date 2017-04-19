@@ -20,6 +20,7 @@
 
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterFFMPEG.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "utils/log.h"
 
@@ -34,8 +35,9 @@ using namespace DSP;
 using namespace DSP::AUDIO;
 
 
-CAudioDSPConverterFFMPEG::CAudioDSPConverterFFMPEG(uint64_t ID) :
-  IADSPNode("CAudioDSPConverterFFMPEG", ID, ADSP_DataFormatFlagFloat)
+CAudioDSPConverterFFMPEG::CAudioDSPConverterFFMPEG(uint64_t ID, CAudioConverterModel &Model) :
+  IADSPNode("CAudioDSPConverterFFMPEG", ID, ADSP_DataFormatFlagFloat),
+  m_model(Model)
 {
   m_pContext = NULL;
   m_doesResample = false;
@@ -50,7 +52,6 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
 {
   AEAudioFormat m_format;
   AEAudioFormat m_inputFormat;
-  AEQuality resampleQuality;
   CAEChannelInfo remap;
   CAEChannelInfo *pRemapLayout = &remap;
   bool forceResampler;
@@ -70,7 +71,6 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
   bool upmix = upmix;
   bool normalize = normalize;
   CAEChannelInfo *remapLayout = &pRemapLayout ? &m_format.m_channelLayout : NULL;
-  AEQuality quality = resampleQuality;
   bool force_resample = forceResampler;
   
   if (!Init(dst_chan_layout,
@@ -88,7 +88,7 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
             upmix,
             normalize,
             remapLayout,
-            quality,
+            m_model.ResampleQuality(),
             force_resample))
   {
     return DSP_ERR_INVALID_INPUT;

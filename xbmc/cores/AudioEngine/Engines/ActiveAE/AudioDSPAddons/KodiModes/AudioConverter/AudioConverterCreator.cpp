@@ -27,18 +27,22 @@ using namespace DSP;
 using namespace DSP::AUDIO;
 using namespace ActiveAE;
 
+CAudioConverterModel *CAudioDSPAudioConverterCreator::m_staticModel = nullptr;
 
-CAudioDSPAudioConverterCreator::CAudioDSPAudioConverterCreator()
+CAudioDSPAudioConverterCreator::CAudioDSPAudioConverterCreator(CAudioConverterModel *Model) :
+  m_model(*Model)
 {
 }
 
 IDSPNode *CAudioDSPAudioConverterCreator::InstantiateNode(uint64_t ID)
 {
   //! @todo add Raspberry PI resampler implementation
-  CAudioDSPConverterFFMPEG *converter = new CAudioDSPConverterFFMPEG(ID);
+  CAudioDSPConverterFFMPEG *converter = new CAudioDSPConverterFFMPEG(ID, m_model);
+  m_model.Register(converter);
   IDSPNode *node = dynamic_cast<IDSPNode*>(converter);
   if (!node)
   {
+    m_model.Deregister(converter);
     delete converter;
   }
 
@@ -50,6 +54,7 @@ DSPErrorCode_t CAudioDSPAudioConverterCreator::DestroyNode(DSP::IDSPNode *&Node)
   DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
   if (Node)
   {
+    m_model.Deregister(dynamic_cast<CAudioDSPConverterFFMPEG*>(Node));
     err = Node->Destroy();
 
     delete Node;

@@ -20,21 +20,35 @@
  */
 
 
-#include "cores/DSP/Models/DSPNodeModel.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
-
-#include <vector>
+#include "threads/SingleLock.h"
+#include "cores/AudioEngine/Interfaces/AE.h"
 
 namespace ActiveAE
 {
-class CAudioDSPKodiModes
+class CAudioDSPConverterFFMPEG;
+
+class CAudioConverterModel
 {
 public:
-  CAudioDSPKodiModes();
+  CAudioConverterModel();
+  ~CAudioConverterModel();
 
-  void PrepareModes(DSP::CDSPNodeModel &Model);
-  void ReleaseAllModes(DSP::CDSPNodeModel &Model);
+  bool StereoUpmix();
+  void SetStereoUpmix(bool StereoUpmix);
+  bool NormalizeLevels();
+  void SetNormalizeLevels(bool NormalizeLevels);
+  AEQuality ResampleQuality();
+  void SetResampleQuality(AEQuality ResampleQuality);
 
-  CAudioConverterModel m_audioConverterModel;
+  void Register(CAudioDSPConverterFFMPEG *Converter);
+
+  void Deregister(CAudioDSPConverterFFMPEG *Converter);
+
+protected:
+  CCriticalSection m_Lock;
+
+  bool m_stereoupmix;
+  bool m_normalizeLevels;
+  AEQuality m_resampleQuality;
 };
 }

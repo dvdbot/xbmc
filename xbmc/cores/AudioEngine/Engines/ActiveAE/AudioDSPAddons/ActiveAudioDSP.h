@@ -135,6 +135,9 @@ public:
   virtual void RegisterAddon(const std::string &Id, bool restart = false, bool update = false) override;
   virtual void UnregisterAddon(const std::string &Id) override;
 
+  // internal Kodi AudioDSP modes
+  CAudioDSPKodiModes m_KodiModes;
+
 protected:
   // ports
   CAudioDSPControlProtocol m_ControlPort;
@@ -165,8 +168,5 @@ private:
   AudioDSPAddonMap_t m_EnabledAddons;
   AudioDSPAddonMap_t m_DisabledAddons;
   CActiveAEDSPDatabase m_databaseDSP;  /*!< database for all audio DSP related data */
-
-  // internal Kodi AudioDSP modes
-  CAudioDSPKodiModes m_KodiModes;
 };
 }

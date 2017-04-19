@@ -1234,7 +1234,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
 
         // resample buffers
         m_vizBuffers = new CActiveAEBufferPoolResample(m_internalFormat, vizFormat);
-        m_vizBuffers->ConfigureResampler(true, false, m_settings.resampleQuality);
+        m_vizBuffers->ConfigureResampler(true, false, m_audioDSP.m_KodiModes.m_audioConverterModel.ResampleQuality());
         //! @todo use cache of sync + water level
         m_vizBuffers->Create(2048 * vizFormat.m_sampleRate);
         m_vizInitialized = false;
@@ -1510,7 +1510,7 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
   if (!m_sinkBuffers)
   {
     m_sinkBuffers = new CActiveAEBufferPoolResample(audioDSPOutputFormat, m_sinkFormat);
-    m_sinkBuffers->ConfigureResampler(true, false, m_settings.resampleQuality);
+    m_sinkBuffers->ConfigureResampler(true, false, m_audioDSP.m_KodiModes.m_audioConverterModel.ResampleQuality());
     m_sinkBuffers->Create(MAX_WATER_LEVEL*1000);
   }
 
@@ -1738,6 +1738,7 @@ void CActiveAE::ChangeResamplers()
   std::list<CActiveAEStream*>::iterator it;
   for(it=m_streams.begin(); it!=m_streams.end(); ++it)
   {
+    //! @todo AudioDSP reimplement this
     //(*it)->m_processingBuffers->ConfigureResampler(m_settings.normalizelevels, m_settings.stereoupmix, m_settings.resampleQuality);
   }
 }
@@ -1760,7 +1761,7 @@ void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &sett
            settings.ac3passthrough &&
            settings.ac3transcode &&
            !m_streams.empty() &&
-           (format.m_channelLayout.Count() > 2 || settings.stereoupmix))
+           (format.m_channelLayout.Count() > 2 || m_audioDSP.m_KodiModes.m_audioConverterModel.StereoUpmix()))
   {
     format.m_dataFormat = AE_FMT_RAW;
     format.m_sampleRate = 48000;
@@ -1780,7 +1781,7 @@ void CActiveAE::ApplySettingsToFormat(AEAudioFormat &format, AudioSettings &sett
     // 3. audio dsp is used
     // 4. fixed mode
     if ((format.m_channelLayout.Count() > 2) ||
-         settings.stereoupmix ||
+         m_audioDSP.m_KodiModes.m_audioConverterModel.StereoUpmix() ||
          (settings.config == AE_CONFIG_FIXED))
     {
       AEStdChLayout stdChannelLayout;
@@ -2725,8 +2726,8 @@ void CActiveAE::LoadSettings()
   }
   m_settings.samplerate = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_SAMPLERATE);
 
-  m_settings.stereoupmix = IsSettingVisible(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) ? CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) : false;
-  m_settings.normalizelevels = !CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_MAINTAINORIGINALVOLUME);
+  m_audioDSP.m_KodiModes.m_audioConverterModel.SetStereoUpmix(IsSettingVisible(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) ? CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_STEREOUPMIX) : false);
+  m_audioDSP.m_KodiModes.m_audioConverterModel.SetNormalizeLevels(!CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_MAINTAINORIGINALVOLUME));
   m_settings.guisoundmode = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_GUISOUNDMODE);
 
   m_settings.passthrough = m_settings.config == AE_CONFIG_FIXED ? false : CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_PASSTHROUGH);
@@ -2739,7 +2740,7 @@ void CActiveAE::LoadSettings()
   m_settings.dtspassthrough = CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_DTSPASSTHROUGH);
   m_settings.dtshdpassthrough = CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_DTSHDPASSTHROUGH);
 
-  m_settings.resampleQuality = static_cast<AEQuality>(CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_PROCESSQUALITY));
+  m_audioDSP.m_KodiModes.m_audioConverterModel.SetResampleQuality(static_cast<AEQuality>(CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_PROCESSQUALITY)));
   m_settings.atempoThreshold = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_ATEMPOTHRESHOLD) / 100.0;
   m_settings.streamNoise = CSettings::GetInstance().GetBool(CSettings::SETTING_AUDIOOUTPUT_STREAMNOISE);
   m_settings.silenceTimeout = CSettings::GetInstance().GetInt(CSettings::SETTING_AUDIOOUTPUT_STREAMSILENCE) * 60000;
@@ -3335,7 +3336,7 @@ bool CActiveAE::ResampleSound(CActiveAESound *sound)
                   false,
                   true,
                   outChannels.Count() > 0 ? &outChannels : NULL,
-                  m_settings.resampleQuality,
+                  m_audioDSP.m_KodiModes.m_audioConverterModel.ResampleQuality(),
                   false);
 
   dst_samples = resampler->CalcDstSampleCount(sound->GetSound(true)->nb_samples,

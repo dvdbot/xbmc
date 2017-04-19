@@ -64,13 +64,13 @@ struct AudioSettings
   bool dtspassthrough;
   bool truehdpassthrough;
   bool dtshdpassthrough;
-  bool stereoupmix;
-  bool normalizelevels;
+  //bool stereoupmix;
+  //bool normalizelevels;
   bool passthrough;
   int config;
   int guisoundmode;
   unsigned int samplerate;
-  AEQuality resampleQuality;
+  //AEQuality resampleQuality;
   double atempoThreshold;
   bool streamNoise;
   int silenceTimeout;

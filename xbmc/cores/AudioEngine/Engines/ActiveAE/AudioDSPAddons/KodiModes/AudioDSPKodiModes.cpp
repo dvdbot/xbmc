@@ -43,7 +43,8 @@ void CAudioDSPKodiModes::PrepareModes(DSP::CDSPNodeModel &Model)
     CLog::Log(LOGERROR, "%s failed to register Kodi::AudioDSPCopyMode!", __FUNCTION__);
   }
 
-  err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioConverter" }), CAudioDSPAudioConverterCreator());
+  CAudioDSPAudioConverterCreator::m_staticModel = &m_audioConverterModel;
+  err = Model.RegisterNode(IDSPNodeModel::CDSPNodeInfoQuery({ "Kodi", "AudioConverter" }), CAudioDSPAudioConverterCreator(&m_audioConverterModel));
   if (err != DSP_ERR_NO_ERR)
   {
     CLog::Log(LOGERROR, "%s failed to register Kodi::AudioConverter!", __FUNCTION__);
