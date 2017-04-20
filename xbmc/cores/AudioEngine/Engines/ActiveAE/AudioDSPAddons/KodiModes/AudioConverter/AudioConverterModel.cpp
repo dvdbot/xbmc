@@ -21,7 +21,10 @@
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterFFMPEG.h"
 
+#include "utils/log.h"
+
 using namespace ActiveAE;
+using namespace std;
 
 
 CAudioConverterModel::CAudioConverterModel()
@@ -71,12 +74,45 @@ void CAudioConverterModel::SetResampleQuality(AEQuality ResampleQuality)
   m_resampleQuality = ResampleQuality;
 }
 
-void CAudioConverterModel::Register(CAudioDSPConverterFFMPEG * Converter)
+void CAudioConverterModel::NotifyNodes()
 {
-  CCriticalSection m_Lock;
+  CSingleLock lock(m_Lock);
+  for (NodeCallbacks_t::iterator iter = m_NodeCallbacks.begin(); iter != m_NodeCallbacks.end(); ++iter)
+  {
+    if (*iter)
+    {
+      (*iter)->AudioConverterCallback();
+    }
+  }
 }
 
-void CAudioConverterModel::Deregister(CAudioDSPConverterFFMPEG * Converter)
+void CAudioConverterModel::Register(IAudioConverterNodeCallback *Converter)
 {
-  CCriticalSection m_Lock;
+  if (!Converter)
+  {
+    CLog::Log(LOGERROR, "%s - Invalid audio converter pointer!", __FUNCTION__);
+    return;
+  }
+
+  CSingleLock lock(m_Lock);
+  m_NodeCallbacks.push_back(Converter);
+}
+
+void CAudioConverterModel::Deregister(IAudioConverterNodeCallback *Converter)
+{
+  if (!Converter)
+  {
+    CLog::Log(LOGERROR, "%s - Invalid audio converter pointer!", __FUNCTION__);
+    return;
+  }
+
+  CSingleLock lock(m_Lock);
+  for (NodeCallbacks_t::iterator iter = m_NodeCallbacks.begin(); iter != m_NodeCallbacks.end(); ++iter)
+  {
+    if (Converter == *iter)
+    {
+      m_NodeCallbacks.erase(iter);
+      return;
+    }
+  }
 }

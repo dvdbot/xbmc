@@ -51,6 +51,7 @@ set(HEADERS AEResampleFactory.h
             Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPKodiModes.h
             Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioDSPCopyMode.h
             Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h
+            Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterNodeCallback.h
             Encoders/AEEncoderFFmpeg.h
             Engines/ActiveAE/ActiveAE.h
             Engines/ActiveAE/ActiveAEBuffer.h

@@ -35,7 +35,7 @@ struct SwrContext;
 
 namespace ActiveAE
 {
-class CAudioDSPConverterFFMPEG : public DSP::AUDIO::IADSPNode
+class CAudioDSPConverterFFMPEG : public DSP::AUDIO::IADSPNode, public IAudioConverterNodeCallback
 {
 public:
   CAudioDSPConverterFFMPEG(uint64_t ID, CAudioConverterModel &Model);
@@ -74,7 +74,15 @@ private:
   int m_dst_dither_bits;
   SwrContext *m_pContext;
   double m_rematrix[AE_CH_MAX][AE_CH_MAX];
+
+  bool m_remapLayoutUsed;
+  CAEChannelInfo m_remapLayout;
+  bool m_forceResampling;
   
+  // model and callback implementations
+  bool m_needsSettingsUpdate;
+  bool UpdateSettings();
+  virtual void AudioConverterCallback() override;
   CAudioConverterModel &m_model;
 };
 

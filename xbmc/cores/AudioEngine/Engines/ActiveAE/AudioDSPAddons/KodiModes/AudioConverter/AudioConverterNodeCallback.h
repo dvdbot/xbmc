@@ -22,37 +22,12 @@
 
 #include "threads/SingleLock.h"
 #include "cores/AudioEngine/Interfaces/AE.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterNodeCallback.h"
-
-#include <vector>
 
 namespace ActiveAE
 {
-class CAudioConverterModel
+class IAudioConverterNodeCallback
 {
-  typedef std::vector<IAudioConverterNodeCallback*> NodeCallbacks_t;
 public:
-  CAudioConverterModel();
-  ~CAudioConverterModel();
-
-  bool StereoUpmix();
-  void SetStereoUpmix(bool StereoUpmix);
-  bool NormalizeLevels();
-  void SetNormalizeLevels(bool NormalizeLevels);
-  AEQuality ResampleQuality();
-  void SetResampleQuality(AEQuality ResampleQuality);
-
-  void NotifyNodes();
-  void Register(IAudioConverterNodeCallback *Converter);
-  void Deregister(IAudioConverterNodeCallback *Converter);
-
-protected:
-  CCriticalSection m_Lock;
-
-  bool m_stereoupmix;
-  bool m_normalizeLevels;
-  AEQuality m_resampleQuality;
-
-  NodeCallbacks_t m_NodeCallbacks;
+  virtual void AudioConverterCallback() = 0;
 };
 }

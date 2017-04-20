@@ -36,7 +36,7 @@ IDSPNode *CAudioDSPAudioConverterCreator::InstantiateNode(uint64_t ID)
 {
   //! @todo add Raspberry PI resampler implementation
   CAudioDSPConverterFFMPEG *converter = new CAudioDSPConverterFFMPEG(ID, m_model);
-  m_model.Register(converter);
+  m_model.Register(dynamic_cast<IAudioConverterNodeCallback*>(converter));
   IDSPNode *node = dynamic_cast<IDSPNode*>(converter);
   if (!node)
   {
@@ -52,7 +52,7 @@ DSPErrorCode_t CAudioDSPAudioConverterCreator::DestroyNode(DSP::IDSPNode *&Node)
   DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
   if (Node)
   {
-    m_model.Deregister(dynamic_cast<CAudioDSPConverterFFMPEG*>(Node));
+    m_model.Deregister(dynamic_cast<IAudioConverterNodeCallback*>(Node));
     err = Node->Destroy();
 
     delete Node;

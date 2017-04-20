@@ -39,8 +39,11 @@ CAudioDSPConverterFFMPEG::CAudioDSPConverterFFMPEG(uint64_t ID, CAudioConverterM
   IADSPNode("CAudioDSPConverterFFMPEG", ID, ADSP_DataFormatFlagFloat),
   m_model(Model)
 {
-  m_pContext = NULL;
+  m_pContext = nullptr;
   m_doesResample = false;
+  m_needsSettingsUpdate = false;
+  m_forceResampling = false;
+  m_remapLayoutUsed = false;
 }
 
 CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
@@ -68,10 +71,7 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
   AVSampleFormat src_fmt = CAEUtil::GetAVSampleFormat(m_inputFormat.m_dataFormat);
   int src_bits = CAEUtil::DataFormatToUsedBits(m_inputFormat.m_dataFormat);
   int src_dither = CAEUtil::DataFormatToDitherBits(m_inputFormat.m_dataFormat);
-  bool upmix = upmix;
-  bool normalize = normalize;
-  CAEChannelInfo *remapLayout = &pRemapLayout ? &m_format.m_channelLayout : NULL;
-  bool force_resample = forceResampler;
+  CAEChannelInfo *remapLayout = m_remapLayoutUsed ? &m_format.m_channelLayout : NULL;
   
   if (!Init(dst_chan_layout,
             dst_channels,
@@ -85,11 +85,11 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
             src_fmt,
             src_bits,
             src_dither,
-            upmix,
-            normalize,
+            m_model.StereoUpmix(),
+            m_model.NormalizeLevels(),
             remapLayout,
             m_model.ResampleQuality(),
-            force_resample))
+            forceResampler))
   {
     return DSP_ERR_INVALID_INPUT;
   }
@@ -99,6 +99,15 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPP
 
 DSPErrorCode_t CAudioDSPConverterFFMPEG::DestroyInstance()
 {
+  if (m_pContext)
+  {
+    swr_free(&m_pContext);
+  }
+
+  m_pContext = nullptr;
+  m_doesResample = false;
+  m_needsSettingsUpdate = false;
+
   return DSP_ERR_NO_ERR;
 }
 
@@ -107,7 +116,23 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::ProcessInstance(float *In, float *Out)
   return DSP_ERR_NO_ERR;
 }
 
-bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout, int dst_channels, int dst_rate, AVSampleFormat dst_fmt, int dst_bits, int dst_dither, uint64_t src_chan_layout, int src_channels, int src_rate, AVSampleFormat src_fmt, int src_bits, int src_dither, bool upmix, bool normalize, CAEChannelInfo *remapLayout, AEQuality quality, bool force_resample)
+bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout, 
+                                    int dst_channels,
+                                    int dst_rate,
+                                    AVSampleFormat dst_fmt,
+                                    int dst_bits,
+                                    int dst_dither,
+                                    uint64_t src_chan_layout,
+                                    int src_channels,
+                                    int src_rate,
+                                    AVSampleFormat src_fmt,
+                                    int src_bits,
+                                    int src_dither,
+                                    bool upmix,
+                                    bool normalize,
+                                    CAEChannelInfo *remapLayout,
+                                    AEQuality quality,
+                                    bool force_resample)
 {
   m_dst_chan_layout = dst_chan_layout;
   m_dst_channels = dst_channels;
@@ -121,6 +146,18 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout, int dst_channels, 
   m_src_fmt = src_fmt;
   m_src_bits = src_bits;
   m_src_dither_bits = src_dither;
+  m_forceResampling = force_resample;
+
+  if (remapLayout)
+  {
+    m_remapLayout = *remapLayout;
+    m_remapLayoutUsed = true;
+  }
+
+  if (m_pContext)
+  {
+    swr_free(&m_pContext);
+  }
 
   if (m_src_rate != m_dst_rate)
     m_doesResample = true;
@@ -178,7 +215,7 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout, int dst_channels, 
     // the channel is mapped by setting coef 1.0
     memset(m_rematrix, 0, sizeof(m_rematrix));
     m_dst_chan_layout = 0;
-    for (unsigned int out=0; out<remapLayout->Count(); out++)
+    for (unsigned int out = 0; out < remapLayout->Count(); out++)
     {
       m_dst_chan_layout += ((uint64_t)1) << out;
       int idx = CAEUtil::GetAVChannelIndex((*remapLayout)[out], m_src_chan_layout);
@@ -246,6 +283,15 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout, int dst_channels, 
 
 int CAudioDSPConverterFFMPEG::Resample(uint8_t **dst_buffer, int dst_samples, uint8_t **src_buffer, int src_samples, double ratio)
 {
+  if (m_needsSettingsUpdate)
+  {
+    m_needsSettingsUpdate = false;
+    if (!UpdateSettings())
+    {
+      return -1;
+    }
+  }
+
   int delta = 0;
   int distance = 0;
   if (ratio != 1.0)
@@ -348,4 +394,34 @@ int CAudioDSPConverterFFMPEG::GetSrcBufferSize(int samples)
 int CAudioDSPConverterFFMPEG::GetDstBufferSize(int samples)
 {
   return av_samples_get_buffer_size(NULL, m_dst_channels, samples, m_dst_fmt, 1);
+}
+
+bool CAudioDSPConverterFFMPEG::UpdateSettings()
+{
+  if(!Init( m_dst_chan_layout,
+            m_dst_channels,
+            m_dst_rate,
+            m_dst_fmt,
+            m_dst_bits,
+            m_dst_dither_bits,
+            m_src_chan_layout,
+            m_src_channels,
+            m_src_rate,
+            m_src_fmt,
+            m_src_bits,
+            m_src_dither_bits,
+            m_model.StereoUpmix(),
+            m_model.NormalizeLevels(),
+            m_remapLayoutUsed ? &m_remapLayout : nullptr,
+            m_model.ResampleQuality(),
+            m_forceResampling))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+void CAudioDSPConverterFFMPEG::AudioConverterCallback()
+{
 }

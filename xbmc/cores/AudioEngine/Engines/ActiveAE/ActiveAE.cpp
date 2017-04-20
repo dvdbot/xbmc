@@ -533,7 +533,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
           LoadSettings();
           m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::SETNOISETYPE, &m_settings.streamNoise, sizeof(bool));
           m_sink.m_controlPort.SendOutMessage(CSinkControlProtocol::SETSILENCETIMEOUT, &m_settings.silenceTimeout, sizeof(int));
-          ChangeResamplers();
+          m_audioDSP.m_KodiModes.m_audioConverterModel.NotifyNodes();
           if (!NeedReconfigureBuffers() && !NeedReconfigureSink())
             return;
           m_state = AE_TOP_RECONFIGURING;
@@ -694,6 +694,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
           {
             msg->Reply(CActiveAEDataProtocol::ACC, &stream, sizeof(CActiveAEStream*));
             LoadSettings();
+            m_audioDSP.m_KodiModes.m_audioConverterModel.NotifyNodes();
             Configure(nullptr, stream);
             if (!m_extError)
             {
@@ -791,6 +792,7 @@ void CActiveAE::StateMachine(int signal, Protocol *port, Message *msg)
             m_controlPort.PurgeOut(CActiveAEControlProtocol::DEVICECHANGE);
             m_sink.EnumerateSinkList(true);
             LoadSettings();
+            m_audioDSP.m_KodiModes.m_audioConverterModel.NotifyNodes();
           }
           m_audioDSP.Start();
           Configure(nullptr, nullptr);
@@ -1606,6 +1608,7 @@ void CActiveAE::DiscardStream(CActiveAEStream *stream)
       if ((*it)->m_processingBuffers)
       {
         (*it)->m_processingBuffers->Flush();
+        //! @todo AudioDSP reimplement this
         //m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
         //m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
       }
@@ -1730,16 +1733,6 @@ void CActiveAE::DiscardSound(CActiveAESound *sound)
       delete sound;
       return;
     }
-  }
-}
-
-void CActiveAE::ChangeResamplers()
-{
-  std::list<CActiveAEStream*>::iterator it;
-  for(it=m_streams.begin(); it!=m_streams.end(); ++it)
-  {
-    //! @todo AudioDSP reimplement this
-    //(*it)->m_processingBuffers->ConfigureResampler(m_settings.normalizelevels, m_settings.stereoupmix, m_settings.resampleQuality);
   }
 }
 
