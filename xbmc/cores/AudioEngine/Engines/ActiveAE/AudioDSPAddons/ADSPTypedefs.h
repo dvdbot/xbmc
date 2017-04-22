@@ -94,11 +94,36 @@ typedef enum
 {
   ADSP_DataFormatINVALID = -1,
 
+  ADSP_DataFormatU8,
+
+  ADSP_DataFormatS16BE,
+  ADSP_DataFormatS16LE,
+  ADSP_DataFormatS16NE,
+
+  ADSP_DataFormatS32BE,
+  ADSP_DataFormatS32LE,
+  ADSP_DataFormatS32NE,
+
+  ADSP_DataFormatS24BE4,
+  ADSP_DataFormatS24LE4,
+  ADSP_DataFormatS24NE4,    // 24 bits in lower 3 bytes
+  ADSP_DataFormatS24NE4MSB, // S32 with bits_per_sample < 32
+
+  ADSP_DataFormatS24BE3,
+  ADSP_DataFormatS24LE3,
+  ADSP_DataFormatS24NE3, /* S24 in 3 bytes */
+
   ADSP_DataFormatFloat,
   ADSP_DataFormatDouble,
   ADSP_DataFormatLongDouble,
 
   /* planar formats */
+  ADSP_DataFormatU8Planes,
+  ADSP_DataFormatS16NEPlanes,
+  ADSP_DataFormatS32NEPlanes,
+  ADSP_DataFormatS24NE4Planes,
+  ADSP_DataFormatS24NE4MSBPlanes,
+  ADSP_DataFormatS24NE3Planes,
   ADSP_DataFormatFloatPlanes,
   ADSP_DataFormatDoublePlanes,
   ADSP_DataFormatLongDoublePlanes,
@@ -110,14 +135,39 @@ typedef enum
 {
   ADSP_DataFormatFlagINVALID = 0,
 
-  ADSP_DataFormatFlagFloat            = 1 << ADSP_DataFormatFloat,
-  ADSP_DataFormatFlagDouble           = 1 << ADSP_DataFormatDouble,
-  ADSP_DataFormatFlagLongDouble       = 1 << ADSP_DataFormatLongDouble,
+  ADSP_DataFormatFlagU8                 = 1 << ADSP_DataFormatU8,
+
+  ADSP_DataFormatFlagS16BE              = 1 << ADSP_DataFormatS16BE,
+  ADSP_DataFormatFlagS16LE              = 1 << ADSP_DataFormatS16LE,
+  ADSP_DataFormatFlagS16NE              = 1 << ADSP_DataFormatS16NE,
+
+  ADSP_DataFormatFlagS32BE              = 1 << ADSP_DataFormatS32BE,
+  ADSP_DataFormatFlagS32LE              = 1 << ADSP_DataFormatS32LE,
+  ADSP_DataFormatFlagS32NE              = 1 << ADSP_DataFormatS32NE,
+
+  ADSP_DataFormatFlagS24BE4             = 1 << ADSP_DataFormatS24BE4,
+  ADSP_DataFormatFlagS24LE4             = 1 << ADSP_DataFormatS24LE4,
+  ADSP_DataFormatFlagS24NE4             = 1 << ADSP_DataFormatS24NE4,    // 24 bits in lower 3 bytes
+  ADSP_DataFormatFlagS24NE4MSB          = 1 << ADSP_DataFormatS24NE4MSB, // S32 with bits_per_sample < 32
+
+  ADSP_DataFormatFlagS24BE3             = 1 << ADSP_DataFormatS24BE3,
+  ADSP_DataFormatFlagS24LE3             = 1 << ADSP_DataFormatS24LE3,
+  ADSP_DataFormatFlagS24NE3             = 1 << ADSP_DataFormatS24NE3, /* S24 in 3 bytes */
+
+  ADSP_DataFormatFlagFloat              = 1 << ADSP_DataFormatFloat,
+  ADSP_DataFormatFlagDouble             = 1 << ADSP_DataFormatDouble,
+  ADSP_DataFormatFlagLongDouble         = 1 << ADSP_DataFormatLongDouble,
 
   /* planar formats */
-  ADSP_DataFormatFlagFloatPlanes      = 1 << ADSP_DataFormatFloatPlanes,
-  ADSP_DataFormatFlagDoublePlanes     = 1 << ADSP_DataFormatDoublePlanes,
-  ADSP_DataFormatFlagLongDoublePlanes = 1 << ADSP_DataFormatLongDoublePlanes,
+  ADSP_DataFormatFlagU8Planes           = 1 << ADSP_DataFormatU8Planes,
+  ADSP_DataFormatFlagS16NEPlanes        = 1 << ADSP_DataFormatS16NEPlanes,
+  ADSP_DataFormatFlagS32NEPlanes        = 1 << ADSP_DataFormatS32NEPlanes,
+  ADSP_DataFormatFlagS24NE4Planes       = 1 << ADSP_DataFormatS24NE4Planes,
+  ADSP_DataFormatFlagS24NE4MSBPlanes    = 1 << ADSP_DataFormatS24NE4MSBPlanes,
+  ADSP_DataFormatFlagS24NE3Planes       = 1 << ADSP_DataFormatS24NE3Planes,
+  ADSP_DataFormatFlagFloatPlanes        = 1 << ADSP_DataFormatFloatPlanes,
+  ADSP_DataFormatFlagDoublePlanes       = 1 << ADSP_DataFormatDoublePlanes,
+  ADSP_DataFormatFlagLongDoublePlanes   = 1 << ADSP_DataFormatLongDoublePlanes,
 
   ADSP_DataFormatFlagMAX
 }ADSPDataFormatFlags_t;
