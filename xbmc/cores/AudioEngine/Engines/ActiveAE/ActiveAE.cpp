@@ -112,7 +112,7 @@ void CEngineStats::UpdateStream(CActiveAEStream *stream)
   {
     if (str.m_streamId == stream->m_id)
     {
-      float delay = 0;
+      double delay = 0;
       str.m_syncState = stream->m_syncState;
       str.m_syncError = stream->m_syncError.GetLastError(str.m_errorTime);
       if (stream->m_processingBuffers)
