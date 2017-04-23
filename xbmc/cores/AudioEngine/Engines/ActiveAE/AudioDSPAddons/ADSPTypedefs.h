@@ -20,6 +20,7 @@
  */
 
 #include "addons/kodi-addon-dev-kit/include/kodi/kodi_adsp_types.h"
+#include "cores/DSP/Typedefs/DSPTypedefs.h"
 
 namespace DSP
 {
@@ -169,7 +170,7 @@ typedef enum
   ADSP_DataFormatFlagDoublePlanes       = 1 << ADSP_DataFormatDoublePlanes,
   ADSP_DataFormatFlagLongDoublePlanes   = 1 << ADSP_DataFormatLongDoublePlanes,
 
-  ADSP_DataFormatFlagMAX
+  ADSP_DataFormatFlagMAX                = 1 << ADSP_DataFormatMAX
 }ADSPDataFormatFlags_t;
 
 class CChannelInformation
@@ -208,7 +209,17 @@ public:
     return DSP_ERR_NO_ERR;
   }
 
-  uint32_t GetChannelCount()
+  const AE_DSP_CHANNEL GetChannelAtIndex(uint32_t Index) const
+  {
+    if (Index >= AE_DSP_CH_MAX)
+    {
+      return AE_DSP_CH_INVALID;
+    }
+
+    return m_Channels[Index];
+  }
+
+  const uint32_t GetChannelCount() const
   {
     return m_ChannelCount;
   }
@@ -225,6 +236,19 @@ public:
       if (m_Channels[ch] != ChannelInfo.m_Channels[ch])
       {
         return false;
+      }
+    }
+
+    return false;
+  }
+
+  const bool HasChannel(const AE_DSP_CHANNEL Channel) const
+  {
+    for (uint8_t ch = 0; ch < AE_DSP_CH_MAX; ch++)
+    {
+      if (m_Channels[ch] == Channel)
+      {
+        return true;
       }
     }
 
