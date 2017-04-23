@@ -19,9 +19,6 @@
  *
  */
 
-#include "cores/AudioEngine/Utils/AEChannelInfo.h"
-#include "cores/AudioEngine/Utils/AEAudioFormat.h"
-#include "cores/AudioEngine/Interfaces/AE.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 #include "cores/DSP/Typedefs/DSPTypedefs.h"
@@ -48,7 +45,7 @@ protected:
   virtual DSPErrorCode_t ProcessInstance(float *In, float *Out) override;
 
 private:
-  bool Init(uint64_t dst_chan_layout, int dst_channels, int dst_rate, AVSampleFormat dst_fmt, int dst_bits, int dst_dither, uint64_t src_chan_layout, int src_channels, int src_rate, AVSampleFormat src_fmt, int src_bits, int src_dither, bool upmix, bool normalize, CAEChannelInfo *remapLayout, AEQuality quality, bool force_resample);
+  bool Init(uint64_t dst_chan_layout, int dst_channels, int dst_rate, AVSampleFormat dst_fmt, int dst_bits, int dst_dither, uint64_t src_chan_layout, int src_channels, int src_rate, AVSampleFormat src_fmt, int src_bits, int src_dither, bool upmix, bool normalize, const DSP::AUDIO::CChannelInformation *remapLayout, AEQuality quality, bool force_resample);
   int Resample(uint8_t **dst_buffer, int dst_samples, uint8_t **src_buffer, int src_samples, double ratio);
   int64_t GetDelay(int64_t base);
   int GetBufferedSamples();
@@ -76,7 +73,7 @@ private:
   double m_rematrix[AE_CH_MAX][AE_CH_MAX];
 
   bool m_remapLayoutUsed;
-  CAEChannelInfo m_remapLayout;
+  DSP::AUDIO::CChannelInformation m_remapLayout;
   bool m_forceResampling;
   
   // model and callback implementations

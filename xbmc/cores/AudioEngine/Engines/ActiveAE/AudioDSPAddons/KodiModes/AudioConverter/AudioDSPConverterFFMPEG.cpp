@@ -21,6 +21,7 @@
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioDSPConverterFFMPEG.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/AudioConverter/AudioConverterModel.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/KodiModes/FFMPEGUtils/FFMPEGUtils.h"
 #include "cores/AudioEngine/Utils/AEUtil.h"
 #include "utils/log.h"
 
@@ -53,38 +54,21 @@ CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
 
 DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options)
 {
-  AEAudioFormat m_format;
-  AEAudioFormat m_inputFormat;
-  CAEChannelInfo remap;
-  CAEChannelInfo *pRemapLayout = &remap;
-  bool forceResampler;
-
-  uint64_t dst_chan_layout = CAEUtil::GetAVChannelLayout(m_format.m_channelLayout);
-  int dst_channels = m_format.m_channelLayout.Count();
-  int dst_rate = m_format.m_sampleRate;
-  AVSampleFormat dst_fmt = CAEUtil::GetAVSampleFormat(m_format.m_dataFormat);
-  int dst_bits = CAEUtil::DataFormatToUsedBits(m_format.m_dataFormat);
-  int dst_dither = CAEUtil::DataFormatToDitherBits(m_format.m_dataFormat);
-  uint64_t src_chan_layout = CAEUtil::GetAVChannelLayout(m_inputFormat.m_channelLayout);
-  int src_channels = m_inputFormat.m_channelLayout.Count();
-  int src_rate = m_inputFormat.m_sampleRate;
-  AVSampleFormat src_fmt = CAEUtil::GetAVSampleFormat(m_inputFormat.m_dataFormat);
-  int src_bits = CAEUtil::DataFormatToUsedBits(m_inputFormat.m_dataFormat);
-  int src_dither = CAEUtil::DataFormatToDitherBits(m_inputFormat.m_dataFormat);
-  CAEChannelInfo *remapLayout = m_remapLayoutUsed ? &m_format.m_channelLayout : NULL;
+  bool forceResampler = false;
+  const CChannelInformation *remapLayout = m_remapLayoutUsed ? &InputProperties->speakerLayout : NULL;
   
-  if (!Init(dst_chan_layout,
-            dst_channels,
-            dst_rate,
-            dst_fmt,
-            dst_bits,
-            dst_dither,
-            src_chan_layout,
-            src_channels,
-            src_rate,
-            src_fmt,
-            src_bits,
-            src_dither,
+  if (!Init(CFFMPEGUtils::GetChannelLayout(OutputProperties->speakerLayout),
+            OutputProperties->speakerLayout.GetChannelCount(),
+            OutputProperties->sampleFrequency,
+            CFFMPEGUtils::GetSampleFormat(OutputProperties->dataFormat),
+            CFFMPEGUtils::DataFormatToUsedBits(OutputProperties->dataFormat),
+            CFFMPEGUtils::DataFormatToDitherBits(OutputProperties->dataFormat),
+            CFFMPEGUtils::GetChannelLayout(InputProperties->speakerLayout),
+            InputProperties->speakerLayout.GetChannelCount(),
+            InputProperties->sampleFrequency,
+            CFFMPEGUtils::GetSampleFormat(InputProperties->dataFormat),
+            CFFMPEGUtils::DataFormatToUsedBits(InputProperties->dataFormat),
+            CFFMPEGUtils::DataFormatToDitherBits(InputProperties->dataFormat),
             m_model.StereoUpmix(),
             m_model.NormalizeLevels(),
             remapLayout,
@@ -130,7 +114,7 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout,
                                     int src_dither,
                                     bool upmix,
                                     bool normalize,
-                                    CAEChannelInfo *remapLayout,
+                                    const CChannelInformation *remapLayout,
                                     AEQuality quality,
                                     bool force_resample)
 {
@@ -215,10 +199,10 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout,
     // the channel is mapped by setting coef 1.0
     memset(m_rematrix, 0, sizeof(m_rematrix));
     m_dst_chan_layout = 0;
-    for (unsigned int out = 0; out < remapLayout->Count(); out++)
+    for (unsigned int out = 0; out < m_remapLayout.GetChannelCount(); out++)
     {
       m_dst_chan_layout += ((uint64_t)1) << out;
-      int idx = CAEUtil::GetAVChannelIndex((*remapLayout)[out], m_src_chan_layout);
+      int idx = CFFMPEGUtils::GetChannelIndex(m_remapLayout.GetChannelAtIndex(out), m_src_chan_layout);
       if (idx >= 0)
       {
         m_rematrix[out][idx] = 1.0;
@@ -377,8 +361,7 @@ int64_t CAudioDSPConverterFFMPEG::GetDelay(int64_t base)
 
 int CAudioDSPConverterFFMPEG::GetBufferedSamples()
 {
-  return av_rescale_rnd(swr_get_delay(m_pContext, m_src_rate),
-                                    m_dst_rate, m_src_rate, AV_ROUND_UP);
+  return av_rescale_rnd(swr_get_delay(m_pContext, m_src_rate), m_dst_rate, m_src_rate, AV_ROUND_UP);
 }
 
 int CAudioDSPConverterFFMPEG::CalcDstSampleCount(int src_samples, int dst_rate, int src_rate)
@@ -424,4 +407,5 @@ bool CAudioDSPConverterFFMPEG::UpdateSettings()
 
 void CAudioDSPConverterFFMPEG::AudioConverterCallback()
 {
+  m_needsSettingsUpdate = true;
 }
