@@ -22,11 +22,14 @@
 #include "cores/AudioEngine/Interfaces/AEStream.h"
 #include "cores/AudioEngine/Utils/AEAudioFormat.h"
 #include "cores/AudioEngine/Utils/AELimiter.h"
+#include "cores/AudioEngine/Engines/ActiveAE/ActiveAEBuffer.h"
 #include <atomic>
 
 namespace ActiveAE
 {
 class CActiveAE;
+class CActiveAudioDSP;
+class CActiveAEDataProtocol;
 
 class CSyncError
 {
@@ -154,6 +157,8 @@ class CActiveAEStream : public IAEStream
 protected:
   friend class CActiveAE;
   friend class CEngineStats;
+  friend class CActiveAudioDSP;
+
   CActiveAEStream(AEAudioFormat *format, unsigned int streamid, CActiveAE &ae);
   virtual ~CActiveAEStream();
   void FadingFinished();

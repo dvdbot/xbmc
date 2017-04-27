@@ -46,6 +46,8 @@
 namespace ActiveAE
 {
 using namespace Actor;
+class CActiveAEStream;
+class IActiveAEProcessingBuffer;
 
 class CAudioDSPAddonControlProtocol : public Protocol
 {
@@ -67,16 +69,26 @@ public:
 class CAudioDSPControlProtocol : public Protocol
 {
 public:
+  struct CCreateBuffer
+  {
+    CCreateBuffer(const CActiveAEStream *AudioStream, AEAudioFormat &OutputFormat) : audioStream(AudioStream), outputFormat(OutputFormat) {}
+    const CActiveAEStream *audioStream;
+    AEAudioFormat &outputFormat;
+  };
+
   CAudioDSPControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
   enum OutSignal
   {
     DEINIT = 0,
     INIT,
+    GET_PROCESSING_BUFFER,
+    RELEASE_PROCESSING_BUFFER,
     TIMEOUT,
   };
   enum InSignal
   {
     ACC,
+    SUCCESS,
     ERR,
   };
 };
@@ -105,6 +117,7 @@ class CActiveAudioDSP : public IAudioDSP,
   typedef std::vector<pAudioDSPProcessor_t>             AudioDSPProcessorVector_t;
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
+  typedef std::map<int, IActiveAEProcessingBuffer*>     AudioDSPProcessingBufferMap_t;
 
 public:
   CActiveAudioDSP(CEvent *inMsgEvent);
@@ -135,6 +148,9 @@ public:
   virtual void RegisterAddon(const std::string &Id, bool restart = false, bool update = false) override;
   virtual void UnregisterAddon(const std::string &Id) override;
 
+  IActiveAEProcessingBuffer* GetProcessingBuffer(const CActiveAEStream *AudioStream, AEAudioFormat &OutputFormat);
+  DSPErrorCode_t ReleaseProcessingBuffer(int StreamID);
+
   // internal Kodi AudioDSP modes
   CAudioDSPKodiModes m_KodiModes;
 
@@ -153,6 +169,7 @@ protected:
   unsigned int m_extSilenceTimeout;
   XbmcThreads::EndTime m_extSilenceTimer;
 
+  bool m_hasError;
   int m_extTimeout;
   bool m_bStateMachineSelfTrigger;
   
@@ -162,6 +179,7 @@ private:
   void CreateDSPNodeModel();
 
   AudioDSPProcessorVector_t m_AudioDSPProcessors;
+  AudioDSPProcessingBufferMap_t m_ProcessingBuffers;
 
   DSP::CDSPNodeModel m_DSPChainModelObject;
   CAudioDSPController m_Controller;

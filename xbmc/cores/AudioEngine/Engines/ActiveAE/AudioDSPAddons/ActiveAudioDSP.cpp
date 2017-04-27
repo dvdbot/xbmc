@@ -25,6 +25,7 @@
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessor.h"
+#include "cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h"
 
  // includes for AudioDSP add-on modes
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h"
@@ -153,17 +154,63 @@ void CActiveAudioDSP::UnregisterAddon(const string &Id)
 {
 }
 
-enum SINK_STATES
+IActiveAEProcessingBuffer* CActiveAudioDSP::GetProcessingBuffer(const CActiveAEStream *AudioStream, AEAudioFormat &OutputFormat)
+{
+  if (!AudioStream)
+  {
+    CLog::Log(LOGERROR, "%s - Invalid audio stream!", __FUNCTION__);
+    return nullptr;
+  }
+
+  Actor::Message *replyMsg = nullptr;
+  CAudioDSPControlProtocol::CCreateBuffer bufferMsg(AudioStream, OutputFormat);
+  if (!m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::GET_PROCESSING_BUFFER, &replyMsg, 3000000, &bufferMsg, sizeof(CAudioDSPControlProtocol::CCreateBuffer)))
+  {
+    if (replyMsg)
+    {
+      replyMsg->Release();
+    }
+    return nullptr;
+  }
+
+  if (replyMsg->signal != CAudioDSPControlProtocol::SUCCESS)
+  {
+    replyMsg->Release();
+    CLog::Log(LOGERROR, "%s an error occured during shutting down AudioDSP", __FUNCTION__);
+    return nullptr;
+  }
+
+  IActiveAEProcessingBuffer *buffer = *reinterpret_cast<IActiveAEProcessingBuffer**>(replyMsg->data);
+  replyMsg->Release();
+
+  return buffer;
+}
+
+DSPErrorCode_t CActiveAudioDSP::ReleaseProcessingBuffer(int StreamID)
+{
+  if (!m_ControlPort.SendOutMessage(CAudioDSPControlProtocol::RELEASE_PROCESSING_BUFFER, &StreamID, sizeof(int)))
+  {
+    return DSP_ERR_FATAL_ERROR;
+  }
+
+  return DSP_ERR_NO_ERR;
+}
+
+enum ACTIVEAUDIODSP_STATES
 {
   ADSP_TOP = 0,                             // 0
   ADSP_TOP_UNCONFIGURED,                    // 1
   ADSP_TOP_CONFIGURED,                      // 2
+  ADSP_TOP_GET_PROCESSING_BUFFER,           // 3
+  ADSP_TOP_RELEASE_PROCESSING_BUFFER,       // 4
 };
 
 int ADSP_parentStates[] = {
     -1,
     ADSP_TOP,                             //TOP_UNCONFIGURED
     ADSP_TOP,                             //TOP_CONFIGURED
+    ADSP_TOP,                             //ADSP_TOP_GET_PROCESSING_BUFFER
+    ADSP_TOP,                             //ADSP_TOP_RELEASE_PROCESSING_BUFFER
 };
 
 void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
@@ -190,6 +237,12 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           switch (signal)
           {
             case CAudioDSPControlProtocol::INIT:
+              return;
+
+            case CAudioDSPControlProtocol::GET_PROCESSING_BUFFER:
+              return;
+
+            case CAudioDSPControlProtocol::RELEASE_PROCESSING_BUFFER:
               return;
 
             case CAudioDSPControlProtocol::DEINIT:
@@ -225,6 +278,7 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
         {
           string portName = port == nullptr ? "timer" : port->portName;
           CLog::Log(LOGWARNING, "%s - signal: %d form port: %s not handled for state: %d", __FUNCTION__, signal, portName.c_str(), m_state);
+          m_hasError = true;
         }
         return;
 
@@ -261,14 +315,18 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
               PrepareAddonModes();
 
               m_state = ADSP_TOP_CONFIGURED;
+              m_hasError = false;
             break;
 
             default:
             break;
           }
         }
+        else
+        {
+          m_hasError = true;
+        }
       break;
-
 
       case ADSP_TOP_CONFIGURED:
         if (port == &m_ControlPort)
@@ -277,6 +335,16 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           {
             case CAudioDSPControlProtocol::DEINIT:
               m_databaseDSP.Close();
+            break;
+
+            case CAudioDSPControlProtocol::GET_PROCESSING_BUFFER:
+              m_bStateMachineSelfTrigger = true;
+              m_state = ADSP_TOP_GET_PROCESSING_BUFFER;
+            break;
+            
+            case CAudioDSPControlProtocol::RELEASE_PROCESSING_BUFFER:
+              m_bStateMachineSelfTrigger = true;
+              m_state = ADSP_TOP_RELEASE_PROCESSING_BUFFER;
             break;
 
             default:
@@ -346,6 +414,60 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
             default:
             break;
           }
+        }
+        else
+        {
+          m_hasError = true;
+        }
+      break;
+
+      case ADSP_TOP_GET_PROCESSING_BUFFER:
+        if (port == &m_ControlPort)
+        {
+          CAudioDSPControlProtocol::CCreateBuffer *bufferMsg = reinterpret_cast<CAudioDSPControlProtocol::CCreateBuffer*>(msg->data);
+          IActiveAEProcessingBuffer *buffer = dynamic_cast<IActiveAEProcessingBuffer*>(new CActiveAEStreamBuffers(bufferMsg->audioStream->m_inputBuffers->m_format, bufferMsg->outputFormat));
+
+          if (!buffer)
+          {
+            msg->Reply(CAudioDSPControlProtocol::ERR);
+            CLog::Log(LOGERROR, "%s - Failed to create processing buffer!", __FUNCTION__);
+          }
+          else
+          {
+            m_ProcessingBuffers[bufferMsg->audioStream->m_id] = buffer;
+            msg->Reply(CAudioDSPControlProtocol::SUCCESS, &buffer, sizeof(IActiveAEProcessingBuffer*));
+          }
+
+          m_state = ADSP_TOP_CONFIGURED;
+        }
+        else
+        {
+          m_hasError = true;
+        }
+      break;
+
+      case ADSP_TOP_RELEASE_PROCESSING_BUFFER:
+        if (port == &m_ControlPort)
+        {
+          int streamID = *reinterpret_cast<int*>(msg->data);
+          AudioDSPProcessingBufferMap_t::iterator iter = m_ProcessingBuffers.find(streamID);
+          if (iter == m_ProcessingBuffers.end())
+          {
+            CLog::Log(LOGERROR, "%s - streamID \"%i\" in processing buffer map not found!", __FUNCTION__, streamID);
+          }
+          else
+          {
+            iter->second->Destroy();
+            delete iter->second;
+
+            m_ProcessingBuffers.erase(iter);
+          }
+
+          m_state = ADSP_TOP_CONFIGURED;
+        }
+        else
+        {
+          m_hasError = true;
         }
       break;
 
