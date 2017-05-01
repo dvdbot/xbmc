@@ -1135,10 +1135,6 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
         }
         if (stream->m_processingBuffers)
         {
-          stream->m_processingBuffers->Flush();
-          //! @todo AudioDSP reimplement this
-          //m_discardBufferPools.push_back(stream->m_processingBuffers->GetResampleBuffers());
-          //m_discardBufferPools.push_back(stream->m_processingBuffers->GetAtempoBuffers());
           DSPErrorCode_t dspErr = m_audioDSP.ReleaseProcessingBuffer(stream->m_id);
           if (dspErr != DSP_ERR_NO_ERR)
           {//! @todo AudioDSP log AudioDSP error
@@ -1196,16 +1192,14 @@ void CActiveAE::Configure(AEAudioFormat *desiredFmt, CActiveAEStream *stream)
         }
         if ((*it)->m_processingBuffers)
         {
-          (*it)->m_processingBuffers->Flush();
-          //! @todo AudioDSP reimplement this
-          //m_discardBufferPools.push_back((*it)->m_processingBuffers->GetResampleBuffers());
-          //m_discardBufferPools.push_back((*it)->m_processingBuffers->GetAtempoBuffers());
-          delete (*it)->m_processingBuffers;
-          (*it)->m_processingBuffers = nullptr;
+          DSPErrorCode_t dspErr = m_audioDSP.ReleaseProcessingBuffer(stream->m_id);
+          if (dspErr != DSP_ERR_NO_ERR)
+          {//! @todo AudioDSP log AudioDSP error
+          }
         }
         if (!(*it)->m_processingBuffers)
         {
-          (*it)->m_processingBuffers = new CActiveAEStreamBuffers((*it)->m_inputBuffers->m_format, audioDSPOutputFormat);
+          (*it)->m_processingBuffers = m_audioDSP.GetProcessingBuffer(*it, audioDSPOutputFormat);
 
           //! @todo AudioDSP reimplement this
           //stream->m_processingBuffers->ConfigureResampler(m_settings.normalizelevels, m_settings.stereoupmix, m_settings.resampleQuality);

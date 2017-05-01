@@ -164,7 +164,7 @@ IActiveAEProcessingBuffer* CActiveAudioDSP::GetProcessingBuffer(const CActiveAES
 
   Actor::Message *replyMsg = nullptr;
   CAudioDSPControlProtocol::CCreateBuffer bufferMsg(AudioStream, OutputFormat);
-  if (!m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::GET_PROCESSING_BUFFER, &replyMsg, 3000000, &bufferMsg, sizeof(CAudioDSPControlProtocol::CCreateBuffer)))
+  if (!m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::GET_PROCESSING_BUFFER, &replyMsg, 3000, &bufferMsg, sizeof(CAudioDSPControlProtocol::CCreateBuffer)))
   {
     if (replyMsg)
     {
@@ -457,6 +457,7 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           }
           else
           {
+            iter->second->Flush();
             iter->second->Destroy();
             delete iter->second;
 

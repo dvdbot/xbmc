@@ -20,6 +20,7 @@
  */
 
 #include "cores/AudioEngine/Interfaces/AEStream.h"
+#include "cores/AudioEngine/Interfaces/IActiveAEProcessingBuffer.h"
 #include "cores/AudioEngine/Utils/AEAudioFormat.h"
 #include "cores/AudioEngine/Utils/AELimiter.h"
 #include "cores/AudioEngine/Engines/ActiveAE/ActiveAEBuffer.h"
@@ -91,30 +92,6 @@ protected:
   double m_lastError;
   int m_count;
   XbmcThreads::EndTime m_timer;
-};
-
-
-class IActiveAEProcessingBuffer
-{
-public:
-  IActiveAEProcessingBuffer(const AEAudioFormat &inputFormat, const AEAudioFormat &outputFormat) : m_inputFormat(inputFormat), m_outputFormat(outputFormat) {}
-
-  virtual bool Create(unsigned int totaltime) = 0;
-  virtual void Destroy() = 0;
-  virtual bool ProcessBuffer() = 0;
-  virtual bool HasInputLevel(int level) = 0;
-  virtual float GetDelay() = 0;
-  virtual void Flush() = 0;
-  virtual void SetDrain(bool drain) = 0;
-  virtual bool IsDrained() = 0;
-  virtual void FillBuffer() = 0;
-  virtual bool HasWork() = 0;
-  virtual void SetOutputSampleRate(unsigned int OutputSampleRate) = 0;
-
-  AEAudioFormat m_inputFormat;
-  AEAudioFormat m_outputFormat;
-  std::deque<CSampleBuffer*> m_outputSamples;
-  std::deque<CSampleBuffer*> m_inputSamples;
 };
 
 
