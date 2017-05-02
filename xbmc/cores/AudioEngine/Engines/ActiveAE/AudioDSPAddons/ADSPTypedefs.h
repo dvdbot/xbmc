@@ -21,6 +21,7 @@
 
 #include "addons/kodi-addon-dev-kit/include/kodi/kodi_adsp_types.h"
 #include "cores/DSP/Typedefs/DSPTypedefs.h"
+#include <vector>
 
 namespace DSP
 {
