@@ -40,6 +40,8 @@ private: // private methods
   DSPErrorCode_t ReCreateNodeChain();
 
 private:
+  virtual DSPErrorCode_t UpdateNodes() override { return DSP_ERR_NO_ERR; }
+
   // processor callbacks
   virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InParameters, DSP::AUDIO::CADSPProperties *OutParameters, void *Options = nullptr) override;
   virtual DSPErrorCode_t ProcessInstance(float  *In, float   *Out) override;

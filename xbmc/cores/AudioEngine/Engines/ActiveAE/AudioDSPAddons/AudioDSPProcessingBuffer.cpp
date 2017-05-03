@@ -30,6 +30,7 @@ CAudioDSPProcessingBuffer::CAudioDSPProcessingBuffer(const AEAudioFormat &InputF
 {
   m_processor = nullptr;
   m_changeProcessor = false;
+  m_procSample = nullptr;
 }
 
 bool CAudioDSPProcessingBuffer::Create(unsigned int totaltime)
@@ -38,8 +39,8 @@ bool CAudioDSPProcessingBuffer::Create(unsigned int totaltime)
   //CActiveAEBufferPool::Create(totaltime);
 
   if (m_inputFormat.m_channelLayout != m_outputFormat.m_channelLayout ||
-    m_inputFormat.m_sampleRate != m_outputFormat.m_sampleRate ||
-    m_inputFormat.m_dataFormat != m_outputFormat.m_dataFormat)
+      m_inputFormat.m_sampleRate != m_outputFormat.m_sampleRate ||
+      m_inputFormat.m_dataFormat != m_outputFormat.m_dataFormat)
   {
     ChangeProcessor();
   }
@@ -49,10 +50,6 @@ bool CAudioDSPProcessingBuffer::Create(unsigned int totaltime)
 
 void CAudioDSPProcessingBuffer::Destroy()
 {
-  if (m_processor)
-  {
-    //! @todo AudioDSP V2 destroy processor
-  }
 }
 
 bool CAudioDSPProcessingBuffer::ProcessBuffer()
@@ -137,7 +134,7 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
         m_planes[i] = m_procSample->pkt->data[i] + start;
       }
 
-      int out_samples = 0;
+      int out_samples = in->pkt->nb_samples;
       //! @todo AudioDSP V2 implement the processor here.
       //m_resampler->Resample(m_planes,
       //                      m_procSample->pkt->max_nb_samples - m_procSample->pkt->nb_samples,
@@ -335,5 +332,6 @@ void CAudioDSPProcessingBuffer::ChangeProcessor()
 {
   if (m_changeProcessor || !m_processor)
   {
+    m_processor->Destroy();
   }
 }

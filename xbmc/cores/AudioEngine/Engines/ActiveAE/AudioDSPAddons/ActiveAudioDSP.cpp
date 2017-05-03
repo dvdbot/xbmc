@@ -26,6 +26,7 @@
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessor.h"
 #include "cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessingBuffer.h"
 
  // includes for AudioDSP add-on modes
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPAddonNodeCreator.h"
@@ -164,7 +165,7 @@ IActiveAEProcessingBuffer* CActiveAudioDSP::GetProcessingBuffer(const CActiveAES
 
   Actor::Message *replyMsg = nullptr;
   CAudioDSPControlProtocol::CCreateBuffer bufferMsg(AudioStream, OutputFormat);
-  if (!m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::GET_PROCESSING_BUFFER, &replyMsg, 3000, &bufferMsg, sizeof(CAudioDSPControlProtocol::CCreateBuffer)))
+  if (!m_ControlPort.SendOutMessageSync(CAudioDSPControlProtocol::GET_PROCESSING_BUFFER, &replyMsg, 30000, &bufferMsg, sizeof(CAudioDSPControlProtocol::CCreateBuffer)))
   {
     if (replyMsg)
     {
@@ -425,7 +426,22 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
         if (port == &m_ControlPort)
         {
           CAudioDSPControlProtocol::CCreateBuffer *bufferMsg = reinterpret_cast<CAudioDSPControlProtocol::CCreateBuffer*>(msg->data);
-          IActiveAEProcessingBuffer *buffer = dynamic_cast<IActiveAEProcessingBuffer*>(new CActiveAEStreamBuffers(bufferMsg->audioStream->m_inputBuffers->m_format, bufferMsg->outputFormat));
+          IActiveAEProcessingBuffer *buffer = nullptr;
+
+          if (bufferMsg->audioStream->m_inputBuffers->m_format.m_dataFormat == AE_FMT_RAW)
+          {
+            buffer = dynamic_cast<IActiveAEProcessingBuffer*>(new CActiveAEStreamBuffers(bufferMsg->audioStream->m_inputBuffers->m_format, bufferMsg->outputFormat));
+          }
+          else
+          {
+            CAudioDSPProcessingBuffer *adspBuffer = new CAudioDSPProcessingBuffer(bufferMsg->audioStream->m_inputBuffers->m_format, bufferMsg->outputFormat);
+            pAudioDSPProcessor_t processor(new CAudioDSPProcessor(m_Controller, m_DSPChainModelObject));
+            m_AudioDSPProcessors.push_back(processor);
+            adspBuffer->m_processor = processor.get();
+
+            buffer = dynamic_cast<IActiveAEProcessingBuffer*>(adspBuffer);
+          }
+
 
           if (!buffer)
           {
@@ -457,6 +473,20 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           }
           else
           {
+            CAudioDSPProcessingBuffer *adspBuffer = dynamic_cast<CAudioDSPProcessingBuffer*>(iter->second);
+            if (adspBuffer && adspBuffer->m_processor)
+            {
+              for (AudioDSPProcessorVector_t::iterator adspIter = m_AudioDSPProcessors.begin(); adspIter != m_AudioDSPProcessors.end(); ++adspIter)
+              {
+                if (adspBuffer->m_processor == adspIter->get())
+                {
+                  adspBuffer->m_processor->Destroy();
+                  adspBuffer->m_processor = nullptr;
+
+                  m_AudioDSPProcessors.erase(adspIter);
+                }
+              }
+            }
             iter->second->Flush();
             iter->second->Destroy();
             delete iter->second;

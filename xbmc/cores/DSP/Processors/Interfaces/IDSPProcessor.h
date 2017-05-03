@@ -20,6 +20,7 @@
  */
 
 #include "cores/DSP/Typedefs/DSPTypedefs.h"
+#include "cores/DSP/DSPObject.h"
 #include <string>
 
 namespace DSP
@@ -36,7 +37,7 @@ public:
   const std::string Name;
   const DSPCategory_t Category;
 
-  virtual DSPErrorCode_t Create(const void *InParameters, void *OutParameters, void *Options = nullptr) = 0;
+  virtual DSPErrorCode_t Create(const DSPObject *InParameters, DSPObject *OutParameters, void *Options = nullptr) = 0;
   virtual DSPErrorCode_t Destroy() = 0;
   virtual DSPErrorCode_t Process(void *In, void *Out) = 0;
   virtual DSPErrorCode_t UpdateNodes() = 0;

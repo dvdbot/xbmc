@@ -28,8 +28,11 @@
 
 namespace ActiveAE
 {
+class CActiveAudioDSP;
+
 class CAudioDSPProcessingBuffer : public IActiveAEProcessingBuffer
 {
+  friend class CActiveAudioDSP;
 public:
   CAudioDSPProcessingBuffer(const AEAudioFormat &InputFormat, const AEAudioFormat &OutputFormat);
 
