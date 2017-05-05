@@ -435,9 +435,8 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
           else
           {
             CAudioDSPProcessingBuffer *adspBuffer = new CAudioDSPProcessingBuffer(bufferMsg->audioStream->m_inputBuffers->m_format, bufferMsg->outputFormat);
-            pAudioDSPProcessor_t processor(new CAudioDSPProcessor(m_Controller, m_DSPChainModelObject));
-            m_AudioDSPProcessors.push_back(processor);
-            adspBuffer->m_processor = processor.get();
+            adspBuffer->m_processor = dynamic_cast<IADSPProcessor*>(new CAudioDSPProcessor(m_Controller, m_DSPChainModelObject));
+            m_AudioDSPProcessors.push_back(adspBuffer->m_processor);
 
             buffer = dynamic_cast<IActiveAEProcessingBuffer*>(adspBuffer);
           }
@@ -478,12 +477,13 @@ void CActiveAudioDSP::StateMachine(int signal, Protocol *port, Message *msg)
             {
               for (AudioDSPProcessorVector_t::iterator adspIter = m_AudioDSPProcessors.begin(); adspIter != m_AudioDSPProcessors.end(); ++adspIter)
               {
-                if (adspBuffer->m_processor == adspIter->get())
+                if (adspBuffer->m_processor == (*adspIter))
                 {
                   adspBuffer->m_processor->Destroy();
                   adspBuffer->m_processor = nullptr;
 
                   m_AudioDSPProcessors.erase(adspIter);
+                  break;
                 }
               }
             }

@@ -22,6 +22,7 @@
 
 #include "cores/AudioEngine/Interfaces/IActiveAEProcessingBuffer.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPProcessor.h"
+#include "cores/AudioEngine/Engines/ActiveAE/ActiveAEBuffer.h"
 
 #include <vector>
 
@@ -30,7 +31,7 @@ namespace ActiveAE
 {
 class CActiveAudioDSP;
 
-class CAudioDSPProcessingBuffer : public IActiveAEProcessingBuffer
+class CAudioDSPProcessingBuffer : public IActiveAEProcessingBuffer, private CActiveAEBufferPool
 {
   friend class CActiveAudioDSP;
 public:
@@ -49,7 +50,6 @@ public:
   virtual void SetOutputSampleRate(unsigned int OutputSampleRate) override;
 
 private:
-  CSampleBuffer* GetFreeBuffer();
   void ChangeProcessor();
   
   std::vector<uint8_t*> m_planes;
@@ -58,7 +58,6 @@ private:
   bool m_fillPackets;
   bool m_empty;
   bool m_drain;
-  std::deque<CSampleBuffer*> m_freeSamples;
   CSampleBuffer *m_procSample;
   
   bool m_changeProcessor;

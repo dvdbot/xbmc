@@ -27,6 +27,7 @@ namespace DSP
 class IDSPNodeCreator
 {
 public:
+  virtual ~IDSPNodeCreator() {}
   typedef IDSPNodeCreator*(*NodeCreatorCallback)(void);
 
   virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;

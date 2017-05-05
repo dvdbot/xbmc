@@ -38,12 +38,12 @@ class CDSPNodeModel : public IDSPNodeModel, public IDSPNodeFactory
   // node model interface
   typedef struct NodeInfo_t
   {
-    std::string AddonName;
-    std::string ModeName;
-    std::string InstanceModeName;
     NodeID_t    ID;
     bool        Active;
     IDSPNodeCreator *NodeCreator;
+    std::string AddonName;
+    std::string ModeName;
+    std::string InstanceModeName;
 
     NodeInfo_t &operator=(CDSPNodeInfo &NodeInfo)
     {

@@ -21,6 +21,7 @@
 
 #include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
+#include "cores/AudioEngine/Utils/AEAudioFormat.h"
 
 namespace DSP
 {
@@ -71,41 +72,28 @@ public:
     IDSPNode(Name, ID, DSP_CATEGORY_Audio),
     FormatFlags(FormatFlags)
   {
-    m_DataFormat = ADSP_DataFormatINVALID;
+    m_DataFormat = AE_FMT_INVALID;
   }
 
   const ADSPDataFormatFlags_t FormatFlags;
 
-  const inline ADSPDataFormat_t &DataFormat()
+  const inline AEDataFormat &DataFormat()
   {
     return m_DataFormat;
   }
 
-  virtual DSPErrorCode_t Create(const DSPObject *InputProperties, DSPObject *OutputProperties, void *Options = nullptr)
+  virtual DSPErrorCode_t Create(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr)
   {
-    if (InputProperties->ID   != ADSP_BASE_ID_PROPERTIES  ||
-        OutputProperties->ID  != ADSP_BASE_ID_PROPERTIES  )
-    {
-      return DSP_ERR_INVALID_INPUT;
-    }
-
-    // does this node support the requested data format?
-    if (!(1 << reinterpret_cast<const CADSPProperties*>(InputProperties)->dataFormat & FormatFlags))
-    {
-      return DSP_ERR_INVALID_DATA_FORMAT;
-    }
     // the default behavoiur is that the node uses the same output parameters as the input parameters
-    *reinterpret_cast<CADSPProperties*>(OutputProperties) = *reinterpret_cast<const CADSPProperties*>(InputProperties);
+    *OutputProperties = *InputProperties;
 
-    DSPErrorCode_t err = CreateInstance(reinterpret_cast<const CADSPProperties*>(InputProperties), 
-                                        reinterpret_cast<CADSPProperties*>(OutputProperties),
-                                        Options);
+    DSPErrorCode_t err = CreateInstance(InputProperties, OutputProperties, Options);
 
     if (err == DSP_ERR_NO_ERR)
     { // no error occured, copy the parameters into own structures
-      m_DataFormat        = reinterpret_cast<const CADSPProperties*>(InputProperties)->dataFormat;
-      m_InputProperties   = *reinterpret_cast<const CADSPProperties*>(InputProperties);
-      m_OutputProperties  = *reinterpret_cast<CADSPProperties*>(OutputProperties);
+      m_DataFormat        = InputProperties->m_dataFormat;
+      m_InputProperties   = *InputProperties;
+      m_OutputProperties  = *OutputProperties;
     }
 
     return err;
@@ -155,11 +143,11 @@ public:
     return err;
   }
 
-  const CADSPProperties& GetInputFormat()  { return m_InputProperties;  }
-  const CADSPProperties& GetOutputFormat() { return m_OutputProperties; }
+  const AEAudioFormat& GetInputFormat()  { return m_InputProperties;  }
+  const AEAudioFormat& GetOutputFormat() { return m_OutputProperties; }
 
 protected:
-  virtual DSPErrorCode_t CreateInstance(const CADSPProperties *InputProperties, CADSPProperties *OutputProperties, void *Options = nullptr) = 0;
+  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) = 0;
   virtual DSPErrorCode_t DestroyInstance() = 0;
   
   virtual DSPErrorCode_t ProcessInstance(float        *In,  float         *Out)    { return DSP_ERR_NOT_IMPLEMENTED; }
@@ -170,9 +158,9 @@ protected:
   virtual DSPErrorCode_t ProcessInstance(long double  **In, long double   **Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
 
 private:
-  ADSPDataFormat_t  m_DataFormat;
-  CADSPProperties   m_InputProperties;
-  CADSPProperties   m_OutputProperties;
+  AEDataFormat m_DataFormat;
+  AEAudioFormat m_InputProperties;
+  AEAudioFormat m_OutputProperties;
 };
 }
 }

@@ -21,7 +21,6 @@
 
 #include "cores/AudioEngine/Utils/AEAudioFormat.h"
 #include "cores/AudioEngine/Interfaces/AE.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ActiveAudioDSP.h"
 #include <deque>
 #include <memory>
 
@@ -30,8 +29,10 @@ extern "C" {
 #include "libswresample/swresample.h"
 }
 
+
 namespace ActiveAE
 {
+class CActiveAudioDSP;
 
 struct SampleConfig
 {

@@ -40,20 +40,18 @@ private: // private methods
   DSPErrorCode_t ReCreateNodeChain();
 
 private:
-  virtual DSPErrorCode_t UpdateNodes() override { return DSP_ERR_NO_ERR; }
-
-  // processor callbacks
-  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InParameters, DSP::AUDIO::CADSPProperties *OutParameters, void *Options = nullptr) override;
-  virtual DSPErrorCode_t ProcessInstance(float  *In, float   *Out) override;
-  virtual DSPErrorCode_t DestroyInstance() override;
+  // processor interface
+  virtual DSPErrorCode_t Create(const AEAudioFormat *InFormat, AEAudioFormat *OutFormat) override;
+  virtual DSPErrorCode_t Process(const ActiveAE::CSampleBuffer *In, ActiveAE::CSampleBuffer *Out) override;
+  virtual DSPErrorCode_t Destroy() override;
 
   // node model callbacks
   virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
   virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
 
   AudioDSPNodeChain_t m_DSPNodeChain;
-  DSP::AUDIO::CADSPProperties m_InParameters;
-  DSP::AUDIO::CADSPProperties m_OutParameters;
+  AEAudioFormat m_InFormat;
+  AEAudioFormat m_OutFormat;
 
   const CAudioDSPController &m_AudioDSPController;
   DSP::IDSPNodeFactory &m_NodeFactory;

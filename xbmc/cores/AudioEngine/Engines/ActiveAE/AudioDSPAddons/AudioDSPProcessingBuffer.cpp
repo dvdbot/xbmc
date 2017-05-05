@@ -26,7 +26,8 @@ using namespace ActiveAE;
 
 
 CAudioDSPProcessingBuffer::CAudioDSPProcessingBuffer(const AEAudioFormat &InputFormat, const AEAudioFormat &OutputFormat) :
-  IActiveAEProcessingBuffer(InputFormat, OutputFormat)
+  IActiveAEProcessingBuffer(InputFormat, OutputFormat),
+  CActiveAEBufferPool(OutputFormat)
 {
   m_processor = nullptr;
   m_changeProcessor = false;
@@ -36,7 +37,7 @@ CAudioDSPProcessingBuffer::CAudioDSPProcessingBuffer(const AEAudioFormat &InputF
 bool CAudioDSPProcessingBuffer::Create(unsigned int totaltime)
 {
   //! @todo AudioDSP V2 is this needed?
-  //CActiveAEBufferPool::Create(totaltime);
+  CActiveAEBufferPool::Create(totaltime);
 
   if (m_inputFormat.m_channelLayout != m_outputFormat.m_channelLayout ||
       m_inputFormat.m_sampleRate != m_outputFormat.m_sampleRate ||
@@ -111,7 +112,7 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
         m_inputSamples.pop_front();
       }
       else
-        in = NULL;
+        in = nullptr;
 
       if (m_planes.size() < m_procSample->pkt->planes)
       {
@@ -134,7 +135,9 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
         m_planes[i] = m_procSample->pkt->data[i] + start;
       }
 
-      int out_samples = in->pkt->nb_samples;
+      int out_samples = in ? in->pkt->nb_samples : 0;
+      DSPErrorCode_t dspErr = m_processor->Process(in, m_procSample);
+
       //! @todo AudioDSP V2 implement the processor here.
       //m_resampler->Resample(m_planes,
       //                      m_procSample->pkt->max_nb_samples - m_procSample->pkt->nb_samples,
@@ -142,15 +145,10 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
       //                      in ? in->pkt->nb_samples : 0,
       //                      m_resampleRatio);
       // in case of error, trigger re-create of resampler
-      if (out_samples < 0)
-      {
-        out_samples = 0;
-        m_changeProcessor = true;
-      }
 
-      m_procSample->pkt->nb_samples += out_samples;
       busy = true;
-      m_empty = (out_samples == 0);
+      m_changeProcessor = dspErr != DSP_ERR_NO_ERR;
+      m_empty = (dspErr != DSP_ERR_NO_ERR);
 
       if (in)
       {
@@ -169,6 +167,8 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
 
         // pts of last sample we added to the buffer
         m_lastSamplePts += (in->pkt->nb_samples - in->pkt_start_offset) * 1000 / m_outputFormat.m_sampleRate;
+
+        in->Return();
       }
 
       // calculate pts for last sample in m_procSample
@@ -210,9 +210,6 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
         m_outputSamples.push_back(m_procSample);
         m_procSample = NULL;
       }
-
-      if (in)
-        in->Return();
     }
   }
   return busy;
@@ -321,11 +318,6 @@ void CAudioDSPProcessingBuffer::SetOutputSampleRate(unsigned int OutputSampleRat
   //! @todo AudioDSP V2 implement this
   //m_resampleRatio = (double)m_inputFormat.m_sampleRate / OutputSampleRate;
   m_outputFormat.m_sampleRate = OutputSampleRate;
-}
-
-CSampleBuffer* CAudioDSPProcessingBuffer::GetFreeBuffer()
-{
-  return nullptr;
 }
 
 void CAudioDSPProcessingBuffer::ChangeProcessor()

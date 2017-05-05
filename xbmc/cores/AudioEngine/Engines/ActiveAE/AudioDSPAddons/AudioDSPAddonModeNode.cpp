@@ -13,7 +13,7 @@ CAudioDSPAddonModeNode::CAudioDSPAddonModeNode(AE_DSP_ADDON Addon, uint64_t ID, 
   memset(&m_DllFunctions, 0, sizeof(m_DllFunctions));
 }
 
-DSPErrorCode_t CAudioDSPAddonModeNode::CreateInstance(const CADSPProperties *InputProperties, CADSPProperties *OutputProperties, void *Options)
+DSPErrorCode_t CAudioDSPAddonModeNode::CreateInstance(const AEAudioFormat* InputProperties, AEAudioFormat* OutputProperties, void *Options)
 {
   if (!m_Addon->GetAddonProcessingCallbacks(m_DllFunctions))
   {

@@ -44,7 +44,7 @@ CAudioDSPCopyMode::CAudioDSPCopyMode(uint64_t ID) :
 {
 }
 
-DSPErrorCode_t CAudioDSPCopyMode::CreateInstance(const CADSPProperties *InputProperties, CADSPProperties *OutputProperties, void *Options)
+DSPErrorCode_t CAudioDSPCopyMode::CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options)
 {
   m_InputProperties = *InputProperties;
   *OutputProperties = *InputProperties;
@@ -63,7 +63,7 @@ DSPErrorCode_t CAudioDSPCopyMode::ProcessInstance(float *In[AE_DSP_CH_MAX], floa
 {
   for (uint8_t ch = 0; ch < AE_DSP_CH_MAX; ch++)
   {
-    for (uint32_t ii = 0; ii < m_InputProperties.frameLength; ii++)
+    for (uint32_t ii = 0; ii < m_InputProperties.m_frameSize; ii++)
     {
       Out[ch][ii] = In[ch][ii];
     }

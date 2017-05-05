@@ -52,7 +52,7 @@ class IActiveAEProcessingBuffer;
 class CAudioDSPAddonControlProtocol : public Protocol
 {
 public:
-  CAudioDSPAddonControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  CAudioDSPAddonControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {}
   enum OutSignal
   {
     REMOVE_ADDON,
@@ -76,7 +76,7 @@ public:
     AEAudioFormat &outputFormat;
   };
 
-  CAudioDSPControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  CAudioDSPControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {}
   enum OutSignal
   {
     DEINIT = 0,
@@ -96,7 +96,7 @@ public:
 class CAudioDSPProcessorControlProtocol : public Protocol
 {
 public:
-  CAudioDSPProcessorControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {};
+  CAudioDSPProcessorControlProtocol(std::string name, CEvent *inEvent, CEvent *outEvent) : Protocol(name, inEvent, outEvent) {}
   enum OutSignal
   {
     CREATE_PROCESSOR = 0,
@@ -113,8 +113,7 @@ class CActiveAudioDSP : public IAudioDSP,
                         public ADDON::IAddonMgrCallback,
                         private CThread
 {
-  typedef std::shared_ptr<DSP::AUDIO::IADSPProcessor>   pAudioDSPProcessor_t;
-  typedef std::vector<pAudioDSPProcessor_t>             AudioDSPProcessorVector_t;
+  typedef std::vector<DSP::AUDIO::IADSPProcessor*>      AudioDSPProcessorVector_t;
   typedef std::shared_ptr<ActiveAE::CActiveAEDSPAddon>  pAudioDSPAddon_t;
   typedef std::map<std::string, pAudioDSPAddon_t>       AudioDSPAddonMap_t;
   typedef std::map<int, IActiveAEProcessingBuffer*>     AudioDSPProcessingBufferMap_t;

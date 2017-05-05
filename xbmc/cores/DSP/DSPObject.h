@@ -37,8 +37,8 @@ public:
   {
   }
   
-  const DSPCategory_t   DSPCategory;
   const std::string     Name;
   const uint64_t        ID;
+  const DSPCategory_t   DSPCategory;
 };
 }

@@ -39,7 +39,7 @@ public:
   virtual ~CAudioDSPConverterFFMPEG();
 
 protected:
-  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options = nullptr) override;
+  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) override;
   virtual DSPErrorCode_t DestroyInstance() override;
 
   virtual DSPErrorCode_t ProcessInstance(float *In, float *Out) override;

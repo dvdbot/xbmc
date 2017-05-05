@@ -20,6 +20,7 @@
  */
 
 #include "cores/DSP/DSPObject.h"
+#include "cores/AudioEngine/Utils/AEAudioFormat.h"
 
 
 namespace DSP
@@ -29,7 +30,7 @@ class IDSPNode : public DSPObject
 public:
   IDSPNode(std::string Name, uint64_t ID, DSPCategory_t DSPCategory) : DSPObject(Name, ID, DSPCategory) {}
 
-  virtual DSPErrorCode_t Create(const DSPObject *InputProperties, DSPObject *OutputProperties, void *Options = nullptr) = 0;
+  virtual DSPErrorCode_t Create(const AEAudioFormat *InputFormat, AEAudioFormat *OutputFormat, void *Options = nullptr) = 0;
   virtual DSPErrorCode_t Destroy() = 0;
   virtual DSPErrorCode_t Process(void *In, void *Out) = 0;
 };

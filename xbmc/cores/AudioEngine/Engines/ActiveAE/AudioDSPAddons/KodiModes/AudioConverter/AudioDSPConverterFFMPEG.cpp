@@ -52,31 +52,31 @@ CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
   swr_free(&m_pContext);
 }
 
-DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options)
+DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const AEAudioFormat* InputProperties, AEAudioFormat* OutputProperties, void *Options)
 {
-  bool forceResampler = false;
-  const CChannelInformation *remapLayout = m_remapLayoutUsed ? &InputProperties->speakerLayout : NULL;
+//  bool forceResampler = false;
+//  const CChannelInformation *remapLayout = m_remapLayoutUsed ? &InputProperties->speakerLayout : NULL;
   
-  if (!Init(CFFMPEGUtils::GetChannelLayout(OutputProperties->speakerLayout),
-            OutputProperties->speakerLayout.GetChannelCount(),
-            OutputProperties->sampleFrequency,
-            CFFMPEGUtils::GetSampleFormat(OutputProperties->dataFormat),
-            CFFMPEGUtils::DataFormatToUsedBits(OutputProperties->dataFormat),
-            CFFMPEGUtils::DataFormatToDitherBits(OutputProperties->dataFormat),
-            CFFMPEGUtils::GetChannelLayout(InputProperties->speakerLayout),
-            InputProperties->speakerLayout.GetChannelCount(),
-            InputProperties->sampleFrequency,
-            CFFMPEGUtils::GetSampleFormat(InputProperties->dataFormat),
-            CFFMPEGUtils::DataFormatToUsedBits(InputProperties->dataFormat),
-            CFFMPEGUtils::DataFormatToDitherBits(InputProperties->dataFormat),
-            m_model.StereoUpmix(),
-            m_model.NormalizeLevels(),
-            remapLayout,
-            m_model.ResampleQuality(),
-            forceResampler))
-  {
-    return DSP_ERR_INVALID_INPUT;
-  }
+//  if (!Init(CFFMPEGUtils::GetChannelLayout(OutputProperties->speakerLayout),
+//            OutputProperties->speakerLayout.GetChannelCount(),
+//            OutputProperties->sampleFrequency,
+//            CFFMPEGUtils::GetSampleFormat(OutputProperties->dataFormat),
+//            CFFMPEGUtils::DataFormatToUsedBits(OutputProperties->dataFormat),
+//            CFFMPEGUtils::DataFormatToDitherBits(OutputProperties->dataFormat),
+//            CFFMPEGUtils::GetChannelLayout(InputProperties->speakerLayout),
+//            InputProperties->speakerLayout.GetChannelCount(),
+//            InputProperties->sampleFrequency,
+//            CFFMPEGUtils::GetSampleFormat(InputProperties->dataFormat),
+//            CFFMPEGUtils::DataFormatToUsedBits(InputProperties->dataFormat),
+//            CFFMPEGUtils::DataFormatToDitherBits(InputProperties->dataFormat),
+//            m_model.StereoUpmix(),
+//            m_model.NormalizeLevels(),
+//            remapLayout,
+//            m_model.ResampleQuality(),
+//            forceResampler))
+//  {
+//    return DSP_ERR_INVALID_INPUT;
+//  }
 
   return DSP_ERR_NO_ERR;
 }

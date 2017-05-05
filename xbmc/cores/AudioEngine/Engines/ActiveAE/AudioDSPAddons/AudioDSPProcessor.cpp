@@ -26,7 +26,7 @@ using namespace DSP;
 using namespace DSP::AUDIO;
 
 CAudioDSPProcessor::CAudioDSPProcessor(const CAudioDSPController &Controller, IDSPNodeFactory &NodeFactory) :
-  IADSPProcessor("CAudioDSPProcessor", ADSP_DataFormatFlagFloat),
+  IADSPProcessor("CAudioDSPProcessor"),
   m_AudioDSPController(Controller),
   m_NodeFactory(NodeFactory)
 {
@@ -123,7 +123,7 @@ DSPErrorCode_t CAudioDSPProcessor::ReCreateNodeChain()
   return DSP_ERR_NO_ERR;
 }
 
-DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const CADSPProperties *InParameters, CADSPProperties *OutParameters, void *Options)
+DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudioFormat *OutFormat)
 {
   IDSPNodeModel::DSPNodeInfoVector_t nodeInfos;
   DSPErrorCode_t dspErr = m_AudioDSPController.GetNodeInfos(nodeInfos);
@@ -132,14 +132,14 @@ DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const CADSPProperties *InParam
     return dspErr;
   }
 
-  m_InParameters = *InParameters;
-  m_OutParameters = *OutParameters;
-  CADSPProperties tmpParameters[2];
-  CADSPProperties *configInParameters = &tmpParameters[0];
-  CADSPProperties *configOutParameters = &tmpParameters[1];
+  m_InFormat = *InFormat;
+  m_OutFormat = *OutFormat;
+  AEAudioFormat tmpParameters[2];
+  AEAudioFormat *configInParameters = &tmpParameters[0];
+  AEAudioFormat *configOutParameters = &tmpParameters[1];
 
-  *configInParameters = m_InParameters;
-  *configOutParameters = m_InParameters;
+  *configInParameters = m_InFormat;
+  *configOutParameters = m_InFormat;
 
   // create node chain
   for(uint32_t ii = 0; ii < nodeInfos.size(); ii++)
@@ -164,7 +164,7 @@ DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const CADSPProperties *InParam
     }
 
     // swap pointer for parameters
-    CADSPProperties *p = configInParameters;
+    AEAudioFormat *p = configInParameters;
     configInParameters = configOutParameters;
     configOutParameters = p;
 
@@ -175,30 +175,30 @@ DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const CADSPProperties *InParam
   //! @todo implement buffer configuration
   if (m_DSPNodeChain.size() == 0)
   {
-    if (m_InParameters != m_OutParameters)
+    if (!(m_InFormat == m_OutFormat))
     { // create a output conversion buffer
       //! @todo add buffer
     }
   }
   else if (m_DSPNodeChain.size() == 1)
   {
-    CADSPProperties inFmt = m_DSPNodeChain.at(0)->GetInputFormat();
-    if (inFmt != m_InParameters)
+    AEAudioFormat inFmt = m_DSPNodeChain.at(0)->GetInputFormat();
+    if (!(inFmt == m_InFormat))
     { // create a output conversion buffer
       //! @todo add buffer
     }
 
-    m_OutParameters = m_DSPNodeChain.at(0)->GetOutputFormat();
+    m_OutFormat = m_DSPNodeChain.at(0)->GetOutputFormat();
   }
   else
   {
-    CADSPProperties inFmt = m_InParameters;
+    AEAudioFormat inFmt = m_InFormat;
     for (uint32_t ii = 0; ii < m_DSPNodeChain.size(); ii++)
     {
-      CADSPProperties outFmt;
+      AEAudioFormat outFmt;
       outFmt = m_DSPNodeChain.at(ii)->GetInputFormat();
 
-      if (inFmt != outFmt)
+      if (!(inFmt == outFmt))
       { // create conversion buffer
         //! @todo add buffer
       }
@@ -206,39 +206,52 @@ DSPErrorCode_t CAudioDSPProcessor::CreateInstance(const CADSPProperties *InParam
       inFmt = m_DSPNodeChain.at(ii)->GetOutputFormat();
     }
 
-    m_OutParameters = inFmt;
+    m_OutFormat = inFmt;
   }
 
-  *OutParameters = m_OutParameters;
+  *OutFormat = m_OutFormat;
     
   return DSP_ERR_NO_ERR;
 }
 
-DSPErrorCode_t CAudioDSPProcessor::ProcessInstance(float *In, float *Out)
+DSPErrorCode_t CAudioDSPProcessor::Process(const CSampleBuffer *In, CSampleBuffer *Out)
 {
-  DSPErrorCode_t dspErr = ReCreateNodeChain();
-  if (dspErr != DSP_ERR_NO_ERR)
+  if(!In || !Out)
   {
-    return dspErr;
+    return DSP_ERR_INVALID_INPUT;
   }
 
-  float *in = In;
-  float *out = Out;
-  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
-  {
-    dspErr = (*iter)->Process(in, out);
-    if (dspErr != DSP_ERR_NO_ERR)
-    {
-      return dspErr;
-    }
+  int out_samples = 0;
+  Out->pkt->nb_samples += In->pkt->nb_samples;
 
-    float *tmp = in;
-    in = out;
-    out = tmp;
-  }
+  return DSP_ERR_NO_ERR;
 }
 
-DSPErrorCode_t CAudioDSPProcessor::DestroyInstance()
+//DSPErrorCode_t CAudioDSPProcessor::ProcessInstance(float *In, float *Out)
+//{
+//  DSPErrorCode_t dspErr = ReCreateNodeChain();
+//  if (dspErr != DSP_ERR_NO_ERR)
+//  {
+//    return dspErr;
+//  }
+
+//  float *in = In;
+//  float *out = Out;
+//  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
+//  {
+//    dspErr = (*iter)->Process(in, out);
+//    if (dspErr != DSP_ERR_NO_ERR)
+//    {
+//      return dspErr;
+//    }
+
+//    float *tmp = in;
+//    in = out;
+//    out = tmp;
+//  }
+//}
+
+DSPErrorCode_t CAudioDSPProcessor::Destroy()
 {
   for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
   {

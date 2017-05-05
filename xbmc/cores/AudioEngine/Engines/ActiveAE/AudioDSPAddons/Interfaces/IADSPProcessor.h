@@ -19,85 +19,25 @@
  *
  */
 
-#include "cores/DSP/Processors/Interfaces/IDSPProcessor.h"
-#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/ActiveAEBuffer.h"
+#include "cores/AudioEngine/Utils/AEAudioFormat.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 
 namespace DSP
 {
 namespace AUDIO
 {
-class IADSPProcessor : public DSP::IDSPProcessor
+class IADSPProcessor
 {
 public:
-  IADSPProcessor(std::string Name, ADSPDataFormatFlags_t DataFormatFlags) :
-    DSP::IDSPProcessor(Name, DSP_CATEGORY_Audio),
-    m_DataFormatFlags(DataFormatFlags),
-    m_DataFormat(ADSP_DataFormatINVALID)
-  {
-  }
+  IADSPProcessor(std::string Name) : Name(Name), m_DataFormat(ADSP_DataFormatINVALID) {}
+  virtual ~IADSPProcessor() {}
 
-  virtual DSPErrorCode_t Create(const DSPObject *InParameters, DSPObject *OutParameters, void *Options = nullptr)
-  {
-    return CreateInstance(reinterpret_cast<const CADSPProperties*>(InParameters), reinterpret_cast<CADSPProperties*>(OutParameters), Options);
-  }
-
-  virtual DSPErrorCode_t Process(void *In, void *Out)
-  {
-    DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
-
-    switch (m_DataFormat)
-    {
-      case ADSP_DataFormatFloat:
-        err = ProcessInstance(reinterpret_cast<float*>(In), reinterpret_cast<float*>(Out));
-      break;
-
-      case ADSP_DataFormatLongDouble:
-        err = ProcessInstance(reinterpret_cast<double*>(In), reinterpret_cast<double*>(Out));
-      break;
-
-      case ADSP_DataFormatDouble:
-        err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<long double*>(Out));
-      break;
-
-        /* planar formats */
-      case ADSP_DataFormatFloatPlanes:
-        err = ProcessInstance(reinterpret_cast<float**>(In), reinterpret_cast<float**>(Out));
-      break;
-
-      case ADSP_DataFormatDoublePlanes:
-        err = ProcessInstance(reinterpret_cast<double**>(In), reinterpret_cast<double**>(Out));
-      break;
-
-      case ADSP_DataFormatLongDoublePlanes:
-        err = ProcessInstance(reinterpret_cast<long double**>(In), reinterpret_cast<long double**>(Out));
-      break;
-
-      default:
-        err = DSP_ERR_INVALID_DATA_FORMAT;
-      break;
-    }
-
-    return err;
-  }
-
-  virtual DSPErrorCode_t Destroy()
-  {
-    return DestroyInstance();
-  }
+  virtual DSPErrorCode_t Create(const AEAudioFormat *InFormat, AEAudioFormat *OutFormat) = 0;
+  virtual DSPErrorCode_t Process(const ActiveAE::CSampleBuffer *In, ActiveAE::CSampleBuffer *Out) = 0;
+  virtual DSPErrorCode_t Destroy() = 0;
   
-  const ADSPDataFormatFlags_t m_DataFormatFlags;
-
-protected:
-  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options = nullptr) = 0;
-
-  virtual DSPErrorCode_t ProcessInstance(float  *In,  float   *Out)             { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double *In,  double  *Out)             { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double *In, long double  *Out)    { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(float  **In, float   **Out)            { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double **In, double  **Out)            { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double **In, long double  **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-
-  virtual DSPErrorCode_t DestroyInstance() = 0;
+  const std::string Name;
 
 private:
   ADSPDataFormat_t m_DataFormat;

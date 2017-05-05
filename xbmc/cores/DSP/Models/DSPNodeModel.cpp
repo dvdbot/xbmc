@@ -114,7 +114,7 @@ IDSPNodeModel::CDSPNodeInfo CDSPNodeModel::GetNodeInfo(const CDSPNodeInfoQuery &
   NodeID_t id = 0x0;
   bool isActive = false;
 
-  for (int ii = 0; ii < m_Nodes.size(); ii++)
+  for (unsigned int ii = 0; ii < m_Nodes.size(); ii++)
   {
     if (addonName == m_Nodes.at(ii).AddonName && modeName == m_Nodes.at(ii).ModeName && instanceModeName == m_Nodes.at(ii).InstanceModeName)
     {

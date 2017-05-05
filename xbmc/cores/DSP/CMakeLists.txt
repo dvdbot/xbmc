@@ -14,8 +14,6 @@ set(HEADERS DSPObject.h
             Models/Interfaces/IDSPChainNodeModel.h
 
             Nodes/Interfaces/IDSPNode.h
-
-            Processors/Interfaces/IDSPProcessor.h
             
             Typedefs/DSPTypedefs.h)
 

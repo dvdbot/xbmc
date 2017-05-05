@@ -25,11 +25,11 @@ class CAudioDSPCopyMode : public DSP::AUDIO::IADSPNode
 public:
   CAudioDSPCopyMode(uint64_t ID);
 
-  virtual DSPErrorCode_t CreateInstance(const DSP::AUDIO::CADSPProperties *InputProperties, DSP::AUDIO::CADSPProperties *OutputProperties, void *Options = nullptr) override;
+  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) override;
   virtual DSPErrorCode_t ProcessInstance(float *In[AE_DSP_CH_MAX], float *Out[AE_DSP_CH_MAX]) override;
   virtual DSPErrorCode_t DestroyInstance() override;
 
 private:
-  DSP::AUDIO::CADSPProperties m_InputProperties;
+  AEAudioFormat m_InputProperties;
 };
 }
