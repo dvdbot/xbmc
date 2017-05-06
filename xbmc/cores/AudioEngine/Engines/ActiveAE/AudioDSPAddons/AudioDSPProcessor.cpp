@@ -20,12 +20,13 @@
 
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/AudioDSPProcessor.h"
 #include "cores/DSP/Models/DSPNodeModel.h"
+#include "cores/AudioEngine/Utils/AEUtil.h"
 
 using namespace ActiveAE;
 using namespace DSP;
 using namespace DSP::AUDIO;
 
-CAudioDSPProcessor::CAudioDSPProcessor(const CAudioDSPController &Controller, IDSPNodeFactory &NodeFactory) :
+CAudioDSPProcessor::CAudioDSPProcessor(CAudioDSPController &Controller, IDSPNodeFactory &NodeFactory) :
   IADSPProcessor("CAudioDSPProcessor"),
   m_AudioDSPController(Controller),
   m_NodeFactory(NodeFactory)
@@ -35,8 +36,6 @@ CAudioDSPProcessor::CAudioDSPProcessor(const CAudioDSPController &Controller, ID
 CAudioDSPProcessor::~CAudioDSPProcessor()
 {
 }
-
-// private methods
 
 DSPErrorCode_t CAudioDSPProcessor::ReCreateNodeChain()
 {
@@ -123,15 +122,49 @@ DSPErrorCode_t CAudioDSPProcessor::ReCreateNodeChain()
   return DSP_ERR_NO_ERR;
 }
 
+void CAudioDSPProcessor::CreateBuffer(const AEAudioFormat &Format, NodeBuffer_t *Buffer)
+{
+  Buffer->planes = AE_IS_PLANAR(Format.m_dataFormat) ? Format.m_channelLayout.Count() : 1;
+  Buffer->buffer = new uint8_t*[Buffer->planes];
+  Buffer->bytesPerSample = CAEUtil::DataFormatToBits(Format.m_dataFormat);
+  Buffer->maxSamplesCount = Format.m_frames;
+
+  for(unsigned int ii = 0; ii < Buffer->planes; ii++)
+  {
+    Buffer->buffer[ii] = new uint8_t[Buffer->bytesPerSample * Buffer->maxSamplesCount ];
+  }
+}
+
+void CAudioDSPProcessor::FreeBuffer(NodeBuffer_t *Buffer)
+{
+  for (unsigned int ii = 0; ii < Buffer->planes; ii++)
+  {
+    if (Buffer->buffer[ii])
+    {
+      delete [] Buffer->buffer[ii];
+    }
+    Buffer->buffer[ii] = nullptr;
+  }
+  delete [] Buffer->buffer;
+
+  Buffer->buffer = nullptr;
+  Buffer->bytesPerSample = 0;
+  Buffer->planes = 0;
+  Buffer->samplesCount = 0;
+  Buffer->maxSamplesCount = 0;
+  Buffer->channels = 0;
+}
+
 DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudioFormat *OutFormat)
 {
   IDSPNodeModel::DSPNodeInfoVector_t nodeInfos;
-  DSPErrorCode_t dspErr = m_AudioDSPController.GetNodeInfos(nodeInfos);
+  DSPErrorCode_t dspErr = m_AudioDSPController.GetActiveNodes(nodeInfos);
   if (dspErr != DSP_ERR_NO_ERR)
   {
     return dspErr;
   }
 
+  OutFormat->m_dataFormat = AE_FMT_FLOATP;
   m_InFormat = *InFormat;
   m_OutFormat = *OutFormat;
   AEAudioFormat tmpParameters[2];
@@ -175,81 +208,159 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
   //! @todo implement buffer configuration
   if (m_DSPNodeChain.size() == 0)
   {
-    if (!(m_InFormat == m_OutFormat))
-    { // create a output conversion buffer
-      //! @todo add buffer
-    }
-  }
-  else if (m_DSPNodeChain.size() == 1)
-  {
-    AEAudioFormat inFmt = m_DSPNodeChain.at(0)->GetInputFormat();
-    if (!(inFmt == m_InFormat))
-    { // create a output conversion buffer
-      //! @todo add buffer
-    }
+      IDSPNodeModel::CDSPNodeInfoQuery query({ "Kodi", "AudioConverter" });
+      IDSPNodeModel::CDSPNodeInfo audioConverterInfo = m_AudioDSPController.GetNodeInfo(query);
+      IADSPNode *audioConverter = dynamic_cast<IADSPNode*>(m_NodeFactory.InstantiateNode(audioConverterInfo.ID));
+      if (!audioConverter)
+      {
+        return DSP_ERR_INVALID_NODE_ID;
+      }
+      DSPErrorCode_t dspErr = audioConverter->Create(configInParameters, configOutParameters);
+      if (dspErr != DSP_ERR_NO_ERR)
+      {
+        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        m_NodeFactory.DestroyNode(node);
+        return dspErr;
+      }
 
-    m_OutFormat = m_DSPNodeChain.at(0)->GetOutputFormat();
+      m_DSPNodeChain.push_back(audioConverter);
   }
   else
   {
-    AEAudioFormat inFmt = m_InFormat;
-    for (uint32_t ii = 0; ii < m_DSPNodeChain.size(); ii++)
+    if (m_DSPNodeChain.size() == 1)
     {
-      AEAudioFormat outFmt;
-      outFmt = m_DSPNodeChain.at(ii)->GetInputFormat();
-
-      if (!(inFmt == outFmt))
-      { // create conversion buffer
+      AEAudioFormat inFmt = m_DSPNodeChain.at(0)->GetInputFormat();
+      if (!(inFmt == m_InFormat))
+      { // create a output conversion buffer
         //! @todo add buffer
       }
 
-      inFmt = m_DSPNodeChain.at(ii)->GetOutputFormat();
+      m_OutFormat = m_DSPNodeChain.at(0)->GetOutputFormat();
+    }
+    else
+    {
+      AEAudioFormat inFmt = m_InFormat;
+      for (uint32_t ii = 0; ii < m_DSPNodeChain.size(); ii++)
+      {
+        AEAudioFormat outFmt;
+        outFmt = m_DSPNodeChain.at(ii)->GetInputFormat();
+
+        if (!(inFmt == outFmt))
+        { // create conversion buffer
+          //! @todo add buffer
+        }
+
+        inFmt = m_DSPNodeChain.at(ii)->GetOutputFormat();
+      }
+
+      m_OutFormat = inFmt;
     }
 
-    m_OutFormat = inFmt;
+    // add audio converter if the first mode needed a different input format
+    AudioDSPNodeChain_t::iterator nodeIter = m_DSPNodeChain.begin();
+    AEAudioFormat firstModeInputFormat = (*nodeIter)->GetInputFormat();
+    if (!(firstModeInputFormat == m_InFormat))
+    {
+      IDSPNodeModel::CDSPNodeInfoQuery query({ "Kodi", "AudioConverter" });
+      IDSPNodeModel::CDSPNodeInfo audioConverterInfo = m_AudioDSPController.GetNodeInfo(query);
+      IADSPNode *audioConverter = dynamic_cast<IADSPNode*>(m_NodeFactory.InstantiateNode(audioConverterInfo.ID));
+      if (!audioConverter)
+      {
+        return DSP_ERR_INVALID_NODE_ID;
+      }
+      DSPErrorCode_t dspErr = audioConverter->Create(&m_InFormat, &firstModeInputFormat);
+      if (dspErr != DSP_ERR_NO_ERR)
+      {
+        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        m_NodeFactory.DestroyNode(node);
+        return dspErr;
+      }
+
+      m_DSPNodeChain.insert(nodeIter, audioConverter);
+    }
+
+    nodeIter = m_DSPNodeChain.end();
+    AEAudioFormat lastModeOutputFormat = (*nodeIter)->GetOutputFormat();
+    if (!(lastModeOutputFormat == m_OutFormat))
+    {
+      IDSPNodeModel::CDSPNodeInfoQuery query({ "Kodi", "AudioConverter" });
+      IDSPNodeModel::CDSPNodeInfo audioConverterInfo = m_AudioDSPController.GetNodeInfo(query);
+      IADSPNode *audioConverter = dynamic_cast<IADSPNode*>(m_NodeFactory.InstantiateNode(audioConverterInfo.ID));
+      if (!audioConverter)
+      {
+        return DSP_ERR_INVALID_NODE_ID;
+      }
+      DSPErrorCode_t dspErr = audioConverter->Create(&lastModeOutputFormat, &m_OutFormat);
+      if (dspErr != DSP_ERR_NO_ERR)
+      {
+        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        m_NodeFactory.DestroyNode(node);
+        return dspErr;
+      }
+
+      m_DSPNodeChain.push_back(audioConverter);
+    }
   }
 
   *OutFormat = m_OutFormat;
-    
+  // initialize internal format with all available ActiveAE channels
+  CAEChannelInfo audioDSPChLayout;
+  for(int ch = AE_CH_FL; ch <= AE_CH_BROC; ch++)
+  {
+    audioDSPChLayout += static_cast<AEChannel>(ch);
+  }
+
+  // create buffers
+  for(unsigned int ii = 0; ii < m_DSPNodeChain.size(); ii++)
+  {
+    NodeBuffer_t nodeBuffer;
+    AEAudioFormat bufferFormat = m_DSPNodeChain.at(ii)->GetOutputFormat();
+    bufferFormat.m_channelLayout = audioDSPChLayout;
+    CreateBuffer(bufferFormat, &nodeBuffer);
+
+    m_Buffers.push_back(nodeBuffer);
+  }
+
   return DSP_ERR_NO_ERR;
 }
 
 DSPErrorCode_t CAudioDSPProcessor::Process(const CSampleBuffer *In, CSampleBuffer *Out)
 {
-  if(!In || !Out)
+  if (!In || !Out)
   {
     return DSP_ERR_INVALID_INPUT;
   }
 
-  int out_samples = 0;
-  Out->pkt->nb_samples += In->pkt->nb_samples;
-
-  return DSP_ERR_NO_ERR;
-}
-
-//DSPErrorCode_t CAudioDSPProcessor::ProcessInstance(float *In, float *Out)
-//{
 //  DSPErrorCode_t dspErr = ReCreateNodeChain();
 //  if (dspErr != DSP_ERR_NO_ERR)
 //  {
 //    return dspErr;
 //  }
 
-//  float *in = In;
-//  float *out = Out;
-//  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
-//  {
-//    dspErr = (*iter)->Process(in, out);
-//    if (dspErr != DSP_ERR_NO_ERR)
-//    {
-//      return dspErr;
-//    }
+  uint8_t **in = In->pkt->data;
+  AudioDSPBuffers_t::iterator bufferIter = m_Buffers.begin();
+  NodeBuffer_t &outBuffer =  *bufferIter;
+  uint8_t **out = outBuffer.buffer;
+  DSPErrorCode_t dspErr;
+  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
+  {
+    dspErr = (*iter)->Process(in, out);
+    if (dspErr != DSP_ERR_NO_ERR)
+    {
+      return dspErr;
+    }
+    bufferIter->samplesCount += (*iter)->GetOutputFormat().m_frames;
+    in = out;
 
-//    float *tmp = in;
-//    in = out;
-//    out = tmp;
-//  }
-//}
+    ++bufferIter;
+    outBuffer =  *bufferIter;
+    out = outBuffer.buffer;
+  }
+
+  Out->pkt->nb_samples += In->pkt->nb_samples;
+
+  return DSP_ERR_NO_ERR;
+}
 
 DSPErrorCode_t CAudioDSPProcessor::Destroy()
 {
@@ -267,6 +378,13 @@ DSPErrorCode_t CAudioDSPProcessor::Destroy()
   }
 
   m_DSPNodeChain.clear();
+
+  for(AudioDSPBuffers_t::iterator iter = m_Buffers.begin(); iter != m_Buffers.end(); ++iter)
+  {
+    FreeBuffer(&*iter);
+  }
+
+  m_Buffers.clear();
 
   return DSP_ERR_NO_ERR;
 }

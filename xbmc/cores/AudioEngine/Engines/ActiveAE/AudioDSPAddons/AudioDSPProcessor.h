@@ -31,13 +31,38 @@ namespace ActiveAE
 {
 class CAudioDSPProcessor : public DSP::AUDIO::IADSPProcessor, public DSP::IDSPNodeModelCallback
 {
+  typedef struct NodeBuffer_t
+  {
+    uint8_t **buffer;
+    int bytesPerSample;     // bytes per sample and per channel
+    int planes;             // 1 for non planar formats, #channels for planar
+    int samplesCount;       // number of frames used
+    int maxSamplesCount;    // max number of frames this packet can hold
+    int channels;
+
+    NodeBuffer_t()
+    {
+      buffer = nullptr;
+      bytesPerSample = 0;
+      planes = 0;
+      samplesCount = 0;
+      maxSamplesCount = 0;
+      channels = 0;
+    }
+  }NodeBuffer_t;
   typedef std::vector<DSP::AUDIO::IADSPNode*> AudioDSPNodeChain_t;
+  typedef std::vector<NodeBuffer_t> AudioDSPBuffers_t;
 public:
-  CAudioDSPProcessor(const CAudioDSPController &Controller, DSP::IDSPNodeFactory &NodeFactory);
+  CAudioDSPProcessor(CAudioDSPController &Controller, DSP::IDSPNodeFactory &NodeFactory);
   virtual ~CAudioDSPProcessor();
 
 private: // private methods
   DSPErrorCode_t ReCreateNodeChain();
+
+  //! @todo implement memory alignment (16 for SSE)
+  void CreateBuffer(const AEAudioFormat& Format, NodeBuffer_t *Buffer);
+  //! @todo implement memory alignment
+  void FreeBuffer(NodeBuffer_t *Buffer);
 
 private:
   // processor interface
@@ -49,11 +74,12 @@ private:
   virtual DSPErrorCode_t EnableNodeCallback(uint64_t ID, uint32_t Position = 0) override;
   virtual DSPErrorCode_t DisableNodeCallback(uint64_t ID) override;
 
+  AudioDSPBuffers_t m_Buffers;
   AudioDSPNodeChain_t m_DSPNodeChain;
   AEAudioFormat m_InFormat;
   AEAudioFormat m_OutFormat;
 
-  const CAudioDSPController &m_AudioDSPController;
+  CAudioDSPController &m_AudioDSPController;
   DSP::IDSPNodeFactory &m_NodeFactory;
 };
 }

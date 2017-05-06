@@ -54,29 +54,29 @@ CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
 
 DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const AEAudioFormat* InputProperties, AEAudioFormat* OutputProperties, void *Options)
 {
-//  bool forceResampler = false;
-//  const CChannelInformation *remapLayout = m_remapLayoutUsed ? &InputProperties->speakerLayout : NULL;
+  bool forceResampler = false;
+  const CAEChannelInfo *remapLayout = m_remapLayoutUsed ? &InputProperties->m_channelLayout : NULL;
   
-//  if (!Init(CFFMPEGUtils::GetChannelLayout(OutputProperties->speakerLayout),
-//            OutputProperties->speakerLayout.GetChannelCount(),
-//            OutputProperties->sampleFrequency,
-//            CFFMPEGUtils::GetSampleFormat(OutputProperties->dataFormat),
-//            CFFMPEGUtils::DataFormatToUsedBits(OutputProperties->dataFormat),
-//            CFFMPEGUtils::DataFormatToDitherBits(OutputProperties->dataFormat),
-//            CFFMPEGUtils::GetChannelLayout(InputProperties->speakerLayout),
-//            InputProperties->speakerLayout.GetChannelCount(),
-//            InputProperties->sampleFrequency,
-//            CFFMPEGUtils::GetSampleFormat(InputProperties->dataFormat),
-//            CFFMPEGUtils::DataFormatToUsedBits(InputProperties->dataFormat),
-//            CFFMPEGUtils::DataFormatToDitherBits(InputProperties->dataFormat),
-//            m_model.StereoUpmix(),
-//            m_model.NormalizeLevels(),
-//            remapLayout,
-//            m_model.ResampleQuality(),
-//            forceResampler))
-//  {
-//    return DSP_ERR_INVALID_INPUT;
-//  }
+  if (!Init(CAEUtil::GetAVChannelLayout(OutputProperties->m_channelLayout),
+            OutputProperties->m_channelLayout.Count(),
+            OutputProperties->m_sampleRate,
+            CAEUtil::GetAVSampleFormat(OutputProperties->m_dataFormat),
+            CAEUtil::DataFormatToUsedBits(OutputProperties->m_dataFormat),
+            CAEUtil::DataFormatToDitherBits(OutputProperties->m_dataFormat),
+            CAEUtil::GetAVChannelLayout(InputProperties->m_channelLayout),
+            InputProperties->m_channelLayout.Count(),
+            InputProperties->m_sampleRate,
+            CAEUtil::GetAVSampleFormat(InputProperties->m_dataFormat),
+            CAEUtil::DataFormatToUsedBits(InputProperties->m_dataFormat),
+            CAEUtil::DataFormatToDitherBits(InputProperties->m_dataFormat),
+            m_model.StereoUpmix(),
+            m_model.NormalizeLevels(),
+            remapLayout,
+            m_model.ResampleQuality(),
+            forceResampler))
+  {
+    return DSP_ERR_INVALID_INPUT;
+  }
 
   return DSP_ERR_NO_ERR;
 }
@@ -114,7 +114,7 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout,
                                     int src_dither,
                                     bool upmix,
                                     bool normalize,
-                                    const CChannelInformation *remapLayout,
+                                    const CAEChannelInfo *remapLayout,
                                     AEQuality quality,
                                     bool force_resample)
 {
@@ -199,10 +199,10 @@ bool CAudioDSPConverterFFMPEG::Init(uint64_t dst_chan_layout,
     // the channel is mapped by setting coef 1.0
     memset(m_rematrix, 0, sizeof(m_rematrix));
     m_dst_chan_layout = 0;
-    for (unsigned int out = 0; out < m_remapLayout.GetChannelCount(); out++)
+    for (unsigned int out = 0; out < m_remapLayout.Count(); out++)
     {
       m_dst_chan_layout += ((uint64_t)1) << out;
-      int idx = CFFMPEGUtils::GetChannelIndex(m_remapLayout.GetChannelAtIndex(out), m_src_chan_layout);
+      int idx = CAEUtil::GetAVChannelIndex((*remapLayout)[out], m_src_chan_layout);
       if (idx >= 0)
       {
         m_rematrix[out][idx] = 1.0;

@@ -37,13 +37,26 @@ CAudioDSPProcessingBuffer::CAudioDSPProcessingBuffer(const AEAudioFormat &InputF
 bool CAudioDSPProcessingBuffer::Create(unsigned int totaltime)
 {
   //! @todo AudioDSP V2 is this needed?
-  CActiveAEBufferPool::Create(totaltime);
+  if(!CActiveAEBufferPool::Create(totaltime))
+  {
+    CLog::Log(LOGERROR, "%s - failed to create AudioDSP buffer pool!", __FUNCTION__);
+
+    return false;
+  }
 
   if (m_inputFormat.m_channelLayout != m_outputFormat.m_channelLayout ||
       m_inputFormat.m_sampleRate != m_outputFormat.m_sampleRate ||
       m_inputFormat.m_dataFormat != m_outputFormat.m_dataFormat)
   {
     ChangeProcessor();
+  }
+
+  DSPErrorCode_t dspErr = m_processor->Create(&m_inputFormat, &m_outputFormat);
+  if(dspErr != DSP_ERR_NO_ERR)
+  {
+    CLog::Log(LOGERROR, "%s - failed to create AudioDSP processor with error: %i", __FUNCTION__, dspErr);
+
+    return false;
   }
 
   return true;

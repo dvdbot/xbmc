@@ -32,7 +32,7 @@ public:
   CAudioDSPController(DSP::IDSPNodeModel &DSPNodeModel);
 
   // node infos
-  DSP::IDSPNodeModel::CDSPNodeInfo GetNodeInfo(DSP::IDSPNodeModel::CDSPNodeInfoQuery &Node);
+  DSP::IDSPNodeModel::CDSPNodeInfo GetNodeInfo(DSP::IDSPNodeModel::CDSPNodeInfoQuery &Node) const;
   DSPErrorCode_t GetNodeInfos(DSP::IDSPNodeModel::DSPNodeInfoVector_t &NodeInfos) const;
   DSPErrorCode_t GetActiveNodes(DSP::IDSPNodeModel::DSPNodeInfoVector_t &ActiveNodeInfos);
 

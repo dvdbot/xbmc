@@ -29,7 +29,7 @@ CAudioDSPController::CAudioDSPController(IDSPNodeModel &DSPNodeModel) :
 {
 }
 
-IDSPNodeModel::CDSPNodeInfo CAudioDSPController::GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery &Node)
+IDSPNodeModel::CDSPNodeInfo CAudioDSPController::GetNodeInfo(IDSPNodeModel::CDSPNodeInfoQuery &Node) const
 {
   return m_DSPNodeModel.GetNodeInfo(Node);
 }
