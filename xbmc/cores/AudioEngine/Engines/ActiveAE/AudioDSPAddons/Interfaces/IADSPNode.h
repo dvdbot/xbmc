@@ -19,7 +19,8 @@
  *
  */
 
-#include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
+#include "cores/DSP/DSPObject.h"
+#include "cores/AudioEngine/Utils/AEAudioFormat.h"
 #include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/ADSPTypedefs.h"
 #include "cores/AudioEngine/Utils/AEAudioFormat.h"
 
@@ -27,295 +28,49 @@ namespace DSP
 {
 namespace AUDIO
 {
-class CADSPProperties : public DSPObject
-{
-public:
-  CChannelInformation speakerLayout;
-  uint64_t            sampleFrequency;
-  uint64_t            frameLength;
-  ADSPDataFormat_t    dataFormat;
-
-  CADSPProperties& operator=(const CADSPProperties& Props)
-  {
-    speakerLayout   = Props.speakerLayout;
-    sampleFrequency = Props.sampleFrequency;
-    frameLength     = Props.frameLength;
-    dataFormat      = Props.dataFormat;
-    
-    return *this;
-  }
-
-  bool operator !=(const CADSPProperties& Props)
-  {
-    return  speakerLayout     != Props.speakerLayout    ||
-            sampleFrequency   != Props.sampleFrequency  ||
-            frameLength       != Props.frameLength      ||
-            dataFormat        != Props.dataFormat;
-
-    return true;
-  }
-
-  CADSPProperties() :
-    DSPObject("CADSPProperties", ADSP_BASE_ID_PROPERTIES, DSP_CATEGORY_Audio)
-  {
-    sampleFrequency = 0;
-    frameLength     = 0;
-    dataFormat      = ADSP_DataFormatINVALID;
-  }
-};
-
-
-class IADSPNode : public IDSPNode
+class IADSPNode : public DSPObject
 {
 public:
   IADSPNode(std::string Name, uint64_t ID, ADSPDataFormatFlags_t FormatFlags) :
-    IDSPNode(Name, ID, DSP_CATEGORY_Audio),
+    DSPObject(Name, ID, DSP_CATEGORY_Audio),
     FormatFlags(FormatFlags)
   {
-    m_InputDataFormat = AE_FMT_INVALID;
-    m_OutputDataFormat = AE_FMT_INVALID;
+    m_InputFormat.m_dataFormat = AE_FMT_INVALID;
+    m_InputFormat.m_channelLayout.Reset();
+
+    m_OutputFormat.m_dataFormat = AE_FMT_INVALID;
+    m_OutputFormat.m_channelLayout.Reset();
   }
 
   const ADSPDataFormatFlags_t FormatFlags;
 
-  virtual DSPErrorCode_t Create(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr)
+  virtual DSPErrorCode_t Create(const AEAudioFormat &InputFormat, AEAudioFormat &OutputFormat, void *Options = nullptr)
   {
+    if (InputFormat.m_dataFormat == AE_FMT_INVALID || InputFormat.m_dataFormat == AE_FMT_MAX || InputFormat.m_dataFormat == AE_FMT_RAW)
+    {
+      return DSP_ERR_INVALID_DATA_FORMAT;
+    }
+
     // the default behavoiur is that the node uses the same output parameters as the input parameters
-    *OutputProperties = *InputProperties;
+    m_InputFormat = InputFormat;
+    m_OutputFormat = InputFormat;
 
-    DSPErrorCode_t err = CreateInstance(InputProperties, OutputProperties, Options);
-
-    if (err == DSP_ERR_NO_ERR)
-    { // no error occured, copy the parameters into own structures
-      m_InputDataFormat   = InputProperties->m_dataFormat;
-      m_OutputDataFormat  = OutputProperties->m_dataFormat;
-      m_InputProperties   = *InputProperties;
-      m_OutputProperties  = *OutputProperties;
-    }
+    DSPErrorCode_t err = CreateInstance(m_InputFormat, m_OutputFormat, Options);
 
     return err;
   }
 
-  virtual DSPErrorCode_t Destroy()
-  {
-    return DestroyInstance();
-  }
+  virtual DSPErrorCode_t Process(void *In, void *Out) = 0;
+  virtual DSPErrorCode_t Destroy() = 0;
 
-  virtual DSPErrorCode_t Process(void *In, void *Out)
-  {
-    DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
-
-    if (m_InputDataFormat == m_OutputDataFormat)
-    {
-      switch (m_InputDataFormat)
-      {
-        //case AE_FMT_LONGDOUBLE:
-        //  err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<long double*>(Out));
-        //break;
-
-        case AE_FMT_DOUBLE:
-          err = ProcessInstance(reinterpret_cast<double*>(In), reinterpret_cast<double*>(Out));
-        break;
-
-        case AE_FMT_FLOAT:
-          err = ProcessInstance(reinterpret_cast<float*>(In), reinterpret_cast<float*>(Out));
-        break;
-
-        //  /* planar formats */
-        //case AE_FMT_LONGDOUBLEP:
-        //  err = ProcessInstance(reinterpret_cast<long double**>(In), reinterpret_cast<long double**>(Out));
-        //break;
-
-        case AE_FMT_DOUBLEP:
-          err = ProcessInstance(reinterpret_cast<double**>(In), reinterpret_cast<double**>(Out));
-        break;
-
-        case AE_FMT_FLOATP:
-          err = ProcessInstance(reinterpret_cast<float**>(In), reinterpret_cast<float**>(Out));
-        break;
-
-        default:
-          err = DSP_ERR_INVALID_DATA_FORMAT;
-        break;
-      }
-    }
-    else
-    {
-      switch (m_InputDataFormat)
-      {
-        case AE_FMT_U8:
-        case AE_FMT_S16BE:
-        case AE_FMT_S16LE:
-        case AE_FMT_S16NE:
-        case AE_FMT_S32BE:
-        case AE_FMT_S32LE:
-        case AE_FMT_S32NE:
-        case AE_FMT_S24BE4:
-        case AE_FMT_S24LE4:
-        case AE_FMT_S24NE4:     // 24 bits in lower 3 bytes
-        case AE_FMT_S24NE4MSB:  // S32 with bits_per_sample < 32
-        case AE_FMT_S24BE3:
-        case AE_FMT_S24LE3:
-        case AE_FMT_S24NE3:     // S24 in 3 bytes */
-          switch (m_OutputDataFormat)
-          {
-            //case AE_FMT_LONGDOUBLE:
-            //  err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<long double*>(Out));
-            //break;
-
-            case AE_FMT_DOUBLE:
-              err = ProcessInstance(reinterpret_cast<uint8_t*>(In), reinterpret_cast<double*>(Out));
-            break;
-
-            case AE_FMT_FLOAT:
-              err = ProcessInstance(reinterpret_cast<uint8_t*>(In), reinterpret_cast<float*>(Out));
-            break;
-
-            default:
-              err = DSP_ERR_INVALID_DATA_FORMAT;
-            break;
-          }
-        break;
-
-        /* planar formats */
-        case AE_FMT_U8P:
-        case AE_FMT_S16NEP:
-        case AE_FMT_S32NEP:
-        case AE_FMT_S24NE4P:
-        case AE_FMT_S24NE4MSBP:
-        case AE_FMT_S24NE3P:
-          switch (m_OutputDataFormat)
-          {
-            //case AE_FMT_LONGDOUBLE:
-            //  err = ProcessInstance(reinterpret_cast<uint8_t**>(In), reinterpret_cast<long double**>(Out));
-            //break;
-
-            case AE_FMT_DOUBLEP:
-              err = ProcessInstance(reinterpret_cast<uint8_t**>(In), reinterpret_cast<double**>(Out));
-            break;
-
-            case AE_FMT_FLOATP:
-              err = ProcessInstance(reinterpret_cast<uint8_t**>(In), reinterpret_cast<float**>(Out));
-            break;
-
-            default:
-              err = DSP_ERR_INVALID_DATA_FORMAT;
-            break;
-          }
-        break;
-
-        default:
-          err = DSP_ERR_INVALID_DATA_FORMAT;
-        break;
-      }
-
-      switch (m_OutputDataFormat)
-      {
-        case AE_FMT_U8:
-        case AE_FMT_S16BE:
-        case AE_FMT_S16LE:
-        case AE_FMT_S16NE:
-        case AE_FMT_S32BE:
-        case AE_FMT_S32LE:
-        case AE_FMT_S32NE:
-        case AE_FMT_S24BE4:
-        case AE_FMT_S24LE4:
-        case AE_FMT_S24NE4:    // 24 bits in lower 3 bytes
-        case AE_FMT_S24NE4MSB: // S32 with bits_per_sample < 32
-        case AE_FMT_S24BE3:
-        case AE_FMT_S24LE3:
-        case AE_FMT_S24NE3: /* S24 in 3 bytes */
-          switch (m_InputDataFormat)
-          {
-            //case AE_FMT_LONGDOUBLE:
-            //  err = ProcessInstance(reinterpret_cast<long double*>(In), reinterpret_cast<uint8_t*>(Out));
-            //break;
-
-            case AE_FMT_DOUBLE:
-              err = ProcessInstance(reinterpret_cast<double*>(In), reinterpret_cast<uint8_t*>(Out));
-            break;
-
-            case AE_FMT_FLOAT:
-              err = ProcessInstance(reinterpret_cast<float*>(In), reinterpret_cast<uint8_t*>(Out));
-            break;
-
-            default:
-              err = DSP_ERR_INVALID_DATA_FORMAT;
-            break;
-          }
-        break;
-
-        /* planar formats */
-        case AE_FMT_U8P:
-        case AE_FMT_S16NEP:
-        case AE_FMT_S32NEP:
-        case AE_FMT_S24NE4P:
-        case AE_FMT_S24NE4MSBP:
-        case AE_FMT_S24NE3P:
-          switch (m_InputDataFormat)
-          {
-            //case AE_FMT_LONGDOUBLE:
-            //  err = ProcessInstance(reinterpret_cast<long double**>(In), reinterpret_cast<uint8_t**>(Out));
-            //break;
-
-            case AE_FMT_DOUBLEP:
-              err = ProcessInstance(reinterpret_cast<double**>(In), reinterpret_cast<uint8_t**>(Out));
-            break;
-
-            case AE_FMT_FLOATP:
-              err = ProcessInstance(reinterpret_cast<float**>(In), reinterpret_cast<uint8_t**>(Out));
-            break;
-
-            default:
-              err = DSP_ERR_INVALID_DATA_FORMAT;
-            break;
-          }
-        break;
-
-        default:
-          err = DSP_ERR_INVALID_DATA_FORMAT;
-        break;
-      }
-    }
-
-    return err;
-  }
-
-  const AEAudioFormat& GetInputFormat()  { return m_InputProperties;  }
-  const AEAudioFormat& GetOutputFormat() { return m_OutputProperties; }
+  virtual const AEAudioFormat& GetInputFormat()  { return m_InputFormat;  }
+  virtual const AEAudioFormat& GetOutputFormat() { return m_OutputFormat; }
 
 protected:
-  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) = 0;
-  virtual DSPErrorCode_t DestroyInstance() = 0;
-  
-  virtual DSPErrorCode_t ProcessInstance(float        *In,  float         *Out)    { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double       *In,  double        *Out)    { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double  *In,  long double   *Out)    { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(float        **In, float         **Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double       **In, double        **Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double  **In, long double   **Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
+  virtual DSPErrorCode_t CreateInstance(AEAudioFormat &InputFormat, AEAudioFormat &OutputFormat, void *Options = nullptr) = 0;
 
-  // input: fixed point, output: floating point
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      *In,  float         *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      *In,  double        *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      *In,  long double   *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      **In, float         **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      **In, double        **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(uint8_t      **In, long double   **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-
-  // input: floating point, output: fixed point
-  virtual DSPErrorCode_t ProcessInstance(float        *In,  uint8_t       *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double       *In,  uint8_t       *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double  *In,  uint8_t       *Out)   { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(float        **In, uint8_t       **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(double       **In, uint8_t       **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-  virtual DSPErrorCode_t ProcessInstance(long double  **In, uint8_t       **Out)  { return DSP_ERR_NOT_IMPLEMENTED; }
-
-private:
-  AEDataFormat m_InputDataFormat;
-  AEDataFormat m_OutputDataFormat;
-  AEAudioFormat m_InputProperties;
-  AEAudioFormat m_OutputProperties;
+  AEAudioFormat m_InputFormat;
+  AEAudioFormat m_OutputFormat;
 };
 }
 }
