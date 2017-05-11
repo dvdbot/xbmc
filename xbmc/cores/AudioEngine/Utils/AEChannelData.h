@@ -105,8 +105,6 @@ enum AEDataFormat
   AE_FMT_DOUBLE,
   AE_FMT_FLOAT,
 
-  // Bitstream
-  AE_FMT_RAW,
 
   /* planar formats */
   AE_FMT_U8P,
@@ -117,6 +115,9 @@ enum AEDataFormat
   AE_FMT_S24NE3P,
   AE_FMT_DOUBLEP,
   AE_FMT_FLOATP,
+
+  // Bitstream
+  AE_FMT_RAW,
 
   AE_FMT_MAX
 };
