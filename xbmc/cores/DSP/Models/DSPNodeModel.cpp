@@ -20,8 +20,9 @@
 
 #include "cores/DSP/Models/DSPNodeModel.h"
 
-using namespace DSP;
 using namespace std;
+using namespace DSP;
+using namespace DSP::AUDIO;
 
 CDSPNodeModel::~CDSPNodeModel()
 {
@@ -216,7 +217,7 @@ DSPErrorCode_t CDSPNodeModel::DisableNode(uint64_t ID)
 
 
 // factory interface
-IDSPNode* CDSPNodeModel::InstantiateNode(uint64_t ID)
+IADSPNode* CDSPNodeModel::InstantiateNode(uint64_t ID)
 {
   CSingleLock lock(m_Mutex);
 
@@ -229,7 +230,7 @@ IDSPNode* CDSPNodeModel::InstantiateNode(uint64_t ID)
   return iter->NodeCreator->InstantiateNode(ID);
 }
 
-DSPErrorCode_t CDSPNodeModel::DestroyNode(IDSPNode *&Node)
+DSPErrorCode_t CDSPNodeModel::DestroyNode(IADSPNode *&Node)
 {
   CSingleLock lock(m_Mutex);
 

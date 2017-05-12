@@ -14,8 +14,8 @@ class CAudioDSPCopyModeCreator : public DSP::TDSPNodeCreator<CAudioDSPCopyModeCr
 public:
   CAudioDSPCopyModeCreator();
 
-  virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
-  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
+  virtual DSP::AUDIO::IADSPNode* InstantiateNode(uint64_t ID) override;
+  virtual DSPErrorCode_t DestroyNode(DSP::AUDIO::IADSPNode *&Node) override;
 };
 
 
@@ -25,11 +25,8 @@ class CAudioDSPCopyMode : public DSP::AUDIO::IADSPNode
 public:
   CAudioDSPCopyMode(uint64_t ID);
 
-  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) override;
-  virtual DSPErrorCode_t ProcessInstance(float *In[AE_DSP_CH_MAX], float *Out[AE_DSP_CH_MAX]) override;
+  virtual DSPErrorCode_t CreateInstance(AEAudioFormat &InputProperties, AEAudioFormat &OutputProperties, void *Options = nullptr) override;
+  virtual DSPErrorCode_t ProcessInstance(void *In, void *Out) override;
   virtual DSPErrorCode_t DestroyInstance() override;
-
-private:
-  AEAudioFormat m_InputProperties;
 };
 }

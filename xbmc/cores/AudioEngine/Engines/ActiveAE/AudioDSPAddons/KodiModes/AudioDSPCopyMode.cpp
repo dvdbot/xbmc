@@ -11,10 +11,10 @@ CAudioDSPCopyModeCreator::CAudioDSPCopyModeCreator()
 {
 }
 
-IDSPNode *CAudioDSPCopyModeCreator::InstantiateNode(uint64_t ID)
+IADSPNode *CAudioDSPCopyModeCreator::InstantiateNode(uint64_t ID)
 {
   CAudioDSPCopyMode *copyMode = new CAudioDSPCopyMode(ID);
-  IDSPNode *node = dynamic_cast<IDSPNode*>(copyMode);
+  IADSPNode *node = dynamic_cast<IADSPNode*>(copyMode);
 
   if (!node)
   {
@@ -24,12 +24,12 @@ IDSPNode *CAudioDSPCopyModeCreator::InstantiateNode(uint64_t ID)
   return node;
 }
 
-DSPErrorCode_t CAudioDSPCopyModeCreator::DestroyNode(DSP::IDSPNode *&Node)
+DSPErrorCode_t CAudioDSPCopyModeCreator::DestroyNode(IADSPNode *&Node)
 {
   DSPErrorCode_t err = DSP_ERR_INVALID_INPUT;
   if (Node)
   {
-    err = Node->Destroy();
+    err = Node->DestroyInstance();
 
     delete Node;
     Node = nullptr;
@@ -44,30 +44,26 @@ CAudioDSPCopyMode::CAudioDSPCopyMode(uint64_t ID) :
 {
 }
 
-DSPErrorCode_t CAudioDSPCopyMode::CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options)
+DSPErrorCode_t CAudioDSPCopyMode::CreateInstance(AEAudioFormat &InputProperties, AEAudioFormat &OutputProperties, void *Options/* = nullptr*/)
 {
-  m_InputProperties = *InputProperties;
-  *OutputProperties = *InputProperties;
-
-
   return DSP_ERR_NO_ERR;
 }
 
 DSPErrorCode_t CAudioDSPCopyMode::DestroyInstance()
 {
-  memset(&m_InputProperties, 0, sizeof(CADSPProperties));
+  m_InputFormat.m_channelLayout.Reset();
   return DSP_ERR_NO_ERR;
 }
 
-DSPErrorCode_t CAudioDSPCopyMode::ProcessInstance(float *In[AE_DSP_CH_MAX], float *Out[AE_DSP_CH_MAX])
+DSPErrorCode_t CAudioDSPCopyMode::ProcessInstance(void *In, void *Out)
 {
-  for (uint8_t ch = 0; ch < AE_DSP_CH_MAX; ch++)
-  {
-    for (uint32_t ii = 0; ii < m_InputProperties.m_frameSize; ii++)
-    {
-      Out[ch][ii] = In[ch][ii];
-    }
-  }
+  //for (uint8_t ch = 0; ch < AE_DSP_CH_MAX; ch++)
+  //{
+  //  for (uint32_t ii = 0; ii < m_InputProperties.m_frameSize; ii++)
+  //  {
+  //    Out[ch][ii] = In[ch][ii];
+  //  }
+  //}
 
   return DSP_ERR_NO_ERR;
 }

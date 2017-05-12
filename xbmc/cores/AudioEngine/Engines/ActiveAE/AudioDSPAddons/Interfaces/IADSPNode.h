@@ -60,8 +60,8 @@ public:
     return err;
   }
 
-  virtual DSPErrorCode_t Process(void *In, void *Out) = 0;
-  virtual DSPErrorCode_t Destroy() = 0;
+  virtual DSPErrorCode_t ProcessInstance(void *In, void *Out) = 0;
+  virtual DSPErrorCode_t DestroyInstance() = 0;
 
   virtual const AEAudioFormat& GetInputFormat()  { return m_InputFormat;  }
   virtual const AEAudioFormat& GetOutputFormat() { return m_OutputFormat; }

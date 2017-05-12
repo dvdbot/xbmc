@@ -20,7 +20,7 @@
  */
 
 
-#include "cores/DSP/Nodes/Interfaces/IDSPNode.h"
+#include "cores/AudioEngine/Engines/ActiveAE/AudioDSPAddons/Interfaces/IADSPNode.h"
 
 namespace DSP
 {
@@ -30,8 +30,8 @@ public:
   virtual ~IDSPNodeCreator() {}
   typedef IDSPNodeCreator*(*NodeCreatorCallback)(void);
 
-  virtual IDSPNode* InstantiateNode(uint64_t ID) = 0;
-  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node) = 0;
+  virtual AUDIO::IADSPNode* InstantiateNode(uint64_t ID) = 0;
+  virtual DSPErrorCode_t DestroyNode(AUDIO::IADSPNode *&Node) = 0;
 };
 
 class IDSPNodeCreatorFactory

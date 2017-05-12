@@ -45,6 +45,7 @@ CAudioDSPConverterFFMPEG::CAudioDSPConverterFFMPEG(uint64_t ID, CAudioConverterM
   m_needsSettingsUpdate = false;
   m_forceResampling = false;
   m_remapLayoutUsed = false;
+  m_resampleRatio = 1.0;
 }
 
 CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
@@ -52,23 +53,23 @@ CAudioDSPConverterFFMPEG::~CAudioDSPConverterFFMPEG()
   swr_free(&m_pContext);
 }
 
-DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const AEAudioFormat* InputProperties, AEAudioFormat* OutputProperties, void *Options)
+DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(AEAudioFormat &InputFormat, AEAudioFormat &OutputFormat, void *Options)
 {
   bool forceResampler = false;
-  const CAEChannelInfo *remapLayout = m_remapLayoutUsed ? &InputProperties->m_channelLayout : NULL;
+  const CAEChannelInfo *remapLayout = m_remapLayoutUsed ? &InputFormat.m_channelLayout : NULL;
   
-  if (!Init(CAEUtil::GetAVChannelLayout(OutputProperties->m_channelLayout),
-            OutputProperties->m_channelLayout.Count(),
-            OutputProperties->m_sampleRate,
-            CAEUtil::GetAVSampleFormat(OutputProperties->m_dataFormat),
-            CAEUtil::DataFormatToUsedBits(OutputProperties->m_dataFormat),
-            CAEUtil::DataFormatToDitherBits(OutputProperties->m_dataFormat),
-            CAEUtil::GetAVChannelLayout(InputProperties->m_channelLayout),
-            InputProperties->m_channelLayout.Count(),
-            InputProperties->m_sampleRate,
-            CAEUtil::GetAVSampleFormat(InputProperties->m_dataFormat),
-            CAEUtil::DataFormatToUsedBits(InputProperties->m_dataFormat),
-            CAEUtil::DataFormatToDitherBits(InputProperties->m_dataFormat),
+  if (!Init(CAEUtil::GetAVChannelLayout(OutputFormat.m_channelLayout),
+            OutputFormat.m_channelLayout.Count(),
+            OutputFormat.m_sampleRate,
+            CAEUtil::GetAVSampleFormat(OutputFormat.m_dataFormat),
+            CAEUtil::DataFormatToUsedBits(OutputFormat.m_dataFormat),
+            CAEUtil::DataFormatToDitherBits(OutputFormat.m_dataFormat),
+            CAEUtil::GetAVChannelLayout(InputFormat.m_channelLayout),
+            InputFormat.m_channelLayout.Count(),
+            InputFormat.m_sampleRate,
+            CAEUtil::GetAVSampleFormat(InputFormat.m_dataFormat),
+            CAEUtil::DataFormatToUsedBits(InputFormat.m_dataFormat),
+            CAEUtil::DataFormatToDitherBits(InputFormat.m_dataFormat),
             m_model.StereoUpmix(),
             m_model.NormalizeLevels(),
             remapLayout,
@@ -77,6 +78,8 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::CreateInstance(const AEAudioFormat* Inp
   {
     return DSP_ERR_INVALID_INPUT;
   }
+
+  m_resampleRatio = OutputFormat.m_sampleRate / InputFormat.m_sampleRate;
 
   return DSP_ERR_NO_ERR;
 }
@@ -95,8 +98,13 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::DestroyInstance()
   return DSP_ERR_NO_ERR;
 }
 
-DSPErrorCode_t CAudioDSPConverterFFMPEG::ProcessInstance(float *In, float *Out)
+DSPErrorCode_t CAudioDSPConverterFFMPEG::ProcessInstance(void *In, void *Out)
 {
+  if (Resample(reinterpret_cast<uint8_t**>(In), m_InputFormat.m_frames, reinterpret_cast<uint8_t**>(Out), m_OutputFormat.m_frames, m_resampleRatio) == 0)
+  {
+    return DSP_ERR_FATAL_ERROR;
+  }
+  
   return DSP_ERR_NO_ERR;
 }
 

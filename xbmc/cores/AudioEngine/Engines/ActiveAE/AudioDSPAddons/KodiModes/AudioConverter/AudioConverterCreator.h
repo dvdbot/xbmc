@@ -30,8 +30,8 @@ class CAudioDSPAudioConverterCreator : public DSP::IDSPNodeCreator, public DSP::
 public:
   CAudioDSPAudioConverterCreator(CAudioConverterModel &Model);
 
-  virtual DSP::IDSPNode* InstantiateNode(uint64_t ID) override;
-  virtual DSPErrorCode_t DestroyNode(DSP::IDSPNode *&Node) override;
+  virtual DSP::AUDIO::IADSPNode* InstantiateNode(uint64_t ID) override;
+  virtual DSPErrorCode_t DestroyNode(DSP::AUDIO::IADSPNode *&Node) override;
 
   static CAudioConverterModel *m_staticModel;
 private:

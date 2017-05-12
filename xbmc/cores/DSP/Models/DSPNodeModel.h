@@ -106,8 +106,8 @@ public:
   virtual DSPErrorCode_t DisableNode(uint64_t ID) override;
 
   // factory interface
-  virtual IDSPNode* InstantiateNode(uint64_t ID);
-  virtual DSPErrorCode_t DestroyNode(IDSPNode *&Node);
+  virtual AUDIO::IADSPNode* InstantiateNode(uint64_t ID) override;
+  virtual DSPErrorCode_t DestroyNode(AUDIO::IADSPNode *&Node) override;
   
 private:
   void NotifyEnableNodeUpdate(uint64_t ID, uint32_t Position);

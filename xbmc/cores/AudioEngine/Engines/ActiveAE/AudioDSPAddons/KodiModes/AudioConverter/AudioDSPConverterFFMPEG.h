@@ -39,10 +39,10 @@ public:
   virtual ~CAudioDSPConverterFFMPEG();
 
 protected:
-  virtual DSPErrorCode_t CreateInstance(const AEAudioFormat *InputProperties, AEAudioFormat *OutputProperties, void *Options = nullptr) override;
+  virtual DSPErrorCode_t CreateInstance(AEAudioFormat &InputProperties, AEAudioFormat &OutputProperties, void *Options = nullptr) override;
   virtual DSPErrorCode_t DestroyInstance() override;
 
-  virtual DSPErrorCode_t ProcessInstance(float *In, float *Out) override;
+  virtual DSPErrorCode_t ProcessInstance(void *In, void *Out) override;
 
 private:
   bool Init(uint64_t dst_chan_layout, int dst_channels, int dst_rate, AVSampleFormat dst_fmt, int dst_bits, int dst_dither, uint64_t src_chan_layout, int src_channels, int src_rate, AVSampleFormat src_fmt, int src_bits, int src_dither, bool upmix, bool normalize, const CAEChannelInfo *remapLayout, AEQuality quality, bool force_resample);
@@ -71,6 +71,7 @@ private:
   int m_dst_dither_bits;
   SwrContext *m_pContext;
   double m_rematrix[AE_CH_MAX][AE_CH_MAX];
+  double m_resampleRatio;
 
   bool m_remapLayoutUsed;
   CAEChannelInfo m_remapLayout;

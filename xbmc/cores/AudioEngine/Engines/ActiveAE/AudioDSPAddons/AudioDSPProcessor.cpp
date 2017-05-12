@@ -129,7 +129,7 @@ void CAudioDSPProcessor::CreateBuffer(const AEAudioFormat &Format, NodeBuffer_t 
   Buffer->bytesPerSample = CAEUtil::DataFormatToBits(Format.m_dataFormat);
   Buffer->maxSamplesCount = Format.m_frames;
 
-  for(unsigned int ii = 0; ii < Buffer->planes; ii++)
+  for(int ii = 0; ii < Buffer->planes; ii++)
   {
     Buffer->buffer[ii] = new uint8_t[Buffer->bytesPerSample * Buffer->maxSamplesCount ];
   }
@@ -137,7 +137,7 @@ void CAudioDSPProcessor::CreateBuffer(const AEAudioFormat &Format, NodeBuffer_t 
 
 void CAudioDSPProcessor::FreeBuffer(NodeBuffer_t *Buffer)
 {
-  for (unsigned int ii = 0; ii < Buffer->planes; ii++)
+  for (int ii = 0; ii < Buffer->planes; ii++)
   {
     if (Buffer->buffer[ii])
     {
@@ -168,16 +168,16 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
   m_InFormat = *InFormat;
   m_OutFormat = *OutFormat;
   AEAudioFormat tmpParameters[2];
-  AEAudioFormat *configInParameters = &tmpParameters[0];
-  AEAudioFormat *configOutParameters = &tmpParameters[1];
+  AEAudioFormat &configInParameters = tmpParameters[0];
+  AEAudioFormat &configOutParameters = tmpParameters[1];
 
-  *configInParameters = m_InFormat;
-  *configOutParameters = m_InFormat;
+  configInParameters = m_InFormat;
+  configOutParameters = m_InFormat;
 
   // create node chain
   for(uint32_t ii = 0; ii < nodeInfos.size(); ii++)
   {
-    IDSPNode *node = m_NodeFactory.InstantiateNode(nodeInfos.at(ii).ID);
+    IADSPNode *node = m_NodeFactory.InstantiateNode(nodeInfos.at(ii).ID);
     if (!node)
     {
       return DSP_ERR_FATAL_ERROR;
@@ -197,7 +197,7 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
     }
 
     // swap pointer for parameters
-    AEAudioFormat *p = configInParameters;
+    AEAudioFormat &p = configInParameters;
     configInParameters = configOutParameters;
     configOutParameters = p;
 
@@ -218,7 +218,7 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
       DSPErrorCode_t dspErr = audioConverter->Create(configInParameters, configOutParameters);
       if (dspErr != DSP_ERR_NO_ERR)
       {
-        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        IADSPNode *node = dynamic_cast<IADSPNode*>(audioConverter);
         m_NodeFactory.DestroyNode(node);
         return dspErr;
       }
@@ -268,10 +268,10 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
       {
         return DSP_ERR_INVALID_NODE_ID;
       }
-      DSPErrorCode_t dspErr = audioConverter->Create(&m_InFormat, &firstModeInputFormat);
+      DSPErrorCode_t dspErr = audioConverter->Create(m_InFormat, firstModeInputFormat);
       if (dspErr != DSP_ERR_NO_ERR)
       {
-        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        IADSPNode *node = dynamic_cast<IADSPNode*>(audioConverter);
         m_NodeFactory.DestroyNode(node);
         return dspErr;
       }
@@ -290,10 +290,10 @@ DSPErrorCode_t CAudioDSPProcessor::Create(const AEAudioFormat *InFormat, AEAudio
       {
         return DSP_ERR_INVALID_NODE_ID;
       }
-      DSPErrorCode_t dspErr = audioConverter->Create(&lastModeOutputFormat, &m_OutFormat);
+      DSPErrorCode_t dspErr = audioConverter->Create(lastModeOutputFormat, m_OutFormat);
       if (dspErr != DSP_ERR_NO_ERR)
       {
-        IDSPNode *node = dynamic_cast<IDSPNode*>(audioConverter);
+        IADSPNode *node = dynamic_cast<IADSPNode*>(audioConverter);
         m_NodeFactory.DestroyNode(node);
         return dspErr;
       }
@@ -344,7 +344,7 @@ DSPErrorCode_t CAudioDSPProcessor::Process(const CSampleBuffer *In, CSampleBuffe
   DSPErrorCode_t dspErr;
   for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
   {
-    dspErr = (*iter)->Process(in, out);
+    dspErr = (*iter)->ProcessInstance(in, out);
     if (dspErr != DSP_ERR_NO_ERR)
     {
       return dspErr;
@@ -368,7 +368,7 @@ DSPErrorCode_t CAudioDSPProcessor::Destroy()
   {
     if (*iter)
     {
-      IDSPNode *node = *iter;
+      IADSPNode *node = *iter;
       
       DSPErrorCode_t dspErr = m_NodeFactory.DestroyNode(node);
       if (dspErr != DSP_ERR_NO_ERR)
