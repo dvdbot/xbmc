@@ -100,7 +100,7 @@ DSPErrorCode_t CAudioDSPConverterFFMPEG::DestroyInstance()
 
 DSPErrorCode_t CAudioDSPConverterFFMPEG::ProcessInstance(void *In, void *Out)
 {
-  if (Resample(reinterpret_cast<uint8_t**>(In), m_InputFormat.m_frames, reinterpret_cast<uint8_t**>(Out), m_OutputFormat.m_frames, m_resampleRatio) == 0)
+  if (Resample(reinterpret_cast<uint8_t**>(In), m_InputFormat.m_frames / m_InputFormat.m_channelLayout.Count(), reinterpret_cast<uint8_t**>(Out), m_OutputFormat.m_frames / m_OutputFormat.m_channelLayout.Count(), m_resampleRatio) == 0)
   {
     return DSP_ERR_FATAL_ERROR;
   }
