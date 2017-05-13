@@ -93,7 +93,7 @@ CActiveAEBufferPool::~CActiveAEBufferPool()
 
 CSampleBuffer* CActiveAEBufferPool::GetFreeBuffer()
 {
-  CSampleBuffer* buf = NULL;
+  CSampleBuffer* buf = nullptr;
 
   if (!m_freeSamples.empty())
   {
