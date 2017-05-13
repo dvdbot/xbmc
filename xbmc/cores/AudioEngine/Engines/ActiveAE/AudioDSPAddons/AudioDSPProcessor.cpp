@@ -342,7 +342,7 @@ DSPErrorCode_t CAudioDSPProcessor::Process(const CSampleBuffer *In, CSampleBuffe
   NodeBuffer_t &outBuffer =  *bufferIter;
   uint8_t **out = outBuffer.buffer;
   DSPErrorCode_t dspErr;
-  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end(); ++iter)
+  for (AudioDSPNodeChain_t::iterator iter = m_DSPNodeChain.begin(); iter != m_DSPNodeChain.end() && bufferIter != m_Buffers.end(); ++iter)
   {
     dspErr = (*iter)->ProcessInstance(in, out);
     if (dspErr != DSP_ERR_NO_ERR)
@@ -353,8 +353,11 @@ DSPErrorCode_t CAudioDSPProcessor::Process(const CSampleBuffer *In, CSampleBuffe
     in = out;
 
     ++bufferIter;
-    outBuffer =  *bufferIter;
-    out = outBuffer.buffer;
+    if (bufferIter != m_Buffers.end())
+    {
+      outBuffer =  *bufferIter;
+      out = outBuffer.buffer;
+    }
   }
 
   Out->pkt->nb_samples += In->pkt->nb_samples;
