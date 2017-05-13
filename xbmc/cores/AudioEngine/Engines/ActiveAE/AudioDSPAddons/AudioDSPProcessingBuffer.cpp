@@ -232,7 +232,11 @@ bool CAudioDSPProcessingBuffer::ProcessBuffer()
 
 bool CAudioDSPProcessingBuffer::HasInputLevel(int level)
 {
-  return false;
+  if ((m_inputSamples.size()) >
+    (this->m_allSamples.size() * level / 100))
+    return true;
+  else
+    return false;
 }
 
 float CAudioDSPProcessingBuffer::GetDelay()
