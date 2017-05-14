@@ -294,88 +294,88 @@ class CVideoPlayer : public IPlayer, public CThread, public IVideoPlayer, public
 public:
   CVideoPlayer(IPlayerCallback& callback);
   virtual ~CVideoPlayer();
-  virtual bool OpenFile(const CFileItem& file, const CPlayerOptions &options);
-  virtual bool CloseFile(bool reopen = false);
-  virtual bool IsPlaying() const;
+  virtual bool OpenFile(const CFileItem& file, const CPlayerOptions &options) override;
+  virtual bool CloseFile(bool reopen = false) override;
+  virtual bool IsPlaying() const override;
   virtual void Pause() override;
-  virtual bool HasVideo() const;
-  virtual bool HasAudio() const;
-  virtual bool HasRDS() const;
-  virtual bool IsPassthrough() const;
-  virtual bool CanSeek();
-  virtual void Seek(bool bPlus, bool bLargeStep, bool bChapterOverride);
-  virtual bool SeekScene(bool bPlus = true);
-  virtual void SeekPercentage(float iPercent);
-  virtual float GetPercentage();
-  virtual float GetCachePercentage();
+  virtual bool HasVideo() const override;
+  virtual bool HasAudio() const override;
+  virtual bool HasRDS() const override;
+  virtual bool IsPassthrough() const override;
+  virtual bool CanSeek() override;
+  virtual void Seek(bool bPlus, bool bLargeStep, bool bChapterOverride) override;
+  virtual bool SeekScene(bool bPlus = true) override;
+  virtual void SeekPercentage(float iPercent) override;
+  virtual float GetPercentage() override;
+  virtual float GetCachePercentage() override;
 
   virtual void SetVolume(float nVolume) override;
   virtual void SetMute(bool bOnOff) override;
   virtual void SetDynamicRangeCompression(long drc) override;
-  virtual bool CanRecord();
-  virtual bool IsRecording();
-  virtual bool CanPause();
-  virtual bool Record(bool bOnOff);
-  virtual void SetAVDelay(float fValue = 0.0f);
-  virtual float GetAVDelay();
+  virtual bool CanRecord() override;
+  virtual bool IsRecording() override;
+  virtual bool CanPause() override;
+  virtual bool Record(bool bOnOff) override;
+  virtual void SetAVDelay(float fValue = 0.0f) override;
+  virtual float GetAVDelay() override;
   virtual bool IsInMenu() const override;
   virtual bool HasMenu() const override;
 
-  virtual void SetSubTitleDelay(float fValue = 0.0f);
-  virtual float GetSubTitleDelay();
-  virtual int GetSubtitleCount();
-  virtual int GetSubtitle();
-  virtual void GetSubtitleStreamInfo(int index, SPlayerSubtitleStreamInfo &info);
-  virtual void SetSubtitle(int iStream);
-  virtual bool GetSubtitleVisible();
-  virtual void SetSubtitleVisible(bool bVisible);
-  virtual void AddSubtitle(const std::string& strSubPath);
+  virtual void SetSubTitleDelay(float fValue = 0.0f) override;
+  virtual float GetSubTitleDelay() override;
+  virtual int GetSubtitleCount() override;
+  virtual int GetSubtitle() override;
+  virtual void GetSubtitleStreamInfo(int index, SPlayerSubtitleStreamInfo &info) override;
+  virtual void SetSubtitle(int iStream) override;
+  virtual bool GetSubtitleVisible() override;
+  virtual void SetSubtitleVisible(bool bVisible) override;
+  virtual void AddSubtitle(const std::string& strSubPath) override;
 
-  virtual int GetAudioStreamCount();
-  virtual int GetAudioStream();
-  virtual void SetAudioStream(int iStream);
+  virtual int GetAudioStreamCount() override;
+  virtual int GetAudioStream() override;
+  virtual void SetAudioStream(int iStream) override;
 
   virtual int GetVideoStream() const override;
   virtual int GetVideoStreamCount() const override;
   virtual void GetVideoStreamInfo(int streamId, SPlayerVideoStreamInfo &info) override;
-  virtual void SetVideoStream(int iStream);
+  virtual void SetVideoStream(int iStream) override;
 
-  virtual TextCacheStruct_t* GetTeletextCache();
-  virtual void LoadPage(int p, int sp, unsigned char* buffer);
+  virtual TextCacheStruct_t* GetTeletextCache() override;
+  virtual void LoadPage(int p, int sp, unsigned char* buffer) override;
 
-  virtual std::string GetRadioText(unsigned int line);
+  virtual std::string GetRadioText(unsigned int line) override;
 
-  virtual int  GetChapterCount();
-  virtual int  GetChapter();
-  virtual void GetChapterName(std::string& strChapterName, int chapterIdx=-1);
-  virtual int64_t GetChapterPos(int chapterIdx=-1);
-  virtual int  SeekChapter(int iChapter);
+  virtual int  GetChapterCount() override;
+  virtual int  GetChapter() override;
+  virtual void GetChapterName(std::string& strChapterName, int chapterIdx = -1) override;
+  virtual int64_t GetChapterPos(int chapterIdx = -1) override;
+  virtual int  SeekChapter(int iChapter) override;
 
-  virtual void SeekTime(int64_t iTime);
-  virtual bool SeekTimeRelative(int64_t iTime);
-  virtual int64_t GetTime();
-  virtual int64_t GetTotalTime();
+  virtual void SeekTime(int64_t iTime) override;
+  virtual bool SeekTimeRelative(int64_t iTime) override;
+  virtual int64_t GetTime() override;
+  virtual int64_t GetTotalTime() override;
   virtual void SetSpeed(float speed) override;
   virtual float GetSpeed() override;
   virtual bool SupportsTempo() override;
-  virtual bool OnAction(const CAction &action);
+  virtual bool OnAction(const CAction &action) override;
 
-  virtual int GetSourceBitrate();
-  virtual bool GetStreamDetails(CStreamDetails &details);
-  virtual void GetAudioStreamInfo(int index, SPlayerAudioStreamInfo &info);
+  virtual int GetSourceBitrate() override;
+  virtual bool GetStreamDetails(CStreamDetails &details) override;
+  virtual void GetAudioStreamInfo(int index, SPlayerAudioStreamInfo &info) override;
 
-  virtual std::string GetPlayerState();
-  virtual bool SetPlayerState(const std::string& state);
+  virtual std::string GetPlayerState() override;
+  virtual bool SetPlayerState(const std::string& state) override;
 
-  virtual std::string GetPlayingTitle();
+  virtual std::string GetPlayingTitle() override;
 
-  virtual bool SwitchChannel(const PVR::CPVRChannelPtr &channel);
+  virtual bool SwitchChannel(const PVR::CPVRChannelPtr &channel) override;
 
   virtual void FrameMove() override;
   virtual void Render(bool clear, uint32_t alpha = 255, bool gui = true) override;
   virtual void FlushRenderer() override;
   virtual void SetRenderViewMode(int mode) override;
-  virtual float GetRenderAspectRatio() override;
+  float GetRenderAspectRatio() override;
   virtual void TriggerUpdateResolution() override;
   virtual bool IsRenderingVideo() override;
   virtual bool Supports(EINTERLACEMETHOD method) override;
@@ -383,14 +383,14 @@ public:
   virtual bool Supports(ESCALINGMETHOD method) override;
   virtual bool Supports(ERENDERFEATURE feature) override;
 
-  virtual unsigned int RenderCaptureAlloc();
-  virtual void RenderCapture(unsigned int captureId, unsigned int width, unsigned int height, int flags);
-  virtual void RenderCaptureRelease(unsigned int captureId);
-  virtual bool RenderCaptureGetPixels(unsigned int captureId, unsigned int millis, uint8_t *buffer, unsigned int size);
+  virtual unsigned int RenderCaptureAlloc() override;
+  virtual void RenderCapture(unsigned int captureId, unsigned int width, unsigned int height, int flags) override;
+  virtual void RenderCaptureRelease(unsigned int captureId) override;
+  virtual bool RenderCaptureGetPixels(unsigned int captureId, unsigned int millis, uint8_t *buffer, unsigned int size) override;
 
   // IDispResource interface
-  virtual void OnLostDisplay();
-  virtual void OnResetDisplay();
+  virtual void OnLostDisplay() override;
+  virtual void OnResetDisplay() override;
 
   virtual bool IsCaching() const override;
   virtual int GetCacheLevel() const override;
