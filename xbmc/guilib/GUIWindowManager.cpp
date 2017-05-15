@@ -141,6 +141,8 @@
 #include "dialogs/GUIDialogPlayEject.h"
 #include "dialogs/GUIDialogMediaFilter.h"
 #include "video/dialogs/GUIDialogSubtitles.h"
+#include "settings/dialogs/GUIDialogAudioDSPManager.h"
+#include "settings/dialogs/GUIDialogAudioDSPSettings.h"
 
 #include "peripherals/dialogs/GUIDialogPeripheralSettings.h"
 #include "addons/binary/interfaces/AddonInterfaces.h"
@@ -278,6 +280,9 @@ void CGUIWindowManager::CreateWindows()
   Add(new CGUIDialogPVRChannelsOSD);
   Add(new CGUIDialogPVRGuideOSD);
 
+  Add(new ActiveAE::CGUIDialogAudioDSPManager);
+  Add(new ActiveAE::CGUIDialogAudioDSPSettings);
+
   Add(new CGUIDialogSelect);
   Add(new CGUIDialogMusicInfo);
   Add(new CGUIDialogOK);
@@ -374,6 +379,9 @@ bool CGUIWindowManager::DestroyWindows()
     Delete(WINDOW_DIALOG_PVR_OSD_CHANNELS);
     Delete(WINDOW_DIALOG_PVR_OSD_GUIDE);
     Delete(WINDOW_DIALOG_OSD_TELETEXT);
+
+    Delete(WINDOW_DIALOG_AUDIO_DSP_MANAGER);
+    Delete(WINDOW_DIALOG_AUDIO_DSP_OSD_SETTINGS);
 
     Delete(WINDOW_DIALOG_TEXT_VIEWER);
     Delete(WINDOW_DIALOG_PLAY_EJECT);

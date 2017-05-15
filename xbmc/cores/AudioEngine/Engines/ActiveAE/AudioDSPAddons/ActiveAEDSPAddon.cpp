@@ -49,31 +49,33 @@ CActiveAEDSPAddon::~CActiveAEDSPAddon(void)
 
 void CActiveAEDSPAddon::OnDisabled()
 {
-  //! @todo reactive this with AudioDSP V2.0
-  //CServiceBroker::GetADSP().UpdateAddons();
+  CServiceBroker::GetADSP().UpdateAddons();
 }
 
 void CActiveAEDSPAddon::OnEnabled()
 {
-  //! @todo reactive this with AudioDSP V2.0
-  //CServiceBroker::GetADSP().UpdateAddons();
+  CServiceBroker::GetADSP().UpdateAddons();
 }
 
 AddonPtr CActiveAEDSPAddon::GetRunningInstance() const
 {
-  return AddonPtr();
+  if (CServiceBroker::GetADSP().IsActivated())
+  {
+    AddonPtr adspAddon;
+    if (CServiceBroker::GetADSP().GetAudioDSPAddon(ID(), adspAddon))
+      return adspAddon;
+  }
+  return CAddon::GetRunningInstance();
 }
 
 void CActiveAEDSPAddon::OnPreInstall()
 {
-  //! @todo reactive this with AudioDSP V2.0
-  //CServiceBroker::GetADSP().UpdateAddons();
+  CServiceBroker::GetADSP().UpdateAddons();
 }
 
 void CActiveAEDSPAddon::OnPostInstall(bool restart, bool update)
 {
-  //! @todo reactive this with AudioDSP V2.0
-  //CServiceBroker::GetADSP().UpdateAddons();
+  CServiceBroker::GetADSP().UpdateAddons();
 }
 
 void CActiveAEDSPAddon::OnPreUnInstall()
@@ -84,8 +86,7 @@ void CActiveAEDSPAddon::OnPreUnInstall()
 
 void CActiveAEDSPAddon::OnPostUnInstall()
 {
-  //! @todo reactive this with AudioDSP V2.0
-  //CServiceBroker::GetADSP().UpdateAddons();
+  CServiceBroker::GetADSP().UpdateAddons();
 }
 
 void CActiveAEDSPAddon::ResetProperties(int iClientId /* = AE_DSP_INVALID_ADDON_ID */)
