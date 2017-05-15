@@ -89,6 +89,9 @@ void CActiveAEDSP::Init(void)
   CSettings::GetInstance().RegisterCallback(this, settingSet);
 
   CAddonMgr::GetInstance().RegisterAddonMgrCallback(ADDON_ADSPDLL, this);
+
+  m_isActive = true;
+  UpdateAddons();
 }
 //@}
 
@@ -188,12 +191,6 @@ void CActiveAEDSP::OnSettingAction(const CSetting *setting)
 
   if (settingId == CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS)
   {
-    if (!IsActivated() || !HasAvailableModes())
-    {
-      CGUIDialogOK::ShowAndGetInput(14117, 0, 15065, 0);
-      return;
-    }
-
     CGUIDialogAudioDSPManager *dialog = (CGUIDialogAudioDSPManager *)g_windowManager.GetWindow(WINDOW_DIALOG_AUDIO_DSP_MANAGER);
     if (dialog)
       dialog->Open();
