@@ -42,6 +42,8 @@ public:
     m_OutputFormat.m_channelLayout.Reset();
   }
 
+  virtual ~IADSPNode() = default;
+
   const ADSPDataFormatFlags_t FormatFlags;
 
   virtual DSPErrorCode_t Create(const AEAudioFormat &InputFormat, AEAudioFormat &OutputFormat, void *Options = nullptr)

@@ -28,6 +28,8 @@ namespace ActiveAE
 class IAudioConverterNodeCallback
 {
 public:
+  virtual ~IAudioConverterNodeCallback() = default;
+
   virtual void AudioConverterCallback() = 0;
 };
 }
