@@ -52,7 +52,7 @@ extern "C" {
 #include "utils/JobManager.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
-
+#include "ServiceBroker.h"
 
 using namespace ADDON;
 using namespace ActiveAE;
@@ -76,8 +76,8 @@ CActiveAEDSP::CActiveAEDSP()
 CActiveAEDSP::~CActiveAEDSP()
 {
   CAddonMgr::GetInstance().UnregisterAddonMgrCallback(ADDON_ADSPDLL);
-  //CSettings::GetInstance().UnregisterCallback(this);
-  //CLog::Log(LOGDEBUG, "ActiveAE DSP - destroyed");
+  CSettings::GetInstance().UnregisterCallback(this);
+  CLog::Log(LOGDEBUG, "ActiveAE DSP - destroyed");
 }
 
 void CActiveAEDSP::Init(void)
@@ -86,7 +86,7 @@ void CActiveAEDSP::Init(void)
   settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPSETTINGS);
   settingSet.insert(CSettings::SETTING_AUDIOOUTPUT_DSPRESETDB);
   //! @todo reimplement this with AudioDSP V2.0
-  //CSettings::GetInstance().RegisterCallback(this, settingSet);
+  CSettings::GetInstance().RegisterCallback(this, settingSet);
 
   CAddonMgr::GetInstance().RegisterAddonMgrCallback(ADDON_ADSPDLL, this);
 }
