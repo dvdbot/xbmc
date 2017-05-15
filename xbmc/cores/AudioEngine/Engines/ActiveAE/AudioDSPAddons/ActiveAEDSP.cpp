@@ -89,9 +89,6 @@ void CActiveAEDSP::Init(void)
   CSettings::GetInstance().RegisterCallback(this, settingSet);
 
   CAddonMgr::GetInstance().RegisterAddonMgrCallback(ADDON_ADSPDLL, this);
-
-  m_isActive = true;
-  UpdateAddons();
 }
 //@}
 
