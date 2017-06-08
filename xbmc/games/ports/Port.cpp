@@ -26,8 +26,8 @@
 using namespace KODI;
 using namespace GAME;
 
-CPort::CPort(JOYSTICK::IInputHandler *inputHandler, CGameClient &gameClient) :
-  m_inputHandler(inputHandler),
+CPort::CPort(JOYSTICK::IInputHandler *gameInput, CGameClient &gameClient) :
+  m_gameInput(gameInput),
   m_controller(new CPortInput(gameClient)),
   m_inputSink(new CInputSink(gameClient))
 {
@@ -47,13 +47,13 @@ void CPort::RegisterDevice(PERIPHERALS::CPeripheral *device)
   device->RegisterJoystickInputHandler(m_inputSink.get(), false);
 
   // Register input handler
-  device->RegisterJoystickInputHandler(m_inputHandler, false);
+  device->RegisterJoystickInputHandler(m_gameInput, false);
 }
 
 void CPort::UnregisterDevice(PERIPHERALS::CPeripheral *device)
 {
   // Unregister in reverse order
-  device->UnregisterJoystickInputHandler(m_inputHandler);
+  device->UnregisterJoystickInputHandler(m_gameInput);
   device->UnregisterJoystickInputHandler(m_inputSink.get());
   device->UnregisterJoystickInputHandler(m_controller.get());
 }
