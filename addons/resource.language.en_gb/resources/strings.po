@@ -16964,7 +16964,55 @@ msgctxt "#35220"
 msgid "Game providers"
 msgstr ""
 
-#empty strings from id 35221 to 35249
+#. Title of the game OSD menu
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35221"
+msgid "Game Menu"
+msgstr ""
+
+#. Label of game menu button for stopping game playback
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35222"
+msgid "Stop"
+msgstr ""
+
+#. Label of game menu button for opening the saved game manager
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35223"
+msgid "Saved Games"
+msgstr ""
+
+#. Label of game menu button for opening the video filter manager
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35224"
+msgid "Video settings"
+msgstr ""
+
+#. Label of game menu button for opening the audio filter manager
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35225"
+msgid "Audio settings"
+msgstr ""
+
+#. Label of game menu button for opening the input configuration dialog
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35226"
+msgid "Input settings"
+msgstr ""
+
+#. Label of game menu button for opening the achievements dialog
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35227"
+msgid "Achievements"
+msgstr ""
+
+#. Label of game menu button for opening the cheat manager
+#: addons/skin.estuary/xml/GameOSD.xml
+msgctxt "#35228"
+msgid "Cheats"
+msgstr ""
+
+#empty strings from id 35229 to 35249
 
 #: xbmc/windows/GUIMediaWindow.cpp
 msgctxt "#35250"

@@ -1,8 +1,10 @@
-set(SOURCES GUIDialogSavestates.cpp
+set(SOURCES GUIDialogGameOSD.cpp
+            GUIDialogSavestates.cpp
             GUIDialogSelectGameClient.cpp
 )
 
-set(HEADERS GUIDialogSavestates.h
+set(HEADERS GUIDialogGameOSD.h
+            GUIDialogSavestates.h
             GUIDialogSelectGameClient.h
 )
 
