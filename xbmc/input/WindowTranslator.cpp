@@ -149,7 +149,10 @@ static const std::map<WindowName, WindowID> WindowMapping =
     { "addon"                    , WINDOW_ADDON_START },
     { "eventlog"                 , WINDOW_EVENT_LOG},
     { "tvtimerrules"             , WINDOW_TV_TIMER_RULES},
-    { "radiotimerrules"          , WINDOW_RADIO_TIMER_RULES}
+    { "radiotimerrules"          , WINDOW_RADIO_TIMER_RULES},
+    { "gameosd"                  , WINDOW_DIALOG_GAME_OSD },
+    { "gamevideosettings"        , WINDOW_DIALOG_GAME_VIDEO_SETTINGS },
+    { "gameaudiosettings"        , WINDOW_DIALOG_GAME_AUDIO_SETTINGS },
 };
 
 struct FallbackWindowMapping
