@@ -3,12 +3,14 @@
 	<visible>Player.Seeking | Player.DisplayAfterSeek | [Player.Paused + !Player.Caching] | Player.Forwarding | Player.Rewinding | Player.ShowInfo | Window.IsActive(videoosd) | Window.IsActive(musicosd) | Window.IsActive(playerprocessinfo) | !String.IsEmpty(Player.SeekNumeric) | !String.IsEmpty(PVR.ChannelNumberInput)</visible>
 	<visible>![Window.IsActive(sliderdialog) | Window.IsActive(pvrosdchannels)]</visible>
 	<visible>Window.IsActive(fullscreenvideo) | Window.IsActive(visualisation)</visible>
+	<visible>!Player.HasGame</visible>
 	<include>Animation_BottomSlide</include>
 	<depth>DepthOSD</depth>
 	<zorder>0</zorder>
 	<controls>
 		<include>PVRChannelNumberInput</include>
 		<control type="group">
+			<visible>!Player.HasGame</visible>
 			<bottom>0</bottom>
 			<height>190</height>
 			<control type="image">
