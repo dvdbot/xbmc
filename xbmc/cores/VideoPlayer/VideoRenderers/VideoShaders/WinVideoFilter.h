@@ -46,17 +46,19 @@ private:
   bool         m_limitedRange;
   EShaderFormat m_format;
   XMFLOAT4X4   m_mat;
+  bool         m_isNearest;
 };
 
 class CWinShader
 {
+public:
+  virtual ~CWinShader();
 protected:
   CWinShader() :
     m_vbsize(0),
     m_vertsize(0),
     m_inputLayout(nullptr)
   {}
-  virtual ~CWinShader();
   virtual bool CreateVertexBuffer(unsigned int vertCount, unsigned int vertSize);
   virtual bool LockVertexBuffer(void **data);
   virtual bool UnlockVertexBuffer();
@@ -84,20 +86,26 @@ private:
 class CYUV2RGBShader : public CWinShader
 {
 public:
-  virtual bool Create(unsigned int sourceWidth, unsigned int sourceHeight, EShaderFormat fmt);
+  virtual bool Create(unsigned int sourceWidth,
+                      unsigned int sourceHeight,
+                      EShaderFormat fmt,
+                      ESCALINGMETHOD scalingMethod = VS_SCALINGMETHOD_LINEAR);
   virtual void Render(CRect sourceRect,
                       CPoint dest[],
                       float contrast,
                       float brightness,
                       unsigned int flags,
-                      YUVBuffer* YUVbuf);
-  CYUV2RGBShader() : 
+                      YUVBuffer* YUVbuf,
+                      ESCALINGMETHOD scalingMethod = VS_SCALINGMETHOD_LINEAR);
+  CYUV2RGBShader() :
     m_sourceWidth (0),
     m_sourceHeight(0),
-    m_format      (SHADER_NONE)
+    m_format      (SHADER_NONE),
+    m_isNearest   (false)
     {
-      memset(&m_texSteps,0,sizeof(m_texSteps));
+      memset(&m_texSteps, 0, sizeof(m_texSteps));
     }
+
   virtual ~CYUV2RGBShader();
 
 protected:
@@ -107,6 +115,7 @@ protected:
                                  float brightness,
                                  unsigned int flags);
   virtual void SetShaderParameters(YUVBuffer* YUVbuf);
+  void HandleScalerChange(ESCALINGMETHOD escalingMethod);
 
 private:
   CYUV2RGBMatrix      m_matrix;
@@ -115,6 +124,7 @@ private:
   CPoint              m_dest[4];
   EShaderFormat       m_format;
   float               m_texSteps[2];
+  bool                m_isNearest;
 
   struct CUSTOMVERTEX {
       FLOAT x, y, z;
