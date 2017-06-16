@@ -618,7 +618,7 @@ void CWinRenderer::UpdatePSVideoFilter()
 
   m_colorShader = new CYUV2RGBShader();
   EShaderFormat shaderFormat = GetShaderFormat(m_format);
-  if (!m_colorShader->Create(m_sourceWidth, m_sourceHeight, shaderFormat))
+  if (!m_colorShader->Create(m_sourceWidth, m_sourceHeight, shaderFormat, m_scalingMethod))
   {
     if (m_bUseHQScaler)
     {
@@ -812,7 +812,8 @@ void CWinRenderer::RenderPS()
   m_colorShader->Render(m_sourceRect, destPoints,
                         CMediaSettings::GetInstance().GetCurrentVideoSettings().m_Contrast,
                         CMediaSettings::GetInstance().GetCurrentVideoSettings().m_Brightness,
-                        m_iFlags, reinterpret_cast<YUVBuffer*>(m_VideoBuffers[m_iYV12RenderBuffer]));
+                        m_iFlags, reinterpret_cast<YUVBuffer*>(m_VideoBuffers[m_iYV12RenderBuffer]),
+                        m_scalingMethod);
   // Restore our view port.
   g_Windowing.RestoreViewPort();
   // Restore the render target and depth view.
@@ -1065,6 +1066,11 @@ bool CWinRenderer::Supports(ESCALINGMETHOD method)
         return true;
       else if (!g_advancedSettings.m_DXVAAllowHqScaling || m_renderOrientation)
         return false;
+    }
+    else // RENDER_PS
+    {
+      if (method == VS_SCALINGMETHOD_NEAREST)
+        return true;
     }
 
     if (  method == VS_SCALINGMETHOD_AUTO

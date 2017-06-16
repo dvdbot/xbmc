@@ -38,6 +38,8 @@
 
 using namespace DirectX::PackedVector;
 
+struct YUVBuffer;
+
 CYUV2RGBMatrix::CYUV2RGBMatrix()
 {
   m_NeedRecalc = true;
@@ -46,6 +48,7 @@ CYUV2RGBMatrix::CYUV2RGBMatrix()
   m_flags = 0;
   m_limitedRange = false;
   m_format = SHADER_NONE;
+  m_isNearest = false;
 }
 
 void CYUV2RGBMatrix::SetParameters(float contrast, float blacklevel, unsigned int flags, EShaderFormat format)
@@ -247,17 +250,21 @@ bool CWinShader::Execute(std::vector<ID3D11RenderTargetView*> *vecRT, unsigned i
 
 //==================================================================================
 
-bool CYUV2RGBShader::Create(unsigned int sourceWidth, unsigned int sourceHeight, EShaderFormat fmt)
+bool CYUV2RGBShader::Create(unsigned int sourceWidth, unsigned int sourceHeight, EShaderFormat fmt, ESCALINGMETHOD scalingMethod)
 {
   CWinShader::CreateVertexBuffer(4, sizeof(CUSTOMVERTEX));
 
   m_sourceWidth = sourceWidth;
   m_sourceHeight = sourceHeight;
   m_format = fmt;
+  m_isNearest = scalingMethod == VS_SCALINGMETHOD_NEAREST;
 
   unsigned int texWidth;
 
   DefinesMap defines;
+
+  if (m_isNearest)
+    defines["SAMP_NEAREST"] = "";
 
   switch (fmt)
   {
@@ -318,12 +325,23 @@ void CYUV2RGBShader::Render(CRect sourceRect, CPoint dest[],
                             float contrast,
                             float brightness,
                             unsigned int flags,
-                            YUVBuffer* YUVbuf)
+                            YUVBuffer* YUVbuf,
+                            ESCALINGMETHOD scalingMethod)
 {
+  HandleScalerChange(scalingMethod);
   PrepareParameters(sourceRect, dest,
                     contrast, brightness, flags);
   SetShaderParameters(YUVbuf);
   Execute(nullptr, 4);
+}
+
+void CYUV2RGBShader::HandleScalerChange(ESCALINGMETHOD scalingMethod)
+{
+  if (m_isNearest != (scalingMethod == VS_SCALINGMETHOD_NEAREST)) {
+    // Scaler has changed from/to nearest neighbour to/from something
+    // else, we need to recompile the shader
+    Create(m_sourceWidth, m_sourceHeight, m_format, scalingMethod);
+  }
 }
 
 CYUV2RGBShader::~CYUV2RGBShader()
