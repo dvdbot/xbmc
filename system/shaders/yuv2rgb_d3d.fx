@@ -23,12 +23,15 @@ float4x4   g_ColorMatrix;
 float2     g_StepXY;
 float2     g_viewPort;
 
-
 SamplerState YUVSampler : IMMUTABLE
 {
   AddressU = CLAMP;
   AddressV = CLAMP;
+#ifdef SAMP_NEAREST
+  Filter   = MIN_MAG_MIP_POINT;
+#else
   Filter   = MIN_MAG_MIP_LINEAR;
+#endif
 };
 #ifdef NV12_SNORM_UV
 SamplerState UVSamplerSNORM : IMMUTABLE
