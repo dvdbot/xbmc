@@ -67,6 +67,12 @@ protected:
 
   CD3DEffect   m_effect;
 
+  const float m_colorRanges[2][2] =
+  {
+    { 0.f, 1.f },
+    { 16.f / 255.f, (235.f - 16.f) / 255.f }
+  };
+
 private:
   CD3DBuffer          m_vb;
   CD3DBuffer          m_ib;

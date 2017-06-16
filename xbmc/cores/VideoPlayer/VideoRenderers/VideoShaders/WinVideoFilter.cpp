@@ -594,12 +594,7 @@ void CConvolutionShader1Pass::SetShaderParameters(CD3DTexture &sourceTexture, fl
   D3D11_VIEWPORT viewPort = {};
   g_Windowing.Get3D11Context()->RSGetViewports(&numVP, &viewPort);
   m_effect.SetFloatArray("g_viewPort", &viewPort.Width, 2);
-  float colorRange[2] =
-  {
-    (useLimitRange ? 16.f : 0.f) / 255.f,
-    (useLimitRange ? (235.f - 16.f) : 255.f) / 255.f,
-  };
-  m_effect.SetFloatArray("g_colorRange", colorRange, _countof(colorRange));
+  m_effect.SetFloatArray("g_colorRange", m_colorRanges[useLimitRange], 2);
 }
 
 //==================================================================================
@@ -836,12 +831,7 @@ void CConvolutionShaderSeparable::SetShaderParameters(CD3DTexture &sourceTexture
   m_effect.SetTexture( "g_Texture",  sourceTexture );
   m_effect.SetTexture( "g_KernelTexture", m_HQKernelTexture );
   m_effect.SetFloatArray("g_StepXY", texSteps, texStepsCount);
-  float colorRange[2] = 
-  { 
-    (useLimitRange ? 16.f : 0.f) / 255.f,
-    (useLimitRange ? (235.f - 16.f) : 255.f) / 255.f,
-  };
-  m_effect.SetFloatArray("g_colorRange", colorRange, _countof(colorRange));
+  m_effect.SetFloatArray("g_colorRange", m_colorRanges[useLimitRange], 2);
 }
 
 void CConvolutionShaderSeparable::SetStepParams(UINT iPass)
