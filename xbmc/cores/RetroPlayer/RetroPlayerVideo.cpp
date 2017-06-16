@@ -30,6 +30,7 @@
 #include "cores/VideoPlayer/VideoRenderers/RenderManager.h"
 #include "cores/VideoPlayer/DVDStreamInfo.h"
 #include "cores/VideoPlayer/TimingConstants.h"
+#include "settings/MediaSettings.h"
 #include "utils/log.h"
 
 #include <atomic> //! @todo
@@ -161,9 +162,19 @@ bool CRetroPlayerVideo::Configure(VideoPicture& picture)
       m_processInfo.SetVideoDimensions(picture.iWidth, picture.iHeight);
       m_processInfo.SetVideoFps(static_cast<float>(m_framerate));
     }
+
+    ConfigureVideoSettings();
   }
 
   return m_bConfigured;
+}
+
+void CRetroPlayerVideo::ConfigureVideoSettings()
+{
+  CVideoSettings& videoSettings = CMediaSettings::GetInstance().GetCurrentVideoSettings();
+
+  // Force nearest neighbor scaling by default
+  videoSettings.m_ScalingMethod = VS_SCALINGMETHOD_NEAREST;
 }
 
 bool CRetroPlayerVideo::GetPicture(const uint8_t* data, unsigned int size, VideoPicture& picture)

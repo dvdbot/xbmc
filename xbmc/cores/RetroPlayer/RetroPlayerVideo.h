@@ -57,6 +57,7 @@ namespace RETRO
 
   private:
     bool Configure(VideoPicture& picture);
+    static void ConfigureVideoSettings();
     bool GetPicture(const uint8_t* data, unsigned int size, VideoPicture& picture);
     void SendPicture(VideoPicture& picture);
 
