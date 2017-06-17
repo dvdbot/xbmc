@@ -69,7 +69,6 @@ CExternalPlayer::CExternalPlayer(IPlayerCallback& callback)
   m_bIsPlaying = false;
   m_paused = false;
   m_playbackStartTime = 0;
-  m_speed = 1;
   m_totalTime = 1;
   m_time = 0;
 
@@ -571,16 +570,6 @@ int64_t CExternalPlayer::GetTime() // in millis
 int64_t CExternalPlayer::GetTotalTime() // in milliseconds
 {
   return (int64_t)m_totalTime * 1000;
-}
-
-void CExternalPlayer::SetSpeed(float iSpeed)
-{
-  m_speed = static_cast<int>(iSpeed);
-}
-
-float CExternalPlayer::GetSpeed()
-{
-  return m_speed;
 }
 
 std::string CExternalPlayer::GetPlayerState()
