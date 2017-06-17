@@ -1825,7 +1825,7 @@ bool CApplication::LoadCustomWindows()
 
           if (StringUtils::EqualsNoCase(strType, "dialog"))
           {
-            hasVisibleCondition = pRootElement->FirstChildElement("visible");
+            hasVisibleCondition = pRootElement->FirstChildElement("visible") != nullptr;
             pWindow = new CGUIDialog(windowId, skinFile);
           }
           else if (StringUtils::EqualsNoCase(strType, "submenu"))
