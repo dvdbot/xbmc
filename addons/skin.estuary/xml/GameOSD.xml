@@ -47,7 +47,6 @@
 						<label>$LOCALIZE[35222]</label>
 						<onclick>PlayerControl(Stop)</onclick>
 					</control>
-					<!--
 					<control type="button" id="11105">
 						<description>Saved games button</description>
 						<width>700</width>
@@ -55,7 +54,6 @@
 						<label>$LOCALIZE[35223]</label>
 						<onclick>ActivateWindow(gamesavestates)</onclick>
 					</control>
-					-->
 					<control type="button" id="11106">
 						<description>Settings button</description>
 						<width>700</width>
