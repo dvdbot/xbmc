@@ -23,6 +23,7 @@
 #include "games/controllers/guicontrols/GUIFeatureButton.h"
 #include "games/controllers/Controller.h"
 #include "games/controllers/ControllerFeature.h"
+#include "input/joysticks/IActionMap.h"
 #include "input/joysticks/IButtonMap.h"
 #include "input/joysticks/IButtonMapCallback.h"
 #include "input/keyboard/KeymapActionMap.h"
@@ -60,6 +61,7 @@ void CGUIConfigurationWizard::InitializeState(void)
   m_currentDirection = JOYSTICK::ANALOG_STICK_DIRECTION::UNKNOWN;
   m_history.clear();
   m_lateAxisDetected = false;
+  m_deviceName.clear();
 }
 
 void CGUIConfigurationWizard::Run(const std::string& strControllerId, const std::vector<IFeatureButton*>& buttons)
@@ -193,12 +195,54 @@ bool CGUIConfigurationWizard::MapPrimitive(JOYSTICK::IButtonMap* buttonMap,
 {
   using namespace JOYSTICK;
 
+  if (m_deviceName.empty())
+  {
+    CLog::Log(LOGDEBUG, "%s: starting to map input for device \"%s\"", buttonMap->ControllerID().c_str(), buttonMap->DeviceName().c_str());
+    m_deviceName = buttonMap->DeviceName();
+  }
+
   bool bHandled = false;
 
-  // Handle esc key separately
-  if (primitive.Type() == PRIMITIVE_TYPE::BUTTON &&
-      primitive.Index() == ESC_KEY_CODE)
+  // Handle primitives from a different device
+  //! @todo This has no effect for multiple controllers with the same device name
+  if (m_deviceName != buttonMap->DeviceName())
   {
+    bool bIsCancelAction = false;
+
+    //! @todo This only succeeds for game.controller.default; no actions are
+    //        currently defined for other controllers
+    if (actionMap && actionMap->ControllerID() == buttonMap->ControllerID())
+    {
+      std::string feature;
+      if (buttonMap->GetFeature(primitive, feature))
+      {
+        switch (actionMap->GetActionID(feature))
+        {
+        case ACTION_NAV_BACK:
+        case ACTION_PREVIOUS_MENU:
+          bIsCancelAction = true;
+          break;
+        default:
+          break;
+        }
+      }
+    }
+
+    if (bIsCancelAction)
+    {
+      CLog::Log(LOGDEBUG, "%s: device \"%s\" is cancelling prompt", buttonMap->ControllerID().c_str(), buttonMap->DeviceName().c_str());
+      Abort(false);
+    }
+    else
+      CLog::Log(LOGDEBUG, "%s: ignoring input for device \"%s\"", buttonMap->ControllerID().c_str(), buttonMap->DeviceName().c_str());
+
+    // Discard input
+    bHandled = true;
+  }
+  else if (primitive.Type() == PRIMITIVE_TYPE::BUTTON &&
+           primitive.Index() == ESC_KEY_CODE)
+  {
+    // Handle esc key
     bHandled = Abort(false);
   }
   else if (m_history.find(primitive) != m_history.end())
@@ -225,7 +269,7 @@ bool CGUIConfigurationWizard::MapPrimitive(JOYSTICK::IButtonMap* buttonMap,
     {
       const CControllerFeature& feature = currentButton->Feature();
 
-      CLog::Log(LOGDEBUG, "%s: mapping feature \"%s\" for device %s",
+      CLog::Log(LOGDEBUG, "%s: mapping feature \"%s\" for device \"%s\"",
         m_strControllerId.c_str(), feature.Name().c_str(), buttonMap->DeviceName().c_str());
 
       switch (feature.Type())
