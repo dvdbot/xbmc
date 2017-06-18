@@ -70,6 +70,10 @@ bool CDialogGameOSD::OnMessage(CGUIMessage& message)
     if (pDialog && pDialog->IsDialogRunning())
       pDialog->Close(true);
 
+    pDialog = g_windowManager.GetDialog(WINDOW_DIALOG_GAME_CONTROLLERS);
+    if (pDialog && pDialog->IsDialogRunning())
+      pDialog->Close(true);
+
     break;
   }
   default:
