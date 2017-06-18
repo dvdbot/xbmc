@@ -108,8 +108,8 @@ namespace JOYSTICK
     virtual void ProcessMotions(void) override;
 
   private:
-    void OnDigitalMotion(bool bPressed);
-    void OnAnalogMotion(float magnitude);
+    bool OnDigitalMotion(bool bPressed);
+    bool OnAnalogMotion(float magnitude);
 
     INPUT_TYPE       m_inputType = INPUT_TYPE::UNKNOWN;
     bool             m_bDigitalState;

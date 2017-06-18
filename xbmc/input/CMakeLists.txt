@@ -16,9 +16,12 @@ set(SOURCES Action.cpp
             KeyboardLayoutManager.cpp
             KeyboardStat.cpp
             KeyboardTranslator.cpp
+            Keymap.cpp
+            KeymapEnvironment.cpp
             MouseStat.cpp
             MouseTranslator.cpp
             TouchTranslator.cpp
+            WindowKeymap.cpp
             WindowTranslator.cpp
             XBMC_keytable.cpp)
 
@@ -30,6 +33,8 @@ set(HEADERS Action.h
             CustomControllerTranslator.h
             GamepadTranslator.h
             IActionHandler.h
+            IKeymap.h
+            IKeymapEnvironment.h
             InertialScrollingHandler.h
             InputCodingTable.h
             InputCodingTableBaiduPY.h
@@ -43,10 +48,13 @@ set(HEADERS Action.h
             KeyboardLayoutManager.h
             KeyboardStat.h
             KeyboardTranslator.h
+            Keymap.h
+            KeymapEnvironment.h
             MouseStat.h
             MouseTranslator.h
             TouchTranslator.h
             WindowTranslator.h
+            WindowKeymap.h
             XBIRRemote.h
             XBMC_keyboard.h
             XBMC_keysym.h
