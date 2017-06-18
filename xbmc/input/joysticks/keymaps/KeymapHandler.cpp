@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
 #include <utility>
 
 using namespace KODI;
@@ -124,7 +125,7 @@ bool CKeymapHandler::OnAnalogStickMotion(const FeatureName& feature, float x, fl
   const ANALOG_STICK_DIRECTION analogStickDir = CJoystickTranslator::VectorToAnalogStickDirection(x, y);
 
   // Calculate the magnitude projected onto that direction
-  const float magnitude = std::max(std::abs(x), std::abs(y));
+  const float magnitude = std::max(std::fabs(x), std::fabs(y));
 
   // Deactivate directions in which the stick is not pointing first
   for (auto dir : CJoystickUtils::GetDirections())
@@ -166,7 +167,7 @@ IKeyHandler *CKeymapHandler::GetKeyHandler(const std::string &keyName)
   auto it = m_keyHandlers.find(keyName);
   if (it == m_keyHandlers.end())
   {
-    m_keyHandlers.insert(std::make_pair(keyName, new CKeyHandler(keyName, m_handler, m_keymap, this)));
+    m_keyHandlers.insert(std::make_pair(keyName, std::unique_ptr<IKeyHandler>(new CKeyHandler(keyName, m_handler, m_keymap, this))));
     it = m_keyHandlers.find(keyName);
   }
 
