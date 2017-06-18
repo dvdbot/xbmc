@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2016-2017 Team Kodi
+ *      Copyright (C) 2017 Team Kodi
  *      http://kodi.tv
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,43 +19,39 @@
  */
 #pragma once
 
-#include "JoystickTypes.h"
-#include "input/Key.h"
+#include <string>
 
 namespace KODI
 {
 namespace JOYSTICK
 {
-  class CDriverPrimitive;
-
   /*!
    * \ingroup joystick
-   * \brief Interface for translating features to action IDs
+   * \brief Interface for a class working with a keymap
    */
-  class IActionMap
+  class IKeymapHandler
   {
   public:
-    virtual ~IActionMap() = default;
+    virtual ~IKeymapHandler() = default;
+    
+    /*!
+     * \brief Get the pressed state of the key
+     *
+     * \param keyName The key name
+     *
+     * \return True if the key is pressed, false otherwise
+     */
+    virtual bool IsPressed(const std::string& keyName) const = 0;
 
     /*!
-     * \brief The add-on ID of the game controller associated with this action map
+     * \brief Get the key name of the last button pressed
      *
-     * The controller ID provided by the implementation serves as the context
-     * for the feature names below.
-     *
-     * \return The ID of this action map's game controller add-on
+     * \return The key name of the last-pressed button, or empty if no button
+     *         is pressed
      */
-    virtual std::string ControllerID(void) const = 0;
+    virtual std::string GetLastPressed() const = 0;
 
-    /*!
-     * \brief Get the action ID mapped to the specified feature
-     *
-     * \param feature  The feature to look up
-     *
-     * \return The action ID from Key.h, or ACTION_NONE if no action is mapped
-     *         to the specified feature
-     */
-    virtual unsigned int GetActionID(const FeatureName& feature) = 0;
+    virtual void OnPress(const std::string& keyName) = 0;
   };
 }
 }

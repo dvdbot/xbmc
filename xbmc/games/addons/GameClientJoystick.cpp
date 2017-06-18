@@ -59,13 +59,12 @@ bool CGameClientJoystick::HasFeature(const std::string& feature) const
   return false;
 }
 
-bool CGameClientJoystick::AcceptsInput(void)
-{
-  return m_gameClient->AcceptsInput();
-}
-
 bool CGameClientJoystick::OnButtonPress(const std::string& feature, bool bPressed)
 {
+  // Only allow activated input in fullscreen game
+  if (bPressed && !m_gameClient->AcceptsInput())
+    return false;
+
   bool bHandled = false;
 
   game_input_event event;
@@ -92,6 +91,10 @@ bool CGameClientJoystick::OnButtonPress(const std::string& feature, bool bPresse
 
 bool CGameClientJoystick::OnButtonMotion(const std::string& feature, float magnitude, unsigned int motionTimeMs)
 {
+  // Only allow activated input in fullscreen game
+  if (magnitude > 0.0f && !m_gameClient->AcceptsInput())
+    return false;
+
   bool bHandled = false;
 
   game_input_event event;
@@ -118,6 +121,10 @@ bool CGameClientJoystick::OnButtonMotion(const std::string& feature, float magni
 
 bool CGameClientJoystick::OnAnalogStickMotion(const std::string& feature, float x, float y, unsigned int motionTimeMs)
 {
+  // Only allow activated input in fullscreen game
+  if ((x > 0.0f || y > 0.0f) && !m_gameClient->AcceptsInput())
+    return false;
+
   bool bHandled = false;
 
   game_input_event event;
@@ -145,6 +152,10 @@ bool CGameClientJoystick::OnAnalogStickMotion(const std::string& feature, float 
 
 bool CGameClientJoystick::OnAccelerometerMotion(const std::string& feature, float x, float y, float z)
 {
+  // Only allow activated input in fullscreen game
+  if (!m_gameClient->AcceptsInput())
+    return false;
+
   bool bHandled = false;
 
   game_input_event event;

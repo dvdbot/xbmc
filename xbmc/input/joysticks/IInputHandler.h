@@ -57,9 +57,13 @@ namespace JOYSTICK
     virtual bool HasFeature(const FeatureName& feature) const = 0;
 
     /*!
-     * \brief Return true if the input handler is currently accepting input
+     * \brief Return true if the input handler has an action for the given feature
+     *
+     * \param feature A feature belonging to the controller specified by ControllerID()
+     *
+     * \return True if their is an action defined for the feature, false otherwise
      */
-    virtual bool AcceptsInput(void) = 0;
+    virtual bool HasAction(const FeatureName& feature) const = 0;
 
     /*!
      * \brief A digital button has been pressed or released

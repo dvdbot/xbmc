@@ -79,16 +79,6 @@ namespace JOYSTICK
      */
     virtual void ProcessMotions(void) = 0;
 
-    /*!
-     * \brief Check if the input handler is accepting input
-     *
-     * \param bActivation True if the motion is activating (true or positive),
-     *                    false if the motion is deactivating (false or zero)
-     *
-     * \return True if input should be sent to the input handler, false otherwise
-     */
-    bool AcceptsInput(bool bActivation);
-
   protected:
     const FeatureName    m_name;
     IInputHandler* const m_handler;
@@ -108,8 +98,8 @@ namespace JOYSTICK
     virtual void ProcessMotions(void) override;
 
   private:
-    void OnDigitalMotion(bool bPressed);
-    void OnAnalogMotion(float magnitude);
+    bool OnDigitalMotion(bool bPressed);
+    bool OnAnalogMotion(float magnitude);
 
     INPUT_TYPE       m_inputType = INPUT_TYPE::UNKNOWN;
     bool             m_bDigitalState;

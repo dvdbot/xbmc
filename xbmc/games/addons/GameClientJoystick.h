@@ -53,7 +53,7 @@ namespace GAME
     // Implementation of IInputHandler
     virtual std::string ControllerID(void) const override;
     virtual bool HasFeature(const std::string& feature) const override;
-    virtual bool AcceptsInput(void) override;
+    virtual bool HasAction(const std::string& feature) const override { return true; }
     virtual bool OnButtonPress(const std::string& feature, bool bPressed) override;
     virtual void OnButtonHold(const std::string& feature, unsigned int holdTimeMs) override { }
     virtual bool OnButtonMotion(const std::string& feature, float magnitude, unsigned int motionTimeMs) override;
