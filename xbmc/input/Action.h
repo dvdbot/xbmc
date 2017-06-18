@@ -32,11 +32,12 @@ class CKey;
 class CAction
 {
 public:
-  CAction(int actionID, float amount1 = 1.0f, float amount2 = 0.0f, const std::string &name = "", unsigned int holdTime = 0);
+  CAction(int actionID, float amount1 = 1.0f, float amount2 = 0.0f, std::string name = "", unsigned int holdTime = 0);
   CAction(int actionID, wchar_t unicode);
-  CAction(int actionID, unsigned int state, float posX, float posY, float offsetX, float offsetY, const std::string &name = "");
-  CAction(int actionID, const std::string &name, const CKey &key);
-  CAction(int actionID, const std::string &name);
+  CAction(int actionID, unsigned int state, float posX, float posY, float offsetX, float offsetY, std::string name = "");
+  CAction(int actionID, std::string name, const CKey &key);
+  CAction(int actionID, std::string name);
+  CAction(std::string name);
 
   CAction(const CAction& other) { *this = other; }
   CAction& operator=(const CAction& rhs);
@@ -96,17 +97,19 @@ public:
 
   bool IsAnalog() const;
 
+  bool GetBuiltInFunction(std::string& builtInFunction, std::vector<std::string>& params, bool bLowerCase = false) const;
+
 private:
   int          m_id;
   std::string   m_name;
 
   static const unsigned int max_amounts = 4; // Must be at least 4.
-  float        m_amount[max_amounts];
+  float        m_amount[max_amounts] = { };
 
-  float        m_repeat;
-  unsigned int m_holdTime;
-  unsigned int m_buttonCode;
-  wchar_t      m_unicode;
+  float        m_repeat = 0.0f;
+  unsigned int m_holdTime = 0;
+  unsigned int m_buttonCode = 0;
+  wchar_t      m_unicode = 0;
   std::string  m_text;
 };
 

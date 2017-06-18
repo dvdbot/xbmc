@@ -24,6 +24,10 @@
 #include "input/Action.h"
 #include "input/ActionIDs.h"
 
+//! @todo Move reset code
+#include "utils/StringUtils.h"
+#include "Util.h"
+
 using namespace KODI;
 using namespace GAME;
 
@@ -43,10 +47,31 @@ bool CDialogGameOSD::OnAction(const CAction &action)
     Close();
     return true;
   }
+  case ACTION_PLAY:
   case ACTION_PREV_ITEM:
   case ACTION_STOP:
+  case ACTION_PLAYER_RESET:
   {
     Close();
+    break;
+  }
+  //! @todo Move this to input handler
+  // Intercept game reset commands so that we can tell which player hit Reset
+  case ACTION_BUILT_IN_FUNCTION:
+  {
+    std::string builtInFunction;
+    std::vector<std::string> params;
+    if (action.GetBuiltInFunction(builtInFunction, params, true))
+    {
+      if (builtInFunction == "playercontrol" && !params.empty())
+      {
+        if (params[0] == "reset")
+        {
+          //! @todo Handle reset
+          return true;
+        }
+      }
+    }
   }
   default:
     break;

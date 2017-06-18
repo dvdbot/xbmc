@@ -26,6 +26,8 @@
 #include "games/addons/GameClient.h"
 #include "games/tags/GameInfoTag.h"
 #include "games/GameUtils.h"
+#include "input/Action.h"
+#include "input/ActionIDs.h"
 #include "settings/MediaSettings.h"
 #include "threads/SingleLock.h"
 #include "utils/log.h"
@@ -315,6 +317,25 @@ float CRetroPlayer::GetSpeed()
   if (m_gameClient)
     return static_cast<float>(m_gameClient->GetPlayback()->GetSpeed());
   return 0;
+}
+
+bool CRetroPlayer::OnAction(const CAction &action)
+{
+  switch (action.GetID())
+  {
+  case ACTION_PLAYER_RESET:
+  {
+    if (m_gameClient)
+    {
+      m_gameClient->Reset();
+      return true;
+    }
+  }
+  default:
+    break;
+  }
+
+  return false;
 }
 
 std::string CRetroPlayer::GetPlayerState()
