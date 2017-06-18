@@ -1,29 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This file contains the mapping of keys to actions within Kodi.                       -->
-<!--                                                                                      -->
-<!-- The format is:                                                                       -->
-<!--  <window>                                                                            -->
-<!--    <device>                                                                          -->
-<!--      <button>action</button>                                                         -->
-<!--    </device>                                                                         -->
-<!--  </window>                                                                           -->
-<!--                                                                                      -->
-<!-- The <global> section is a fall through - they will only be used if the button is     -->
-<!-- not used in the current window's section.                                            -->
-<!--                                                                                      -->
-<!-- Actions can be built-in functions.                                                   -->
-<!--  eg <B>ActivateWindow(Music)</B>                                                     -->
-<!-- would automatically go to Music on the press of the B button.                        -->
-<!--                                                                                      -->
-<!--                                                                                      -->
-<!-- An empty action removes the corresponding mapping from default and parent keymaps.   -->
-<!-- This is different from a "noop" action, which disables a button.                     -->
-<!--                                                                                      -->
-<!-- More documentation on keymaps can be found on http://kodi.wiki/view/keymaps          -->
+<!-- This file contains the mapping of joystick buttons to actions within    -->
+<!-- Kodi.                                                                   -->
+<!--                                                                         -->
+<!-- The format is:                                                          -->
+<!--   <window>                                                              -->
+<!--     <joystick profile="game.controller.default">                        -->
+<!--       <button>action</button>                                           -->
+<!--     </joystick>                                                         -->
+<!--   </window>                                                             -->
+<!--                                                                         -->
+<!-- The <global> section is a fall through - they will only be used if the  -->
+<!-- button is not used in the current window's section.                     -->
+<!--                                                                         -->
+<!-- The "profile" attribute specifies the controller profile whose buttons  -->
+<!-- are being mapped. Currently, the default controller profile is used for -->
+<!-- every controller. In the future it may be possible to specify mappings  -->
+<!-- for the controller profile most similar to the user's physical          -->
+<!-- controller.                                                             -->
+<!--                                                                         -->
+<!-- Actions can be built-in functions.                                      -->
+<!--   eg <b>ActivateWindow(Music)</b>                                       -->
+<!-- would automatically go to Music on the press of the B button.           -->
+<!--                                                                         -->
+<!-- Buttons can be overloaded with hold durations, in miliseconds:          -->
+<!--   <joystick profile="game.controller.default">                          -->
+<!--     <start holdtime="1000">OSD</start>                  -->
+<!--   </jotstick>                                                           -->
+<!--                                                                         -->
+<!-- Buttons can be also require a meta key to be pressed:                   -->
+<!--   <joystick profile="game.controller.default">                          -->
+<!--     <start hotkey="back">Stop</start>                                   -->
+<!--   </jotstick>                                                           -->
+<!--                                                                         -->
+<!-- More documentation on keymaps can be found on                           -->
+<!-- http://kodi.wiki/view/keymaps                                           -->
+<!--                                                                         -->
 <keymap>
   <global>
     <joystick profile="game.controller.default">
       <a>Select</a>
+      <a holdtime="1000">ContextMenu</a>
       <b>Back</b>
       <x>ContextMenu</x>
       <y>FullScreen</y>
@@ -70,7 +86,7 @@
       <y>FullScreen</y>
       <start>Info</start>
       <back>Seek(-7)</back>
-      <guide>ActivateWindow(Home)</guide>
+      <guide>OSD</guide>
       <up>ChapterOrBigStepForward</up>
       <down>ChapterOrBigStepBack</down>
       <right>StepForward</right>
@@ -92,10 +108,48 @@
       <start holdtime="1000">OSD</start>
       <back holdtime="1000">OSD</back>
       <guide>OSD</guide>
+      <!-- RetroPie hotkeys, ref: https://github.com/RetroPie/RetroPie-Setup/wiki/RetroArch-Configuration -->
+      <!--
+      <b hotkey="back">Player.Reset</b>
+      <x hotkey="back">OSD</x>
+      <start hotkey="back">Stop</start>
+      <rightbumper hotkey="back">Save</rightbumper>
+      <leftbumper hotkey="back">Load</leftbumper>
+      <righttrigger hotkey="back">AnalogFastForward</righttrigger>
+      <lefttrigger hotkey="back">AnalogRewind</lefttrigger>
+      <right hotkey="back">SaveSlotIncrease</right>
+      <left hotkey="back">SaveSlotDecrease</left>
+      -->
+      <!-- Hotkeys courtesy Julipo -->
+      <!--
+      <a hotkey="back">Screenshot</a>
+      <x hotkey="back">ToggleFullScreen</x>
+      <y hotkey="back">OSD</y>
+      <start hotkey="back">OSD</start>
+      <rightbumper hotkey="back">Save</rightbumper>
+      <leftbumper hotkey="back">Load</leftbumper>
+      <leftstick direction="left" hotkey="back">SaveSlotDecrease</leftstick>
+      <leftstick direction="right" hotkey="back">SaveSlotIncrease</leftstick>
+      -->
+      <!-- Merged -->
+      <a hotkey="back">Screenshot</a>
+      <b hotkey="back">PlayerControl(Reset)</b>
+      <x hotkey="back">OSD</x>
+      <y hotkey="back">ToggleFullScreen</y>
+      <start hotkey="back">Stop</start>
+      <rightbumper hotkey="back">Save</rightbumper>
+      <leftbumper hotkey="back">Load</leftbumper>
+      <righttrigger hotkey="back">AnalogFastForward</righttrigger>
+      <lefttrigger hotkey="back">AnalogRewind</lefttrigger>
+      <right hotkey="back">SaveSlotIncrease</right>
+      <left hotkey="back">SaveSlotDecrease</left>
+      <leftstick direction="left" hotkey="back">SaveSlotDecrease</leftstick>
+      <leftstick direction="right" hotkey="back">SaveSlotIncrease</leftstick>
     </joystick>
   </FullscreenGame>
   <FullscreenLiveTV>
     <joystick profile="game.controller.default">
+      <guide>OSD</guide>
       <up>ChannelUp</up>
       <down>ChannelDown</down>
       <left>StepBack</left>
@@ -104,6 +158,7 @@
   </FullscreenLiveTV>
   <FullscreenRadio>
     <joystick profile="game.controller.default">
+      <guide>OSD</guide>
       <up>ChannelUp</up>
       <down>ChannelDown</down>
       <left>StepBack</left>
