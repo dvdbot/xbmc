@@ -30,6 +30,7 @@ set(HEADERS Action.h
             ButtonTranslator.h
             CustomControllerTranslator.h
             GamepadTranslator.h
+            IActionHandler.h
             InertialScrollingHandler.h
             InputCodingTable.h
             InputCodingTableBaiduPY.h
