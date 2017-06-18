@@ -105,7 +105,7 @@ void CPortMapper::ProcessPeripherals()
       {
         PortPtr& oldPort = itDisconnectedPort->second;
 
-        oldPort->UnregisterDevice(joystick.get());
+        oldPort->UnregisterInput(joystick.get());
 
         m_portMap.erase(itDisconnectedPort);
       }
@@ -120,7 +120,7 @@ void CPortMapper::ProcessPeripherals()
         {
           PortPtr newPort(new CPort(inputHandler, *gameClient));
 
-          newPort->RegisterDevice(joystick.get());
+          newPort->RegisterInput(joystick.get());
 
           m_portMap.insert(std::make_pair(std::move(joystick), std::move(newPort)));
         }

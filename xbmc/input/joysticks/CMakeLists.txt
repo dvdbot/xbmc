@@ -23,6 +23,7 @@ set(HEADERS DeadzoneFilter.h
             IDriverHandler.h
             IDriverReceiver.h
             IInputHandler.h
+            IInputProvider.h
             IInputReceiver.h
             IKeymapHandler.h
             JoystickEasterEgg.h
