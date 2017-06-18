@@ -12,6 +12,7 @@ xbmc/dialogs                                    dialogs
 xbmc/favourites                                 favourites
 xbmc/guilib                                     guilib
 xbmc/input                                      input
+xbmc/input/hardware                             input/hardware
 xbmc/input/joysticks                            input/joysticks
 xbmc/input/joysticks/dialogs                    input/joysticks/dialogs
 xbmc/input/joysticks/generic                    input/joysticks/generic

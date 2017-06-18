@@ -24,14 +24,19 @@
 #include "cores/VideoPlayer/Process/ProcessInfo.h"
 #include "games/addons/playback/IGameClientPlayback.h"
 #include "games/addons/GameClient.h"
+#include "games/ports/PortManager.h"
 #include "games/tags/GameInfoTag.h"
+#include "games/GameServices.h"
 #include "games/GameUtils.h"
+#include "input/Action.h"
+#include "input/ActionIDs.h"
 #include "settings/MediaSettings.h"
 #include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/MathUtils.h"
 #include "utils/StringUtils.h"
 #include "FileItem.h"
+#include "ServiceBroker.h"
 #include "URL.h"
 
 using namespace KODI;
@@ -315,6 +320,22 @@ float CRetroPlayer::GetSpeed()
   if (m_gameClient)
     return static_cast<float>(m_gameClient->GetPlayback()->GetSpeed());
   return 0;
+}
+
+bool CRetroPlayer::OnAction(const CAction &action)
+{
+  switch (action.GetID())
+  {
+  case ACTION_PLAYER_RESET:
+  {
+    CServiceBroker::GetGameServices().PortManager().HardwareReset();
+    return true;
+  }
+  default:
+    break;
+  }
+
+  return false;
 }
 
 std::string CRetroPlayer::GetPlayerState()
