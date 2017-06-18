@@ -153,10 +153,10 @@
 						<onclick>ActivateWindow(gamevideosettings)</onclick>
 					</control>
 					<control type="button" id="14102">
-						<description>Audio settings button</description>
+						<description>Volume button</description>
 						<width>700</width>
 						<include>DialogSettingButton</include>
-						<label>$LOCALIZE[35224]</label>
+						<label>$LOCALIZE[13376]</label>
 						<onclick>ActivateWindow(gameaudiosettings)</onclick>
 					</control>
 					<control type="button" id="14103">

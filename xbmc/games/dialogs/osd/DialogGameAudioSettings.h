@@ -20,46 +20,36 @@
  *
  */
 
-#include "settings/dialogs/GUIDialogSettingsManualBase.h"
-
-#include <memory>
-#include <string>
-#include <vector>
-
-class CVariant;
+#include "dialogs/GUIDialogSlider.h"
+#include "guilib/ISliderCallback.h"
 
 namespace KODI
 {
 namespace GAME
 {
-  class CDialogGameAudioSettings : public CGUIDialogSettingsManualBase
+  class CDialogGameAudioSettings : public CGUIDialogSlider,
+                                   public ISliderCallback
   {
   public:
     CDialogGameAudioSettings();
     virtual ~CDialogGameAudioSettings() = default;
 
-    // specialization of CGUIWindow via CGUIDialogSettingsManualBase
-    virtual void FrameMove();
+    // specialization of CGUIWindow via CGUIDialogSlider
+    virtual void OnInitWindow() override;
+    virtual void FrameMove() override;
+
+    // implementation of ISliderCallback
+    virtual void OnSliderChange(void *data, CGUISliderControl *slider) override;
 
   protected:
-    // implementations of ISettingCallback via CGUIDialogSettingsManualBase
-    virtual void OnSettingChanged(std::shared_ptr<const CSetting> setting);
-    virtual void OnSettingAction(std::shared_ptr<const CSetting> setting);
+    // Called when application volume changes
+    void SetVolume(float volume);
 
-    // specialization of CGUIDialogSettingsBase via CGUIDialogSettingsManualBase
-    virtual bool AllowResettingSettings() const { return false; }
-    virtual void Save();
-    virtual void SetupView();
+    // Called when slider value changes
+    void OnVolumeChanged(float volume);
 
-    // specialization of CGUIDialogSettingsManualBase
-    virtual void InitializeSettings();
-
-    // Utility function
-    static std::string SettingFormatterPercentAsDecibel(std::shared_ptr<const CSettingControlSlider> control, const CVariant &value, const CVariant &minimum, const CVariant &step, const CVariant &maximum);
-
-    // External parameters
-    float m_volume = 100.0f; // Application volume
-    bool m_dspEnabled = false; // Value of "AudioDSP enabled" setting
+  private:
+    float m_volume = 1.0f; // Application volume
   };
 }
 }
