@@ -32,7 +32,7 @@
 #endif
 
 #include "windowing/XBMC_events.h"
-#include "input/joysticks/IActionHandler.h"
+#include "input/IActionHandler.h"
 #include "input/KeyboardStat.h"
 #include "input/MouseStat.h"
 #include "settings/lib/ISettingCallback.h"
@@ -69,7 +69,7 @@ namespace MOUSE
  * \copydoc mouse
  */
 class CInputManager : public ISettingCallback,
-                      public KODI::JOYSTICK::IActionHandler
+                      public IActionHandler
 {
 private:
   CInputManager();
@@ -239,8 +239,7 @@ public:
   virtual void OnSettingChanged(std::shared_ptr<const CSetting> setting) override;
 
   // implementation of IActionHandler
-  virtual bool SendDigitalAction(const CAction& action) override;
-  virtual bool SendAnalogAction(const CAction& action, float magnitude) override;
+  virtual bool SendAction(const CAction& action) override;
 
   /*! \brief Registers a handler to be called on keyboard input (e.g a game client).
    *

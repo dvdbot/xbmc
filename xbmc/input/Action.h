@@ -84,6 +84,11 @@ public:
    */
   unsigned int GetHoldTime() const { return m_holdTime; };
 
+  /*! \brief Set the hold duration, in ms
+   \param holdtimeMs The time for which the key or button has been held
+  */
+  void SetHoldTime(unsigned int holdtimeMs) { m_holdTime = holdtimeMs; }
+
   /*! \brief Time since last repeat in ms
    \return time since last repeat in ms. Returns 0 if unknown.
    */
