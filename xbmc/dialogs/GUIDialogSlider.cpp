@@ -93,6 +93,16 @@ void CGUIDialogSlider::SetSlider(const std::string &label, float value, float mi
   }
 }
 
+void CGUIDialogSlider::SetSliderValue(float value)
+{
+  // Grab the slider dialog
+  CGUISliderControl *slider = dynamic_cast<CGUISliderControl*>(GetControl(CONTROL_SLIDER));
+  if (slider == nullptr)
+    return;
+
+  slider->SetFloatValue(value);
+}
+
 void CGUIDialogSlider::OnWindowLoaded()
 {
   // ensure our callbacks are NULL, incase we were loaded via some non-standard means

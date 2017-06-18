@@ -61,6 +61,7 @@ public:
   static void Display(int label, float value, float min, float delta, float max, ISliderCallback *callback);
 protected:
   void SetSlider(const std::string &label, float value, float min, float delta, float max, ISliderCallback *callback, void *callbackData);
+  void SetSliderValue(float value);
   virtual void OnWindowLoaded();
 
   ISliderCallback *m_callback;
