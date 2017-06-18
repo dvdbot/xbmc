@@ -17,37 +17,32 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-class CAction;
+#include "WindowKeymap.h"
 
-namespace KODI
+using namespace KODI;
+
+CWindowKeymap::CWindowKeymap(const std::string &controllerId) :
+  m_controllerId(controllerId)
 {
-namespace JOYSTICK
-{
-  /*!
-   * \ingroup joystick
-   * \brief Interface for handling Kodi actions;
-   */
-  class IActionHandler
-  {
-  public:
-    virtual ~IActionHandler() = default;
-
-    /*!
-     * \brief Send a digital action
-     * \param action The action
-     * \return True if the action was handled, false otherwise
-     */
-    virtual bool SendDigitalAction(const CAction& action) = 0;
-    
-    /*!
-     * \brief Send an analog action
-     * \param action The action
-     * \param magnitude The value associated with the action
-     * \return True if the action was handled, false otherwise
-     */
-    virtual bool SendAnalogAction(const CAction& action, float magnitude) = 0;
-  };
 }
+
+void CWindowKeymap::MapAction(int windowId, const std::string &keyName, JOYSTICK::KeymapAction action)
+{
+  m_windowKeymap[windowId][keyName].insert(std::move(action));
+}
+
+const JOYSTICK::KeymapActions &CWindowKeymap::GetActions(int windowId, const std::string& keyName) const
+{
+  auto it = m_windowKeymap.find(windowId);
+  if (it != m_windowKeymap.end())
+  {
+    auto& keymap = it->second;
+    auto it2 = keymap.find(keyName);
+    if (it2 != keymap.end())
+      return it2->second;
+  }
+
+  static const JOYSTICK::KeymapActions empty;
+  return empty;
 }

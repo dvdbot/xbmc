@@ -40,14 +40,14 @@
       <righttrigger>ScrollDown</righttrigger>
       <leftbumper>ScrollUp</leftbumper>
       <rightbumper>ScrollDown</rightbumper>
-      <leftstickleft>Left</leftstickleft>
-      <leftstickright>Right</leftstickright>
-      <leftstickup>Up</leftstickup>
-      <leftstickdown>Down</leftstickdown>
-      <rightstickleft>VolumeDown</rightstickleft>
-      <rightstickright>VolumeUp</rightstickright>
-      <rightstickup>VolumeUp</rightstickup>
-      <rightstickdown>VolumeDown</rightstickdown>
+      <leftstick direction="left">Left</leftstick>
+      <leftstick direction="right">Right</leftstick>
+      <leftstick direction="up">Up</leftstick>
+      <leftstick direction="down">Down</leftstick>
+      <rightstick direction="left">VolumeDown</rightstick>
+      <rightstick direction="right">VolumeUp</rightstick>
+      <rightstick direction="up">VolumeUp</rightstick>
+      <rightstick direction="down">VolumeDown</rightstick>
     </joystick>
   </global>
   <FileManager>
@@ -81,18 +81,16 @@
       <righttrigger>AnalogFastForward</righttrigger>
       <leftbumper>AnalogRewind</leftbumper>
       <rightbumper>AnalogFastForward</rightbumper>
-      <leftstickleft>AnalogSeekBack</leftstickleft>
-      <leftstickright>AnalogSeekForward</leftstickright>
-      <leftstickup>AnalogSeekForward</leftstickup>
-      <leftstickdown>AnalogSeekBack</leftstickdown>
-      <rightstickleft>VolumeDown</rightstickleft>
-      <rightstickright>VolumeUp</rightstickright>
-      <rightstickup>VolumeUp</rightstickup>
-      <rightstickdown>VolumeDown</rightstickdown>
+      <leftstick direction="left">AnalogSeekBack</leftstick>
+      <leftstick direction="right">AnalogSeekForward</leftstick>
+      <leftstick direction="up">noop</leftstick>
+      <leftstick direction="down">noop</leftstick>
     </joystick>
   </FullscreenVideo>
   <FullscreenGame>
     <joystick profile="game.controller.default">
+      <start holdtime="1000">OSD</start>
+      <back holdtime="1000">OSD</back>
       <guide>OSD</guide>
     </joystick>
   </FullscreenGame>
@@ -146,8 +144,8 @@
       <righttrigger>AnalogFastForward</righttrigger>
       <leftbumper>AnalogRewind</leftbumper>
       <rightbumper>AnalogFastForward</rightbumper>
-      <leftstickleft>PreviousPreset</leftstickleft>
-      <leftstickright>NextPreset</leftstickright>
+      <leftstick direction="left">PreviousPreset</leftstick>
+      <leftstick direction="right">NextPreset</leftstick>
     </joystick>
   </Visualisation>
   <MusicOSD>
@@ -172,10 +170,10 @@
       <down>ZoomOut</down>
       <left>PreviousPicture</left>
       <right>NextPicture</right>
-      <leftstickleft>AnalogMoveX</leftstickleft>
-      <leftstickright>AnalogMoveX</leftstickright>
-      <leftstickup>AnalogMoveY</leftstickup>
-      <leftstickdown>AnalogMoveY</leftstickdown>
+      <leftstick direction="left">AnalogMoveX</leftstick>
+      <leftstick direction="right">AnalogMoveX</leftstick>
+      <leftstick direction="up">AnalogMoveY</leftstick>
+      <leftstick direction="down">AnalogMoveY</leftstick>
       <lefttrigger>ZoomOut</lefttrigger>
       <righttrigger>ZoomIn</righttrigger>
     </joystick>
