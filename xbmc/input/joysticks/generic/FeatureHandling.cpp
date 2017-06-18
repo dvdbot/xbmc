@@ -81,12 +81,14 @@ bool CScalarFeature::OnDigitalMotion(const CDriverPrimitive& source, bool bPress
   if (!AcceptsInput(bPressed))
     return false;
 
-  if (m_inputType == INPUT_TYPE::DIGITAL)
-    OnDigitalMotion(bPressed);
-  else if (m_inputType == INPUT_TYPE::ANALOG)
-    OnAnalogMotion(bPressed ? 1.0f : 0.0f);
+  bool bHandled;
 
-  return true;
+  if (m_inputType == INPUT_TYPE::DIGITAL)
+    bHandled = OnDigitalMotion(bPressed);
+  else if (m_inputType == INPUT_TYPE::ANALOG)
+    bHandled = OnAnalogMotion(bPressed ? 1.0f : 0.0f);
+
+  return bHandled;
 }
 
 bool CScalarFeature::OnAnalogMotion(const CDriverPrimitive& source, float magnitude)
@@ -95,15 +97,17 @@ bool CScalarFeature::OnAnalogMotion(const CDriverPrimitive& source, float magnit
   if (magnitude != 0.0f && magnitude != 1.0f)
     m_bDiscrete = false;
 
-  if (!AcceptsInput(magnitude != 0.0f))
+  if (!AcceptsInput(magnitude > 0.0f))
     return false;
 
-  if (m_inputType == INPUT_TYPE::DIGITAL)
-    OnDigitalMotion(magnitude >= ANALOG_DIGITAL_THRESHOLD);
-  else if (m_inputType == INPUT_TYPE::ANALOG)
-    OnAnalogMotion(magnitude);
+  bool bHandled;
 
-  return true;
+  if (m_inputType == INPUT_TYPE::DIGITAL)
+    bHandled = OnDigitalMotion(magnitude >= ANALOG_DIGITAL_THRESHOLD);
+  else if (m_inputType == INPUT_TYPE::ANALOG)
+    bHandled = OnAnalogMotion(magnitude);
+
+  return bHandled;
 }
 
 void CScalarFeature::ProcessMotions(void)
@@ -152,7 +156,7 @@ void CScalarFeature::ProcessMotions(void)
   }
 }
 
-void CScalarFeature::OnDigitalMotion(bool bPressed)
+bool CScalarFeature::OnDigitalMotion(bool bPressed)
 {
   if (m_bDigitalState != bPressed)
   {
@@ -163,10 +167,13 @@ void CScalarFeature::OnDigitalMotion(bool bPressed)
               bPressed ? "pressed" : "released");
 
     m_bDigitalHandled = m_handler->OnButtonPress(m_name, bPressed);
+    return m_bDigitalHandled;
   }
+
+  return false;
 }
 
-void CScalarFeature::OnAnalogMotion(float magnitude)
+bool CScalarFeature::OnAnalogMotion(float magnitude)
 {
   const bool bActivated = (magnitude != 0.0f);
 
@@ -185,6 +192,8 @@ void CScalarFeature::OnAnalogMotion(float magnitude)
                 bActivated ? "activated" : "deactivated");
     }
   }
+
+  return true;
 }
 
 // --- CAnalogStick ------------------------------------------------------------
@@ -308,8 +317,10 @@ bool CAccelerometer::OnDigitalMotion(const CDriverPrimitive& source, bool bPress
 
 bool CAccelerometer::OnAnalogMotion(const CDriverPrimitive& source, float magnitude)
 {
-  if (!AcceptsInput(magnitude != 0.0f))
+  if (!AcceptsInput(true))
     return false;
+
+  bool bHandled = false;
 
   CDriverPrimitive positiveX;
   CDriverPrimitive positiveY;
@@ -318,11 +329,20 @@ bool CAccelerometer::OnAnalogMotion(const CDriverPrimitive& source, float magnit
   m_buttonMap->GetAccelerometer(m_name, positiveX, positiveY, positiveZ);
 
   if (source == positiveX)
+  {
     m_xAxis.SetPositiveDistance(magnitude);
+    bHandled = true;
+  }
   else if (source == positiveY)
+  {
     m_yAxis.SetPositiveDistance(magnitude);
+    bHandled = true;
+  }
   else if (source == positiveZ)
+  {
     m_zAxis.SetPositiveDistance(magnitude);
+    bHandled = true;
+  }
   else
   {
     // Just in case, avoid sticking
@@ -331,7 +351,7 @@ bool CAccelerometer::OnAnalogMotion(const CDriverPrimitive& source, float magnit
     m_yAxis.Reset();
   }
 
-  return true;
+  return bHandled;
 }
 
 void CAccelerometer::ProcessMotions(void)
