@@ -28,8 +28,9 @@
 #include "AppTranslator.h"
 #include "CustomControllerTranslator.h"
 #include "GamepadTranslator.h"
+#include "InputManager.h"
 #include "IRTranslator.h"
-#include "JoystickTranslator.h"
+#include "Key.h"
 #include "KeyboardTranslator.h"
 #include "MouseTranslator.h"
 #include "TouchTranslator.h"
@@ -37,10 +38,90 @@
 #include "FileItem.h"
 #include "filesystem/Directory.h"
 #include "guilib/WindowIDs.h"
-#include "input/Key.h"
+#include "input/joysticks/JoystickKeymap.h"
 #include "Util.h"
 #include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
+
+
+// Joystick
+#include "Action.h"
+#include "ActionIDs.h"
+#include "ActionTranslator.h"
+#include "input/joysticks/JoystickIDs.h"
+#include "input/joysticks/JoystickTranslator.h"
+#include "input/joysticks/JoystickTypes.h"
+
+using namespace KODI;
+
+void DeserializeJoystickNode(const TiXmlNode* pDevice, std::string &controllerId)
+{
+  controllerId = DEFAULT_CONTROLLER_ID;
+
+  const TiXmlElement* deviceElem = pDevice->ToElement();
+  if (deviceElem != nullptr)
+    deviceElem->QueryValueAttribute("profile", &controllerId);
+}
+
+JOYSTICK::ANALOG_STICK_DIRECTION TranslateDirection(const std::string &direction)
+{
+  JOYSTICK::ANALOG_STICK_DIRECTION dir = JOYSTICK::ANALOG_STICK_DIRECTION::UNKNOWN;
+
+  if (direction == "up") dir = JOYSTICK::ANALOG_STICK_DIRECTION::UP;
+  else if (direction == "down") dir = JOYSTICK::ANALOG_STICK_DIRECTION::DOWN;
+  else if (direction == "right") dir = JOYSTICK::ANALOG_STICK_DIRECTION::RIGHT;
+  else if (direction == "left") dir = JOYSTICK::ANALOG_STICK_DIRECTION::LEFT;
+  
+  return dir;
+}
+
+bool DeserializeButton(const TiXmlElement *pButton, std::string &feature, JOYSTICK::ANALOG_STICK_DIRECTION &dir, unsigned int& holdtimeMs, std::set<std::string>& hotkeys, std::string &actionStr)
+{
+  const char *szButton = pButton->Value();
+  if (szButton != nullptr)
+  {
+    const char *szAction = pButton->FirstChild()->Value();
+    if (szAction != nullptr)
+    {
+      feature = szButton;
+      StringUtils::ToLower(feature);
+      actionStr = szAction;
+    }
+  }
+
+  if (!feature.empty() && !actionStr.empty())
+  {
+    // Handle direction
+    dir = JOYSTICK::ANALOG_STICK_DIRECTION::UNKNOWN;
+    const char *szDirection = pButton->Attribute("direction");
+    if (szDirection != nullptr)
+      dir = TranslateDirection(szDirection);
+
+    // Process holdtime parameter
+    holdtimeMs = 0;
+    std::string strHoldTime;
+    if (pButton->QueryValueAttribute("holdtime", &strHoldTime) == TIXML_SUCCESS)
+    {
+      std::stringstream ss(std::move(strHoldTime));
+      ss >> holdtimeMs;
+    }
+
+    // Process hotkeys
+    hotkeys.clear();
+    std::string strHotkeys;
+    if (pButton->QueryValueAttribute("hotkey", &strHotkeys) == TIXML_SUCCESS)
+    {
+      std::vector<std::string> vecHotkeys = StringUtils::Split(strHotkeys, ",");
+      for (auto& hotkey : vecHotkeys)
+        hotkeys.insert(std::move(hotkey));
+    }
+
+
+    return true;
+  }
+
+  return false;
+}
 
 CButtonTranslator& CButtonTranslator::GetInstance()
 {
@@ -51,7 +132,8 @@ CButtonTranslator& CButtonTranslator::GetInstance()
 CButtonTranslator::CButtonTranslator() :
   m_customControllerTranslator(new CCustomControllerTranslator),
   m_irTranslator(new CIRTranslator),
-  m_touchTranslator(new CTouchTranslator)
+  m_touchTranslator(new CTouchTranslator),
+  m_joystickKeymap(new JOYSTICK::CJoystickKeymap)
 {
 }
 
@@ -317,50 +399,6 @@ bool CButtonTranslator::HasLongpressMapping(int window, const CKey &key)
   return false;
 }
 
-unsigned int CButtonTranslator::GetHoldTimeMs(int window, const CKey &key, bool fallback /* = true */)
-{
-  unsigned int holdtimeMs = 0;
-
-  std::map<int, buttonMap>::const_iterator it = m_translatorMap.find(window);
-  if (it != m_translatorMap.end())
-  {
-    uint32_t code = key.GetButtonCode();
-
-    buttonMap::const_iterator it2 = (*it).second.find(code);
-
-    if (it2 != (*it).second.end())
-    {
-      holdtimeMs = (*it2).second.holdtimeMs;
-    }
-    else if (fallback)
-    {
-      //! @todo Refactor fallback logic
-      int fallbackWindow = CWindowTranslator::GetFallbackWindow(window);
-      if (fallbackWindow > -1)
-        holdtimeMs = GetHoldTimeMs(fallbackWindow, key, false);
-      else
-      {
-        // still no valid action? use global map
-        holdtimeMs = GetHoldTimeMs(-1, key, false);
-      }
-    }
-  }
-  else if (fallback)
-  {
-    //! @todo Refactor fallback logic
-    int fallbackWindow = CWindowTranslator::GetFallbackWindow(window);
-    if (fallbackWindow > -1)
-      holdtimeMs = GetHoldTimeMs(fallbackWindow, key, false);
-    else
-    {
-      // still no valid action? use global map
-      holdtimeMs = GetHoldTimeMs(-1, key, false);
-    }
-  }
-
-  return holdtimeMs;
-}
-
 unsigned int CButtonTranslator::GetActionCode(int window, const CKey &key, std::string &strAction) const
 {
   uint32_t code = key.GetButtonCode();
@@ -401,7 +439,7 @@ unsigned int CButtonTranslator::GetActionCode(int window, const CKey &key, std::
   return action;
 }
 
-void CButtonTranslator::MapAction(uint32_t buttonCode, const char *szAction, unsigned int holdtimeMs, buttonMap &map)
+void CButtonTranslator::MapAction(uint32_t buttonCode, const char *szAction, buttonMap &map)
 {
   unsigned int action = ACTION_NONE;
   if (!CActionTranslator::TranslateString(szAction, action) || buttonCode == 0)
@@ -419,7 +457,6 @@ void CButtonTranslator::MapAction(uint32_t buttonCode, const char *szAction, uns
     CButtonAction button;
     button.id = action;
     button.strID = szAction;
-    button.holdtimeMs = holdtimeMs;
     map.insert(std::pair<uint32_t, CButtonAction>(buttonCode, button));
   }
 }
@@ -431,7 +468,7 @@ void CButtonTranslator::MapWindowActions(const TiXmlNode *pWindow, int windowID)
 
   const TiXmlNode *pDevice;
 
-  static const std::vector<std::string> types = {"gamepad", "remote", "universalremote", "keyboard", "mouse", "appcommand", "joystick"};
+  static const std::vector<std::string> types = {"gamepad", "remote", "universalremote", "keyboard", "mouse", "appcommand"};
 
   for (const auto& type : types)
   {
@@ -452,7 +489,6 @@ void CButtonTranslator::MapWindowActions(const TiXmlNode *pWindow, int windowID)
       while (pButton != nullptr)
       {
         uint32_t buttonCode = 0;
-        unsigned int holdtimeMs = 0;
 
         if (type == "gamepad")
             buttonCode = CGamepadTranslator::TranslateString(pButton->Value());
@@ -466,13 +502,11 @@ void CButtonTranslator::MapWindowActions(const TiXmlNode *pWindow, int windowID)
             buttonCode = CMouseTranslator::TranslateCommand(pButton);
         else if (type == "appcommand")
             buttonCode = CAppTranslator::TranslateAppCommand(pButton->Value());
-        else if (type == "joystick")
-          buttonCode = CJoystickTranslator::TranslateButton(pDevice, pButton, holdtimeMs);
 
         if (buttonCode != 0)
         {
           if (pButton->FirstChild() && pButton->FirstChild()->Value()[0])
-            MapAction(buttonCode, pButton->FirstChild()->Value(), holdtimeMs, map);
+            MapAction(buttonCode, pButton->FirstChild()->Value(), map);
           else
           {
             buttonMap::iterator it = map.find(buttonCode);
@@ -507,6 +541,32 @@ void CButtonTranslator::MapWindowActions(const TiXmlNode *pWindow, int windowID)
     m_customControllerTranslator->MapActions(windowID, pDevice);
     pDevice = pDevice->NextSibling("customcontroller");
   }
+
+  // Map joystick actions
+  pDevice = pWindow->FirstChild("joystick");
+  while (pDevice != nullptr)
+  {
+    std::string controllerId;
+    DeserializeJoystickNode(pDevice, controllerId);
+
+    const TiXmlElement *pButton = pDevice->FirstChildElement();
+    while (pButton != nullptr)
+    {
+      std::string feature;
+      JOYSTICK::ANALOG_STICK_DIRECTION dir;
+      unsigned int holdtimeMs;
+      std::set<std::string> hotkeys;
+      std::string actionStr;
+      if (DeserializeButton(pButton, feature, dir, holdtimeMs, hotkeys, actionStr))
+      {
+        JOYSTICK::IActionHandler *actionHandler = &CInputManager::GetInstance();
+        m_joystickKeymap->MapAction(windowID, controllerId, feature, dir, holdtimeMs, hotkeys, CAction(actionStr));
+      }
+      pButton = pButton->NextSiblingElement();
+    }
+
+    pDevice = pDevice->NextSibling("joystick");
+  }
 }
 
 void CButtonTranslator::Clear()
@@ -516,4 +576,5 @@ void CButtonTranslator::Clear()
   m_irTranslator->Clear();
   m_customControllerTranslator->Clear();
   m_touchTranslator->Clear();
+  m_joystickKeymap->Clear();
 }

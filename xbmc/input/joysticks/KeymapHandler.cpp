@@ -49,8 +49,10 @@ INPUT_TYPE CKeymapHandler::GetInputType(unsigned int keyId, int windowId, bool b
 {
   CAction action(ACTION_NONE);
 
+  /*! @todo
   if (keyId != 0)
-    action = CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough);
+    action = CButtonTranslator::GetInstance().JoystickKeymap()->GetAction(windowId, CKey(keyId), bFallthrough);
+  */
 
   if (action.GetID() > ACTION_NONE)
   {
@@ -67,8 +69,10 @@ unsigned int CKeymapHandler::GetActionID(unsigned int keyId, int windowId, bool 
 {
   CAction action(ACTION_NONE);
 
+  /*! @todo
   if (keyId != 0)
-    action = CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough);
+    action = CButtonTranslator::GetInstance().JoystickKeymap()->GetAction(windowId, CKey(keyId), bFallthrough);
+  */
 
   //! @todo make CAction::GetID() return unsigned
   if (action.GetID() >= 0)
@@ -79,7 +83,13 @@ unsigned int CKeymapHandler::GetActionID(unsigned int keyId, int windowId, bool 
 
 unsigned int CKeymapHandler::GetHoldTimeMs(unsigned int keyId, int windowId, bool bFallthrough) const
 {
-  return CButtonTranslator::GetInstance().GetHoldTimeMs(windowId, CKey(keyId), bFallthrough);
+  unsigned int holdtimeMs = 0;
+
+  /*! @todo/
+  holdtimeMs = CButtonTranslator::GetInstance().JoystickKeymap()->GetHoldTimeMs(windowId, CKey(keyId), bFallthrough);
+  */
+
+  return holdtimeMs;
 }
 
 void CKeymapHandler::OnDigitalKey(unsigned int keyId, int windowId, bool bFallthrough, bool bPressed, unsigned int holdTimeMs /* = 0 */)

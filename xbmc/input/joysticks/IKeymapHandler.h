@@ -38,62 +38,34 @@ namespace JOYSTICK
     virtual ~IKeymapHandler() = default;
 
     /*!
-     * \brief Get the type of action mapped to the specified key ID
+     * \brief Get the type of action mapped to the specified key
      *
-     * \param keyId  The key ID from Key.h
-     * \param windowId   The window ID from WindowIDs.h
-     * \param bFallthrough Use a key from an underlying window or global keymap
-     *
-     * \return The type of action mapped to keyId, or INPUT_TYPE::UNKNOWN if
-     *         no action is mapped to the specified key
+     * \return The input type of the action
      */
-    virtual INPUT_TYPE GetInputType(unsigned int keyId, int windowId, bool bFallthrough) const = 0;
+    virtual INPUT_TYPE GetInputType() const = 0;
 
     /*!
-     * \brief Get the action ID mapped to the specified key ID
+     * \brief Get the action ID mapped to the specified key
      *
-     * \param keyId  The key ID from Key.h
-     * \param windowId   The window ID from WindowIDs.h
-     * \param bFallthrough Use a key from an underlying window or global keymap
-     *
-     * \return The action ID, or ACTION_NONE if no action is mapped to the
-     *         specified key
+     * \return The action ID
      */
-    virtual unsigned int GetActionID(unsigned int keyId, int windowId, bool bFallthrough) const = 0;
-
-    /*!
-     * \brief Get the time required to hold the button before calling OnDigitalKey()
-     *
-     * \param keyId      The key ID from Key.h
-     * \param windowId   The window ID from WindowIDs.h
-     * \param bFallthrough Use a key from an underlying window or global keymap
-     *
-     * \return The hold time, in ms
-     */
-    virtual unsigned int GetHoldTimeMs(unsigned int keyId, int windowId, bool bFallthrough) const = 0;
+    virtual unsigned int GetActionID() const = 0;
 
     /*!
      * \brief A key mapped to a digital action has been pressed or released
      *
-     * \param keyId      The key ID from Key.h
-     * \param windowId   The window ID from WindowIDs.h
-     * \param bFallthrough Use a key from an underlying window or global keymap
      * \param bPressed   true if the key's button/axis is activated, false if deactivated
      * \param holdTimeMs The held time in ms for pressed buttons, or 0 for released
      */
-    virtual void OnDigitalKey(unsigned int keyId, int windowId, bool bPressed, bool bFallthrough, unsigned int holdTimeMs = 0) = 0;
+    virtual void OnDigitalKey(bool bPressed, unsigned int holdTimeMs) = 0;
 
     /*!
      * \brief Callback for keys mapped to analog actions
      *
-     * \param keyId      The button key ID from Key.h
-     * \param windowId   The window ID from WindowIDs.h
-     * \param bFallthrough Use a key from an underlying window or global keymap
      * \param magnitude  The amount of the analog action
-     *
-     * If keyId is not mapped to an analog action, no action need be taken
+     * \param motionTimeMs  The time since the magnitude was 0.0
      */
-    virtual void OnAnalogKey(unsigned int keyId, int windowId, bool bFallthrough, float magnitude) = 0;
+    virtual void OnAnalogKey(float magnitude, unsigned int motionTimeMs) = 0;
   };
 }
 }

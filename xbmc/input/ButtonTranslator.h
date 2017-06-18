@@ -36,6 +36,14 @@ class CCustomControllerTranslator;
 class CIRTranslator;
 class CTouchTranslator;
 
+namespace KODI
+{
+namespace JOYSTICK
+{
+  class CJoystickKeymap;
+}
+}
+
 /// singleton class to map from buttons to actions
 /// Warning: _not_ threadsafe!
 class CButtonTranslator
@@ -72,13 +80,6 @@ public:
    */
   bool HasLongpressMapping(int window, const CKey &key);
 
-  /*! \brief Get the "holdtime" parameter if specified for this key
-   \param window id of the current window
-   \param key to search a mapping for
-   \return the holdtime in ms, or 0 if no holdtime was specified
-   */
-  unsigned int GetHoldTimeMs(int window, const CKey &key, bool fallback = true);
-
   /*! \brief Obtain the action configured for a given window and key
    \param window the window id
    \param key the key to query the action for
@@ -99,12 +100,13 @@ public:
 
   bool TranslateTouchAction(int window, int touchAction, int touchPointers, int &action, std::string &actionString);
 
+  KODI::JOYSTICK::CJoystickKeymap *JoystickKeymap() { return m_joystickKeymap.get(); }
+
 private:
   struct CButtonAction
   {
     unsigned int id;
     std::string strID; // needed for "ActivateWindow()" type actions
-    unsigned int holdtimeMs;
   };
 
   typedef std::multimap<uint32_t, CButtonAction> buttonMap; // our button map to fill in
@@ -118,11 +120,12 @@ private:
   unsigned int GetActionCode(int window, const CKey &key, std::string &strAction) const;
 
   void MapWindowActions(const TiXmlNode *pWindow, int wWindowID);
-  void MapAction(uint32_t buttonCode, const char *szAction, unsigned int holdtimeMs, buttonMap &map);
+  void MapAction(uint32_t buttonCode, const char *szAction, buttonMap &map);
 
   bool LoadKeymap(const std::string &keymapPath);
 
   std::unique_ptr<CCustomControllerTranslator> m_customControllerTranslator;
   std::unique_ptr<CIRTranslator> m_irTranslator;
   std::unique_ptr<CTouchTranslator> m_touchTranslator;
+  std::unique_ptr<KODI::JOYSTICK::CJoystickKeymap> m_joystickKeymap;
 };

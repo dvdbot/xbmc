@@ -33,7 +33,7 @@ namespace JOYSTICK
 
   /*!
    * Handles keymaps
-   */
+   *
   class CKeymapHandler : public IKeymapHandler
   {
   public:
@@ -60,5 +60,6 @@ namespace JOYSTICK
     unsigned int              m_lastDigitalActionMs;
     std::vector<unsigned int> m_pressedButtons;
   };
+  */
 }
 }

@@ -4,9 +4,9 @@ set(SOURCES DeadzoneFilter.cpp
             DefaultRemote.cpp
             DriverPrimitive.cpp
             JoystickEasterEgg.cpp
+            JoystickKeymap.cpp
             JoystickMonitor.cpp
             JoystickTranslator.cpp
-            KeymapHandler.cpp
             RumbleGenerator.cpp)
 
 set(HEADERS DeadzoneFilter.h
@@ -28,11 +28,11 @@ set(HEADERS DeadzoneFilter.h
             IKeymapHandler.h
             JoystickEasterEgg.h
             JoystickIDs.h
+            JoystickKeymap.h
             JoystickMonitor.h
             JoystickTranslator.h
             JoystickTypes.h
             JoystickUtils.h
-            KeymapHandler.h
             RumbleGenerator.h)
 
 core_add_library(input_joystick)
