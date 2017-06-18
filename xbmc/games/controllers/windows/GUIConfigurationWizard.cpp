@@ -23,11 +23,12 @@
 #include "games/controllers/guicontrols/GUIFeatureButton.h"
 #include "games/controllers/Controller.h"
 #include "games/controllers/ControllerFeature.h"
-#include "input/joysticks/IActionMap.h"
 #include "input/joysticks/IButtonMap.h"
 #include "input/joysticks/IButtonMapCallback.h"
+#include "input/joysticks/JoystickUtils.h"
 #include "input/keyboard/KeymapActionMap.h"
 #include "input/InputManager.h"
+#include "input/IKeymap.h"
 #include "peripherals/Peripherals.h"
 #include "threads/SingleLock.h"
 #include "utils/log.h"
@@ -190,7 +191,7 @@ void CGUIConfigurationWizard::Process(void)
 }
 
 bool CGUIConfigurationWizard::MapPrimitive(JOYSTICK::IButtonMap* buttonMap,
-                                           JOYSTICK::IActionMap* actionMap,
+                                           IKeymap* keymap,
                                            const JOYSTICK::CDriverPrimitive& primitive)
 {
   using namespace JOYSTICK;
@@ -211,19 +212,24 @@ bool CGUIConfigurationWizard::MapPrimitive(JOYSTICK::IButtonMap* buttonMap,
 
     //! @todo This only succeeds for game.controller.default; no actions are
     //        currently defined for other controllers
-    if (actionMap && actionMap->ControllerID() == buttonMap->ControllerID())
+    if (keymap)
     {
       std::string feature;
       if (buttonMap->GetFeature(primitive, feature))
       {
-        switch (actionMap->GetActionID(feature))
+        const auto &actions = keymap->GetActions(CJoystickUtils::MakeKeyName(feature));
+        if (!actions.empty())
         {
-        case ACTION_NAV_BACK:
-        case ACTION_PREVIOUS_MENU:
-          bIsCancelAction = true;
-          break;
-        default:
-          break;
+          //! @todo Handle multiple actions mapped to the same key
+          switch (actions.begin()->actionId)
+          {
+          case ACTION_NAV_BACK:
+          case ACTION_PREVIOUS_MENU:
+            bIsCancelAction = true;
+            break;
+          default:
+            break;
+          }
         }
       }
     }

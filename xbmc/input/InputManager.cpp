@@ -825,51 +825,47 @@ void CInputManager::OnSettingChanged(std::shared_ptr<const CSetting> setting)
     m_Mouse.SetEnabled(std::dynamic_pointer_cast<const CSettingBool>(setting)->GetValue());
 }
 
-bool CInputManager::SendDigitalAction(const CAction& action)
+bool CInputManager::SendAction(const CAction& action)
 {
   if (action.GetID() != ACTION_NONE)
   {
-    // If button was pressed this frame, send action
-    if (action.GetHoldTime() == 0)
+    if (action.IsAnalog())
     {
       QueueAction(action);
+      return true;
     }
     else
     {
-      // Only send repeated actions for basic navigation commands
-      bool bIsNavigation = false;
-
-      switch (action.GetID())
+      // If button was pressed this frame, send action
+      if (action.GetHoldTime() == 0)
       {
-      case ACTION_MOVE_LEFT:
-      case ACTION_MOVE_RIGHT:
-      case ACTION_MOVE_UP:
-      case ACTION_MOVE_DOWN:
-      case ACTION_PAGE_UP:
-      case ACTION_PAGE_DOWN:
-        bIsNavigation = true;
-        break;
-
-      default:
-        break;
-      }
-
-      if (bIsNavigation)
         QueueAction(action);
+      }
+      else
+      {
+        // Only send repeated actions for basic navigation commands
+        bool bIsNavigation = false;
+
+        switch (action.GetID())
+        {
+        case ACTION_MOVE_LEFT:
+        case ACTION_MOVE_RIGHT:
+        case ACTION_MOVE_UP:
+        case ACTION_MOVE_DOWN:
+        case ACTION_PAGE_UP:
+        case ACTION_PAGE_DOWN:
+          bIsNavigation = true;
+          break;
+
+        default:
+          break;
+        }
+
+        if (bIsNavigation)
+          QueueAction(action);
+      }
     }
 
-    return true;
-  }
-
-  return false;
-}
-
-bool CInputManager::SendAnalogAction(const CAction& action, float magnitude)
-{
-  if (action.GetID() != ACTION_NONE)
-  {
-    CAction actionWithAmount(action.GetID(), magnitude, 0.0f, action.GetName());
-    QueueAction(actionWithAmount);
     return true;
   }
 
