@@ -14,6 +14,7 @@ set(HEADERS DeadzoneFilter.h
             DefaultJoystick.h
             DefaultRemote.h
             DriverPrimitive.h
+            IActionHandler.h
             IActionMap.h
             IButtonMap.h
             IButtonMapCallback.h
