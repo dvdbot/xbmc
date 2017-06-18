@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include "input/joysticks/IInputHandler.h"
+
 #include <memory>
 
 namespace PERIPHERALS
@@ -30,7 +32,6 @@ namespace KODI
 {
 namespace JOYSTICK
 {
-  class IInputHandler;
   class IInputProvider;
 }
 
@@ -38,7 +39,7 @@ namespace GAME
 {
   class CGameClient;
 
-  class CPort
+  class CPort : public JOYSTICK::IInputHandler
   {
   public:
     CPort(JOYSTICK::IInputHandler* gameInput, CGameClient& gameClient);
@@ -49,9 +50,26 @@ namespace GAME
 
     JOYSTICK::IInputHandler *InputHandler() { return m_gameInput; }
 
+    // Implementation of IInputHandler
+    virtual std::string ControllerID() const override;
+    virtual bool HasFeature(const std::string& feature) const override { return true; }
+    virtual bool AcceptsInput() override { return true; }
+    virtual JOYSTICK::INPUT_TYPE GetInputType(const std::string& feature) const override;
+    virtual unsigned int GetDelayMs(const std::string& feature) const { return 0; }
+    virtual bool OnButtonPress(const std::string& feature, bool bPressed) override;
+    virtual void OnButtonHold(const std::string& feature, unsigned int holdTimeMs) override;
+    virtual bool OnButtonMotion(const std::string& feature, float magnitude, unsigned int motionTimeMs) override;
+    virtual bool OnAnalogStickMotion(const std::string& feature, float x, float y, unsigned int motionTimeMs = 0) override;
+    virtual bool OnAccelerometerMotion(const std::string& feature, float x, float y, float z) override;
+
   private:
+    // Construction parameter
     JOYSTICK::IInputHandler* const m_gameInput;
+
+    // Handles input to Kodi
     std::unique_ptr<JOYSTICK::IInputHandler> m_appInput;
+
+    // Prevents input falling through to Kodi when not handled by the game
     std::unique_ptr<JOYSTICK::IInputHandler> m_inputSink;
   };
 }

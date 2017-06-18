@@ -47,13 +47,56 @@ void CPort::RegisterInput(JOYSTICK::IInputProvider *provider)
   provider->RegisterInputHandler(m_inputSink.get(), false);
 
   // Register input handler
-  provider->RegisterInputHandler(m_gameInput, false);
+  provider->RegisterInputHandler(this, false);
 }
 
 void CPort::UnregisterInput(JOYSTICK::IInputProvider *provider)
 {
   // Unregister in reverse order
-  provider->UnregisterInputHandler(m_gameInput);
+  provider->UnregisterInputHandler(this);
   provider->UnregisterInputHandler(m_inputSink.get());
   provider->UnregisterInputHandler(m_appInput.get());
+}
+
+std::string CPort::ControllerID() const
+{
+  return m_gameInput->ControllerID();
+}
+
+JOYSTICK::INPUT_TYPE CPort::GetInputType(const std::string& feature) const
+{
+  return m_gameInput->GetInputType(feature);
+}
+
+bool CPort::OnButtonPress(const std::string& feature, bool bPressed)
+{
+  //! @todo
+  m_gameInput->OnButtonPress(feature, bPressed);
+  return true;
+}
+
+void CPort::OnButtonHold(const std::string& feature, unsigned int holdTimeMs)
+{
+  //! @todo
+  m_gameInput->OnButtonHold(feature, holdTimeMs);
+}
+
+bool CPort::OnButtonMotion(const std::string& feature, float magnitude, unsigned int motionTimeMs)
+{
+  //! @todo
+  m_gameInput->OnButtonMotion(feature, magnitude, motionTimeMs);
+  return true;
+}
+
+bool CPort::OnAnalogStickMotion(const std::string& feature, float x, float y, unsigned int motionTimeMs /* = 0 */)
+{
+  //! @todo
+  m_gameInput->OnAnalogStickMotion(feature, x, y, motionTimeMs);
+  return true;
+}
+
+bool CPort::OnAccelerometerMotion(const std::string& feature, float x, float y, float z)
+{
+  m_gameInput->OnAccelerometerMotion(feature, x, y, z);
+  return true;
 }
