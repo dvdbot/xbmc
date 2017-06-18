@@ -19,6 +19,7 @@
  */
 
 #include "KeymapHandler.h"
+#include "IActionHandler.h"
 #include "input/Action.h"
 #include "input/ButtonTranslator.h"
 #include "input/InputManager.h"
@@ -33,7 +34,8 @@ using namespace JOYSTICK;
 #define HOLD_TIMEOUT_MS     500
 #define REPEAT_TIMEOUT_MS   50
 
-CKeymapHandler::CKeymapHandler(void) :
+CKeymapHandler::CKeymapHandler(IActionHandler *actionHandler) :
+    m_actionHandler(actionHandler),
     m_lastButtonPress(0),
     m_lastDigitalActionMs(0)
 {
@@ -101,7 +103,7 @@ void CKeymapHandler::OnAnalogKey(unsigned int keyId, int windowId, bool bFallthr
   if (keyId != 0)
   {
     CAction action(CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough));
-    SendAnalogAction(action, magnitude);
+    m_actionHandler->SendAnalogAction(action, magnitude);
   }
 }
 
@@ -115,17 +117,20 @@ void CKeymapHandler::SendAction(const CAction& action)
     m_pressedButtons.push_back(keyId);
 
     // Only dispatch action if button was pressed this frame
-    if (holdTimeMs == 0 && SendDigitalAction(action))
+    if (holdTimeMs == 0)
     {
-      m_lastButtonPress = keyId;
-      m_lastDigitalActionMs = holdTimeMs;
+      if (m_actionHandler->SendDigitalAction(action))
+      {
+        m_lastButtonPress = keyId;
+        m_lastDigitalActionMs = holdTimeMs;
+      }
     }
   }
   else if (keyId == m_lastButtonPress && holdTimeMs > HOLD_TIMEOUT_MS)
   {
     if (holdTimeMs > m_lastDigitalActionMs + REPEAT_TIMEOUT_MS)
     {
-      SendDigitalAction(action);
+      m_actionHandler->SendDigitalAction(action);
       m_lastDigitalActionMs = holdTimeMs;
     }
   }
@@ -150,55 +155,4 @@ void CKeymapHandler::ProcessButtonRelease(unsigned int keyId)
 bool CKeymapHandler::IsPressed(unsigned int keyId) const
 {
   return std::find(m_pressedButtons.begin(), m_pressedButtons.end(), keyId) != m_pressedButtons.end();
-}
-
-bool CKeymapHandler::SendDigitalAction(const CAction& action)
-{
-  if (action.GetID() > 0)
-  {
-    // If button was pressed this frame, send action
-    if (action.GetHoldTime() == 0)
-    {
-      CInputManager::GetInstance().QueueAction(action);
-    }
-    else
-    {
-      // Only send repeated actions for basic navigation commands
-      bool bIsNavigation = false;
-
-      switch (action.GetID())
-      {
-      case ACTION_MOVE_LEFT:
-      case ACTION_MOVE_RIGHT:
-      case ACTION_MOVE_UP:
-      case ACTION_MOVE_DOWN:
-      case ACTION_PAGE_UP:
-      case ACTION_PAGE_DOWN:
-        bIsNavigation = true;
-        break;
-
-      default:
-        break;
-      }
-
-      if (bIsNavigation)
-        CInputManager::GetInstance().QueueAction(action);
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-bool CKeymapHandler::SendAnalogAction(const CAction& action, float magnitude)
-{
-  if (action.GetID() > 0)
-  {
-    CAction actionWithAmount(action.GetID(), magnitude, 0.0f, action.GetName());
-    CInputManager::GetInstance().QueueAction(actionWithAmount);
-    return true;
-  }
-
-  return false;
 }
