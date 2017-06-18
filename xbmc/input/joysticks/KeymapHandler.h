@@ -29,13 +29,15 @@ namespace KODI
 {
 namespace JOYSTICK
 {
+  class IActionHandler;
+
   /*!
    * Handles keymaps
    */
   class CKeymapHandler : public IKeymapHandler
   {
   public:
-    CKeymapHandler(void);
+    CKeymapHandler(IActionHandler *actionHandler);
 
     virtual ~CKeymapHandler(void);
 
@@ -51,8 +53,8 @@ namespace JOYSTICK
     void ProcessButtonRelease(unsigned int keyId);
     bool IsPressed(unsigned int keyId) const;
 
-    static bool SendDigitalAction(const CAction& action);
-    static bool SendAnalogAction(const CAction& action, float magnitude);
+    // Construction parameter
+    IActionHandler* const m_actionHandler;
 
     unsigned int              m_lastButtonPress;
     unsigned int              m_lastDigitalActionMs;
