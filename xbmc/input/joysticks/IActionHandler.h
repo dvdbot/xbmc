@@ -44,6 +44,7 @@ namespace JOYSTICK
     /*!
      * \brief Send an analog action
      * \param action The action
+     * \param magnitude The value associated with the action
      * \return True if the action was handled, false otherwise
      */
     virtual bool SendAnalogAction(const CAction& action, float magnitude) = 0;
