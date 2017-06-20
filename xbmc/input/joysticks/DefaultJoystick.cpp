@@ -72,11 +72,6 @@ bool CDefaultJoystick::AcceptsInput()
   return g_application.IsAppFocused();
 }
 
-unsigned int CDefaultJoystick::GetDelayMs(const FeatureName& feature) const
-{
-  return m_handler->GetHoldTimeMs(GetKeyID(feature), GetWindowID(), GetFallthrough());
-}
-
 bool CDefaultJoystick::OnButtonPress(const FeatureName& feature, bool bPressed)
 {
   if (bPressed && m_easterEgg && m_easterEgg->OnButtonPress(feature))
