@@ -20,7 +20,6 @@
 #pragma once
 
 #include "Peripheral.h"
-#include "input/joysticks/DefaultController.h"
 #include "input/joysticks/IDriverReceiver.h"
 #include "input/joysticks/JoystickMonitor.h"
 #include "input/joysticks/JoystickTypes.h"
@@ -61,7 +60,6 @@ namespace PERIPHERALS
     virtual void RegisterJoystickDriverHandler(KODI::JOYSTICK::IDriverHandler* handler, bool bPromiscuous) override;
     virtual void UnregisterJoystickDriverHandler(KODI::JOYSTICK::IDriverHandler* handler) override;
     virtual KODI::JOYSTICK::IDriverReceiver* GetDriverReceiver() override { return this; }
-    virtual KODI::JOYSTICK::IActionMap* GetActionMap() override { return &m_defaultController; }
 
     bool OnButtonMotion(unsigned int buttonIndex, bool bPressed);
     bool OnHatMotion(unsigned int hatIndex, KODI::JOYSTICK::HAT_STATE state);
@@ -125,7 +123,6 @@ namespace PERIPHERALS
     unsigned int                        m_axisCount;
     unsigned int                        m_motorCount;
     bool                                m_supportsPowerOff;
-    KODI::JOYSTICK::CDefaultController        m_defaultController;
     KODI::JOYSTICK::CJoystickMonitor          m_joystickMonitor;
     std::unique_ptr<KODI::JOYSTICK::IButtonMap>      m_buttonMap;
     std::unique_ptr<KODI::JOYSTICK::CDeadzoneFilter> m_deadzoneFilter;
