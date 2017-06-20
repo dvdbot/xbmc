@@ -31,6 +31,8 @@
 using namespace KODI;
 using namespace JOYSTICK;
 
+#define DIGITAL_ANALOG_THRESHOLD  0.5f
+
 #define HOLD_TIMEOUT_MS     500
 #define REPEAT_TIMEOUT_MS   50
 
@@ -43,24 +45,6 @@ CKeymapHandler::CKeymapHandler(IActionHandler *actionHandler) :
 
 CKeymapHandler::~CKeymapHandler(void)
 {
-}
-
-INPUT_TYPE CKeymapHandler::GetInputType(unsigned int keyId, int windowId, bool bFallthrough) const
-{
-  CAction action(ACTION_NONE);
-
-  if (keyId != 0)
-    action = CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough);
-
-  if (action.GetID() > ACTION_NONE)
-  {
-    if (action.IsAnalog())
-      return INPUT_TYPE::ANALOG;
-    else
-      return INPUT_TYPE::DIGITAL;
-  }
-
-  return INPUT_TYPE::UNKNOWN;
 }
 
 unsigned int CKeymapHandler::GetActionID(unsigned int keyId, int windowId, bool bFallthrough) const
@@ -84,30 +68,64 @@ unsigned int CKeymapHandler::GetHoldTimeMs(unsigned int keyId, int windowId, boo
 
 void CKeymapHandler::OnDigitalKey(unsigned int keyId, int windowId, bool bFallthrough, bool bPressed, unsigned int holdTimeMs /* = 0 */)
 {
+  CAction action(ACTION_NONE);
+
   if (keyId != 0)
+    action = CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId, holdTimeMs), bFallthrough);
+
+  if (action.GetID() != ACTION_NONE)
   {
-    if (bPressed)
+    if (action.IsAnalog())
     {
-      CAction action(CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId, holdTimeMs), bFallthrough));
-      SendAction(action);
+      OnAnalogKey(keyId, windowId, bFallthrough, bPressed ? 1.0f : 0.0f, 0);
     }
     else
     {
-      ProcessButtonRelease(keyId);
+      if (bPressed)
+        SendDigitalAction(action);
+      else
+        ProcessButtonRelease(keyId);
     }
   }
 }
 
 void CKeymapHandler::OnAnalogKey(unsigned int keyId, int windowId, bool bFallthrough, float magnitude, unsigned int motionTimeMs)
 {
+  CAction action(ACTION_NONE);
+
   if (keyId != 0)
+    action = CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough);
+
+  if (action.GetID() != ACTION_NONE)
   {
-    CAction action(CButtonTranslator::GetInstance().GetAction(windowId, CKey(keyId), bFallthrough));
-    m_actionHandler->SendAnalogAction(action, magnitude);
+    if (action.IsAnalog())
+    {
+      m_actionHandler->SendAnalogAction(action, magnitude);
+    }
+    else
+    {
+      unsigned int holdTimeMs = 0;
+      
+      const bool bIsPressed = (magnitude >= DIGITAL_ANALOG_THRESHOLD);
+      if (bIsPressed)
+      {
+        const bool bIsHeld = (m_holdStartTimes.find(keyId) != m_holdStartTimes.end());
+        if (bIsHeld)
+          holdTimeMs = motionTimeMs - m_holdStartTimes[keyId];
+        else
+          m_holdStartTimes[keyId] = motionTimeMs;
+      }
+      else
+      {
+        m_holdStartTimes.erase(keyId);
+      }
+
+      OnDigitalKey(keyId, windowId, bFallthrough, bIsPressed, holdTimeMs);
+    }
   }
 }
 
-void CKeymapHandler::SendAction(const CAction& action)
+void CKeymapHandler::SendDigitalAction(const CAction& action)
 {
   const unsigned int keyId = action.GetButtonCode();
   const unsigned int holdTimeMs = action.GetHoldTime();
