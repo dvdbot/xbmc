@@ -56,6 +56,7 @@ bool CKeyHandler::OnDigitalMotion(bool bPressed, unsigned int holdTimeMs)
 
     const unsigned int actionId = keymapAction.actionId;
     const std::string &actionString = keymapAction.actionString;
+    const unsigned int requriedHoldTimeMs = keymapAction.holdTimeMs;
 
     if (CActionTranslator::IsAnalog(actionId))
     {
@@ -69,9 +70,15 @@ bool CKeyHandler::OnDigitalMotion(bool bPressed, unsigned int holdTimeMs)
     {
       if (bPressed)
       {
-        CAction action(actionId, actionString);
-        action.SetHoldTime(holdTimeMs);
-        SendDigitalAction(action);
+        if (holdTimeMs >= requriedHoldTimeMs)
+        {
+          if (!m_bPressed)
+            holdTimeMs = requriedHoldTimeMs;
+
+          CAction action(actionId, actionString);
+          action.SetHoldTime(holdTimeMs - requriedHoldTimeMs);
+          SendDigitalAction(action);
+        }
       }
       else
       {
@@ -94,6 +101,7 @@ bool CKeyHandler::OnAnalogMotion(float magnitude, unsigned int motionTimeMs)
 
     const unsigned int actionId = keymapAction.actionId;
     const std::string &actionString = keymapAction.actionString;
+    const unsigned int requriedHoldTimeMs = keymapAction.holdTimeMs;
 
     if (CActionTranslator::IsAnalog(actionId))
     {
@@ -105,8 +113,6 @@ bool CKeyHandler::OnAnalogMotion(float magnitude, unsigned int motionTimeMs)
     }
     else
     {
-      unsigned int holdTimeMs = 0;
-
       const bool bIsPressed = (magnitude >= DIGITAL_ANALOG_THRESHOLD);
       if (bIsPressed)
       {
@@ -115,18 +121,25 @@ bool CKeyHandler::OnAnalogMotion(float magnitude, unsigned int motionTimeMs)
           m_holdStartTime = motionTimeMs;
           m_bHeld = true;
         }
-        else
+
+        unsigned int holdTimeMs = motionTimeMs - m_holdStartTime;
+
+        if (holdTimeMs >= requriedHoldTimeMs)
         {
-          holdTimeMs = motionTimeMs - m_holdStartTime;
+          if (!m_bPressed)
+            holdTimeMs = requriedHoldTimeMs;
+
+          CAction action(actionId, actionString);
+          action.SetHoldTime(holdTimeMs - requriedHoldTimeMs);
+          SendDigitalAction(action);
         }
       }
       else
       {
         m_holdStartTime = 0;
+        m_bPressed = false;
         m_bHeld = false;
       }
-
-      OnDigitalMotion(bIsPressed, holdTimeMs);
     }
 
     return true;
