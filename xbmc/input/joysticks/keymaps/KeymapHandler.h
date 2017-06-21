@@ -49,6 +49,7 @@ namespace JOYSTICK
     virtual ~CKeymapHandler() = default;
 
     // implementation of IKeymapHandler
+    virtual bool IsPressed(const std::string& keyName) const override;
     virtual std::string GetLastPressed() const override { return m_lastPressed; }
 
     // implementation of IInputHandler

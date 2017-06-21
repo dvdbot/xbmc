@@ -27,15 +27,27 @@ namespace JOYSTICK
 {
   /*!
    * \ingroup joystick
-   * \brief
+   * \brief Interface for a class working with a keymap
    */
   class IKeymapHandler
   {
   public:
     virtual ~IKeymapHandler() = default;
+    
+    /*!
+     * \brief Get the pressed state of the key
+     *
+     * \param keyName The key name
+     *
+     * \return True if the key is pressed, false otherwise
+     */
+    virtual bool IsPressed(const std::string& keyName) const = 0;
 
     /*!
      * \brief Get the key name of the last button pressed
+     *
+     * \return The key name of the last-pressed button, or empty if no button
+     *         is pressed
      */
     virtual std::string GetLastPressed() const = 0;
   };

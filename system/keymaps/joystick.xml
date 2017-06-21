@@ -38,8 +38,9 @@
 <keymap>
   <global>
     <joystick profile="game.controller.default">
-      <a>Select</a>
-      <a holdtime="1000">ContextMenu</a>
+      <a>Notification(0ms,A pressed for 0ms-2000ms)</a>
+      <a holdtime="2000">Notification(2000ms,A pressed for 2000ms-4000ms)</a>
+      <a holdtime="4000">Notification(4000ms,A pressed for >= 4000ms)</a>
       <b>Back</b>
       <x>ContextMenu</x>
       <y>FullScreen</y>

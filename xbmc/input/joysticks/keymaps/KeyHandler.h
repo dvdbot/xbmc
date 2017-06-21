@@ -20,6 +20,7 @@
 #pragma once
 
 #include "input/joysticks/interfaces/IKeyHandler.h"
+#include "input/joysticks/JoystickTypes.h"
 
 #include <map>
 #include <string>
@@ -34,6 +35,8 @@ namespace JOYSTICK
 {
   class IKeymapHandler;
 
+  
+
   /*!
    * \ingroup joystick
    * \brief
@@ -46,12 +49,14 @@ namespace JOYSTICK
     virtual ~CKeyHandler() = default;
 
     // implementation of IKeyHandler
+    virtual bool bIsPressed() const override { return m_bHeld; }
     virtual bool OnDigitalMotion(bool bPressed, unsigned int holdTimeMs) override;
     virtual bool OnAnalogMotion(float magnitude, unsigned int motionTimeMs) override;
 
   private:
-    void SendDigitalAction(const CAction& action);
-    void SendAnalogAction(const CAction& action);
+    void Reset();
+
+    bool SendAction(const KeymapAction& action, float magnitude, unsigned int holdTimeMs);
 
     // Construction parameters
     const std::string m_keyName;
@@ -59,13 +64,11 @@ namespace JOYSTICK
     const IKeymap *const m_keymap;
     IKeymapHandler *const m_keymapHandler;
 
-    // Digital variables
-    bool m_bPressed = false;
-    unsigned int m_lastDigitalActionMs = 0;
-
-    // Analog variables
-    bool m_bHeld = false;
-    unsigned int m_holdStartTime = 0;
+    // State variables
+    bool m_bHeld;
+    unsigned int m_holdStartTimeMs;
+    unsigned int m_lastActionMs;
+    unsigned int m_lastHoldTimeMs;
   };
 }
 }

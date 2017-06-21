@@ -38,6 +38,14 @@ namespace JOYSTICK
     virtual ~IKeyHandler() = default;
 
     /*!
+     * \brief Return true if the key is "pressed" (has a magnitude greater
+     *        than 0.5)
+     *
+     * \return True if the key is "pressed", false otherwise
+     */
+    virtual bool bIsPressed() const = 0;
+
+    /*!
      * \brief A key mapped to a digital feature has been pressed or released
      *
      * \param bPressed   true if the key's button/axis is activated, false if deactivated

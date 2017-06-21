@@ -19,6 +19,14 @@
  */
 #pragma once
 
+class IKeymapEnvironmentCallback
+{
+public:
+  virtual ~IKeymapEnvironmentCallback() = default;
+
+  virtual void OnWindowIDChanged() = 0;
+};
+
 /*!
  * \brief Customizes the environment in which keymapping is performed
  *

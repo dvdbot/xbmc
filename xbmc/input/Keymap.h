@@ -37,4 +37,7 @@ private:
   // Construction parameters
   const IWindowKeymap *const m_keymap;
   const IKeymapEnvironment *const m_environment;
+
+  // State variable
+  int m_lastWindowId = -1;
 };

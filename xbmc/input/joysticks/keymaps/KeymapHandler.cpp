@@ -41,6 +41,16 @@ CKeymapHandler::CKeymapHandler(IActionHandler *handler, const IKeymap *keymap) :
   assert(keymap != nullptr);
 }
 
+
+bool CKeymapHandler::IsPressed(const std::string& keyName) const
+{
+  auto it = m_keyHandlers.find(keyName);
+  if (it != m_keyHandlers.end())
+    return it->second->IsPressed();
+
+  return false;
+}
+
 std::string CKeymapHandler::ControllerID() const
 {
   return m_keymap->ControllerID();

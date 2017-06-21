@@ -27,7 +27,6 @@
 
 #include <algorithm>
 #include <assert.h>
-#include <utility>
 
 using namespace KODI;
 using namespace JOYSTICK;
@@ -46,103 +45,80 @@ CKeyHandler::CKeyHandler(const std::string &keyName, IActionHandler *actionHandl
   assert(m_actionHandler != nullptr);
   assert(m_keymap != nullptr);
   assert(m_keymapHandler != nullptr);
+
+  Reset();
+}
+
+void CKeyHandler::Reset()
+{
+  m_bHeld = false;
+  m_holdStartTimeMs = 0;
+  m_lastActionMs = 0;
+  m_lastHoldTimeMs = 0;
 }
 
 bool CKeyHandler::OnDigitalMotion(bool bPressed, unsigned int holdTimeMs)
 {
-  auto &actions = m_keymap->GetActions(m_keyName);
-  if (!actions.empty())
-  {
-    const KeymapAction &keymapAction = *actions.begin();
-
-    const unsigned int actionId = keymapAction.actionId;
-    const std::string &actionString = keymapAction.actionString;
-    const unsigned int requriedHoldTimeMs = keymapAction.holdTimeMs;
-
-    if (CActionTranslator::IsAnalog(actionId))
-    {
-      if (bPressed)
-      {
-        CAction action(actionId, 1.0f, 0.0f, actionString);
-        SendAnalogAction(action);
-      }
-    }
-    else
-    {
-      if (bPressed)
-      {
-        if (holdTimeMs >= requriedHoldTimeMs)
-        {
-          // Ensure holdtime gets reported as zero on first press
-          if (!m_bPressed)
-            holdTimeMs = requriedHoldTimeMs;
-
-          CAction action(actionId, actionString);
-          action.SetHoldTime(holdTimeMs - requriedHoldTimeMs);
-          SendDigitalAction(action);
-        }
-      }
-      else
-      {
-        m_bPressed = false;
-      }
-    }
-
-    return true;
-  }
-
-  return false;
+  return OnAnalogMotion(bPressed ? 1.0f : 0.0f, holdTimeMs);
 }
 
 bool CKeyHandler::OnAnalogMotion(float magnitude, unsigned int motionTimeMs)
 {
-  auto &actions = m_keymap->GetActions(m_keyName);
+  const auto &actions = m_keymap->GetActions(m_keyName);
   if (!actions.empty())
   {
-    const KeymapAction &keymapAction = *actions.begin();
+    // Get action properties
+    const KeymapAction& finalAction = *actions.rbegin();
 
-    const unsigned int actionId = keymapAction.actionId;
-    const std::string &actionString = keymapAction.actionString;
-    const unsigned int requriedHoldTimeMs = keymapAction.holdTimeMs;
+    // Actions are sorted by holdtime, so the final holdtime is the maximum one
+    const bool bHasDelay = (finalAction.holdTimeMs > 0);
 
-    if (CActionTranslator::IsAnalog(actionId))
+    // Calculate press state
+    const bool bPressed = (magnitude >= DIGITAL_ANALOG_THRESHOLD);
+    const bool bJustPressed = bPressed && !m_bHeld;
+    const bool bJustReleased = !bPressed && m_bHeld;
+
+    // Update hold start time
+    if (bJustPressed)
+      m_holdStartTimeMs = motionTimeMs;
+
+    // Calculate holdtime
+    unsigned int holdTimeMs = 0;
+    if (m_bHeld)
+      holdTimeMs = motionTimeMs - m_holdStartTimeMs;
+
+    if (!bHasDelay)
     {
-      if (magnitude > 0.0f)
-      {
-        CAction action(actionId, magnitude, 0.0f, actionString);
-        m_actionHandler->SendAction(action);
-      }
+      SendAction(finalAction, magnitude, holdTimeMs);
     }
     else
     {
-      const bool bIsPressed = (magnitude >= DIGITAL_ANALOG_THRESHOLD);
-      if (bIsPressed)
+      // If holdtime has exceeded the last action, execute it now
+      if (holdTimeMs >= finalAction.holdTimeMs)
       {
-        if (!m_bHeld)
-        {
-          m_holdStartTime = motionTimeMs;
-          m_bHeld = true;
-        }
-
-        unsigned int holdTimeMs = motionTimeMs - m_holdStartTime;
-
-        if (holdTimeMs >= requriedHoldTimeMs)
-        {
-          if (!m_bPressed)
-            holdTimeMs = requriedHoldTimeMs;
-
-          CAction action(actionId, actionString);
-          action.SetHoldTime(holdTimeMs - requriedHoldTimeMs);
-          SendDigitalAction(action);
-        }
+        SendAction(finalAction, magnitude, holdTimeMs - finalAction.holdTimeMs);
       }
-      else
+      else if (bJustReleased)
       {
-        m_holdStartTime = 0;
-        m_bPressed = false;
-        m_bHeld = false;
+        // Find the maximum holdtime less than the current holdtime
+        auto it = actions.rend();
+        for ( ; it != actions.rbegin(); ++it)
+        {
+          // Analog actions can't be overridden with a greater holdtime
+          if (CActionTranslator::IsAnalog(it->actionId))
+            continue;
+
+          if (it->holdTimeMs < m_lastHoldTimeMs)
+            break;
+        }
+
+        if (it != actions.rbegin())
+          SendAction(finalAction, magnitude, holdTimeMs);
       }
     }
+
+    m_bHeld = bPressed;
+    m_lastHoldTimeMs = holdTimeMs;
 
     return true;
   }
@@ -150,32 +126,60 @@ bool CKeyHandler::OnAnalogMotion(float magnitude, unsigned int motionTimeMs)
   return false;
 }
 
-void CKeyHandler::SendDigitalAction(const CAction& action)
+bool CKeyHandler::SendAction(const KeymapAction& action, float magnitude, unsigned int holdTimeMs)
 {
-  const unsigned int holdTimeMs = action.GetHoldTime();
+  bool bSendAction = false;
 
-  if (!m_bPressed)
-  {
-    // Only dispatch action if button was pressed this frame
-    if (holdTimeMs == 0)
+  const auto &hotkeys = action.hotkeys;
+  bool bHotkeysPressed = std::find_if(hotkeys.begin(), hotkeys.end(),
+    [this](const std::string &hotkey)
     {
-      if (m_actionHandler->SendAction(action))
-        m_lastDigitalActionMs = holdTimeMs;
+      return m_keymapHandler->IsPressed(hotkey);
+    }) != hotkeys.end();
+
+  if (bHotkeysPressed)
+  {
+    if (CActionTranslator::IsAnalog(action.actionId))
+    {
+      // Always send analog actions
+      bSendAction = true;
+    }
+    else
+    {
+      if (holdTimeMs == 0)
+      {
+        // Dispatch action if button was pressed this frame
+        bSendAction = true;
+      }
+      else
+      {
+        // Check criteria for sending a repeat action
+        bool bSendRepeat = true;
+
+        // Don't send a repeat action if the last key has changed
+        if (m_keymapHandler->GetLastPressed() != m_keyName)
+          bSendRepeat = false;
+
+        // Ensure initial timeout has elapsed
+        if (holdTimeMs < HOLD_TIMEOUT_MS)
+          bSendRepeat = false;
+
+        // Ensure repeat timeout has elapsed
+        if (holdTimeMs < m_lastActionMs + REPEAT_TIMEOUT_MS)
+          bSendRepeat = false;
+
+        bSendAction = bSendRepeat;
+      }
     }
   }
-  else if (m_keymapHandler->GetLastPressed() == m_keyName && holdTimeMs > HOLD_TIMEOUT_MS)
+
+  if (bSendAction)
   {
-    if (holdTimeMs > m_lastDigitalActionMs + REPEAT_TIMEOUT_MS)
-    {
-      m_actionHandler->SendAction(action);
-      m_lastDigitalActionMs = holdTimeMs;
-    }
+    const CAction guiAction(action.actionId, magnitude, 0.0f, action.actionString, holdTimeMs);
+    m_actionHandler->SendAction(guiAction);
+    m_lastActionMs = holdTimeMs;
+    return true;
   }
 
-  m_bPressed = true;
-}
-
-void CKeyHandler::SendAnalogAction(const CAction& action)
-{
-  m_actionHandler->SendAction(action);
+  return false;
 }
