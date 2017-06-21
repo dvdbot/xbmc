@@ -328,6 +328,9 @@ void CInputManager::QueueAction(const CAction& action)
     m_queuedActions.erase(std::remove_if(m_queuedActions.begin(), m_queuedActions.end(),
       [&action](const CAction& queuedAction)
       {
+        if (action.GetID() == ACTION_BUILT_IN_FUNCTION && queuedAction.GetID() == ACTION_BUILT_IN_FUNCTION)
+          return StringUtils::EqualsNoCase(action.GetName(), queuedAction.GetName());
+
         return action.GetID() == queuedAction.GetID();
       }), m_queuedActions.end());
   }
