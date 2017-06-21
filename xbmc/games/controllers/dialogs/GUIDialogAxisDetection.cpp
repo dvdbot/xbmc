@@ -21,7 +21,7 @@
 #include "GUIDialogAxisDetection.h"
 #include "guilib/LocalizeStrings.h"
 #include "input/joysticks/DriverPrimitive.h"
-#include "input/joysticks/IButtonMap.h"
+#include "input/joysticks/interfaces/IButtonMap.h"
 #include "input/joysticks/JoystickTranslator.h"
 #include "utils/StringUtils.h"
 

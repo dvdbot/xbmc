@@ -73,6 +73,7 @@ bool CKeyHandler::OnDigitalMotion(bool bPressed, unsigned int holdTimeMs)
       {
         if (holdTimeMs >= requriedHoldTimeMs)
         {
+          // Ensure holdtime gets reported as zero on first press
           if (!m_bPressed)
             holdTimeMs = requriedHoldTimeMs;
 

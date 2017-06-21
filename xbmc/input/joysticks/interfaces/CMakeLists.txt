@@ -1,4 +1,13 @@
-set(HEADERS IKeyHandler.h
+set(HEADERS IButtonMap.h
+            IButtonMapCallback.h
+            IButtonMapper.h
+            IButtonSequence.h
+            IDriverHandler.h
+            IDriverReceiver.h
+            IInputHandler.h
+            IInputProvider.h
+            IInputReceiver.h
+            IKeyHandler.h
             IKeymapHandler.h
 )
 
