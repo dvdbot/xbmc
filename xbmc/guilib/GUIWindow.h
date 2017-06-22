@@ -256,8 +256,6 @@ protected:
   virtual bool Animate(unsigned int currentTime);
   virtual bool CheckAnimation(ANIMATION_TYPE animType);
 
-  CAnimation *GetAnimation(ANIMATION_TYPE animType, bool checkConditions = true);
-
   // control state saving on window close
   virtual void SaveControlStates();
   virtual void RestoreControlStates();
