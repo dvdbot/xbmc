@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
 #include <utility>
 
 using namespace KODI;
@@ -77,7 +78,7 @@ bool CKeymapHandler::OnButtonMotion(const FeatureName& feature, float magnitude,
   const std::string keyName = CJoystickUtils::MakeKeyName(feature);
 
   IKeyHandler *handler = GetKeyHandler(keyName);
-  bool bHandled = handler->OnAnalogMotion(magnitude, motionTimeMs);
+  handler->OnAnalogMotion(magnitude, motionTimeMs);
 
   return true;
 }
@@ -90,7 +91,7 @@ bool CKeymapHandler::OnAnalogStickMotion(const FeatureName& feature, float x, fl
   const ANALOG_STICK_DIRECTION analogStickDir = CJoystickTranslator::VectorToAnalogStickDirection(x, y);
 
   // Calculate the magnitude projected onto that direction
-  const float magnitude = std::max(std::abs(x), std::abs(y));
+  const float magnitude = std::max(std::fabs(x), std::fabs(y));
 
   // Deactivate directions in which the stick is not pointing first
   for (auto dir : CJoystickUtils::GetDirections())
